@@ -39,6 +39,7 @@ View::error_notice();
 			array(
 				'for'     => 'wp_post_id',
 				'label'   => __( '文章 ID', 'wpdocs' ),
+				'bad'     => __( '请填写有效的文章 ID。', 'wpdocs' ),
 				'help'    => __( 'WordPress 文章或页面的数字 ID。', 'wpdocs' ),
 				'control' => '<input id="wp_post_id" type="number" name="wp_post_id" required min="1" />',
 			)
@@ -110,7 +111,7 @@ View::error_notice();
 		$resolve_ctl  = '<div class="field-ctl-row">';
 		$resolve_ctl .= '<input id="resolve-post" type="number" min="1" placeholder="' . esc_attr__( '文章 ID 或文档页 ID', 'wpdocs' ) . '" autocomplete="off" />';
 		$resolve_ctl .= '<button type="button" class="btn btn-ghost" data-wpdocs-resolve>' . esc_html__( '反查', 'wpdocs' ) . '</button>';
-		$resolve_ctl .= '</div><p class="hint d">' . esc_html__( '对应 GET /wpdocs/v1/bindings/resolve。不写命中、不改表。', 'wpdocs' ) . '</p>';
+		$resolve_ctl .= '</div><p class="hint d">' . esc_html__( '按文章 ID 或文档页 ID 查已有绑定。不写命中、不改表。', 'wpdocs' ) . '</p>';
 		$resolve_ctl .= '<div class="preview-out" data-resolve-out hidden></div>';
 		View::field(
 			array(
@@ -121,6 +122,12 @@ View::error_notice();
 			)
 		);
 		?>
+		<?php if ( $adv ) : ?>
+			<div class="field is-note" data-for-mode="advanced">
+				<span class="field-label"><?php esc_html_e( '文章列表', 'wpdocs' ); ?></span>
+				<span class="d"><?php esc_html_e( '文章列表会多一列「文档绑定」，显示书册/页面别名。该列不套本页顶栏。', 'wpdocs' ); ?></span>
+			</div>
+		<?php endif; ?>
 		<div class="wenpai-actions"><button type="submit" class="btn btn-primary"><?php esc_html_e( '保存绑定', 'wpdocs' ); ?></button></div>
 	</form>
 </section>

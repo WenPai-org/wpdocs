@@ -57,15 +57,16 @@ final class View {
 	}
 
 	/**
-	 * Stacked field (APPROVAL prototypes: label → control → hint).
+	 * Stacked field (APPROVAL: label → control → bad hint → help).
 	 * Product CSS forces `.field` to one column; kit default is 280px|1fr settings grid.
 	 *
-	 * @param array{label:string,help?:string,for?:string,control:string,advanced?:bool} $args
+	 * @param array{label:string,help?:string,bad?:string,for?:string,control:string,advanced?:bool} $args
 	 */
 	public static function field( array $args ): void {
 		$for   = isset( $args['for'] ) ? (string) $args['for'] : '';
 		$label = (string) ( $args['label'] ?? '' );
 		$help  = (string) ( $args['help'] ?? '' );
+		$bad   = (string) ( $args['bad'] ?? '' );
 		$ctl   = (string) ( $args['control'] ?? '' );
 		$extra = '';
 		if ( ! empty( $args['advanced'] ) ) {
@@ -81,6 +82,9 @@ final class View {
 			echo '<span class="field-label">' . esc_html( $label ) . '</span>';
 		}
 		echo $ctl; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- caller HTML.
+		if ( '' !== $bad ) {
+			echo '<p class="hint is-bad" data-wpdocs-bad hidden>' . esc_html( $bad ) . '</p>';
+		}
 		if ( '' !== $help ) {
 			echo '<p class="hint d">' . esc_html( $help ) . '</p>';
 		}
@@ -121,7 +125,7 @@ final class View {
 		if ( empty( $_GET['updated'] ) ) {
 			return;
 		}
-		echo '<div class="notice ok"><span>' . esc_html__( '已保存。', 'wpdocs' ) . '</span></div>';
+		echo '<div class="wenpai-notice-wrap" data-wenpai-fade><div class="notice ok"><span>' . esc_html__( '已保存。', 'wpdocs' ) . '</span></div></div>';
 	}
 
 	public static function error_notice(): void {

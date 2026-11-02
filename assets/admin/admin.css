@@ -1,6 +1,5 @@
-/* Product-only; kit owns chrome / field / tbl / pill.
- * APPROVAL prototypes: stacked fields (label above), kv status rows (no tile).
- * Kit default `.field` is 280px|1fr — override to one column for this plugin. */
+/* Product-only; kit owns chrome / field / tbl / pill / preview-out / is-busy.
+ * APPROVAL: stacked fields; kv status rows. Spacing follows standards §3b overlay. */
 
 body.wenpai-ui-page .wenpai-app .wenpai-mark svg {
   width: 28px;
@@ -8,10 +7,10 @@ body.wenpai-ui-page .wenpai-app .wenpai-mark svg {
   display: block;
 }
 
-/* —— fields: stacked like prototypes/wpdocs/*.html —— */
+/* —— fields: stacked (label → control → hint) —— */
 body.wenpai-ui-page .wenpai-app .field {
   grid-template-columns: minmax(0, 1fr);
-  gap: 8px;
+  gap: 6px;
   align-items: stretch;
   padding: 14px 0;
 }
@@ -36,13 +35,22 @@ body.wenpai-ui-page .wenpai-app .field > .field-label {
 body.wenpai-ui-page .wenpai-app .field > .hint,
 body.wenpai-ui-page .wenpai-app .field .hint {
   margin: 0;
-  font-size: 13px;
-  line-height: 20px;
+  font-size: 12px;
+  line-height: 18px;
   color: var(--wenpai-ink-3);
 }
 
 body.wenpai-ui-page .wenpai-app .field .hint.is-bad {
   color: var(--wenpai-bad, #d63638);
+}
+
+body.wenpai-ui-page .wenpai-app .field .hint[hidden] {
+  display: none;
+}
+
+body.wenpai-ui-page .wenpai-app .field input.is-invalid,
+body.wenpai-ui-page .wenpai-app .field select.is-invalid {
+  border-color: var(--wenpai-bad, #d63638);
 }
 
 .field-ctl-row {
@@ -66,7 +74,26 @@ body.wenpai-ui-page .wenpai-app .field .hint.is-bad {
   white-space: nowrap;
 }
 
-/* —— status kv rows (prototype .k / .v / .pill) —— */
+/* preview result colors (kit is gray; product paints ok/bad) */
+body.wenpai-ui-page .wenpai-app .preview-out {
+  margin-top: 2px;
+}
+
+body.wenpai-ui-page .wenpai-app .preview-out[hidden] {
+  display: none;
+}
+
+body.wenpai-ui-page .wenpai-app .preview-out.is-ok {
+  background: #d4edda;
+  color: #155724;
+}
+
+body.wenpai-ui-page .wenpai-app .preview-out.is-bad {
+  background: #f8d7da;
+  color: #d63638;
+}
+
+/* —— status kv rows —— */
 body.wenpai-ui-page .wenpai-app .simple-row.wpdocs-kv {
   gap: 12px;
   padding: 12px 0;
@@ -77,6 +104,7 @@ body.wenpai-ui-page .wenpai-app .simple-row.wpdocs-kv > .t {
   min-width: 5.5rem;
   font-weight: 500;
   font-size: 14px;
+  line-height: 22px;
 }
 
 body.wenpai-ui-page .wenpai-app .simple-row.wpdocs-kv > .d {
@@ -92,9 +120,10 @@ body.wenpai-ui-page .wenpai-app .simple-row.wpdocs-kv > .r {
   margin-left: 0;
 }
 
-/* —— chrome density —— */
+/* —— chrome density (overlay numbers) —— */
 body.wenpai-ui-page .wenpai-app .wenpai-page-head {
   align-items: center;
+  margin-bottom: 0;
 }
 
 body.wenpai-ui-page .wenpai-main > .wenpai-stack {
@@ -103,10 +132,14 @@ body.wenpai-ui-page .wenpai-main > .wenpai-stack {
 
 body.wenpai-ui-page .wenpai-app .section-title {
   font-weight: 600;
+  font-size: 16px;
+  line-height: 24px;
 }
 
 body.wenpai-ui-page .wenpai-app .section-desc {
-  margin-bottom: 8px;
+  margin: 4px 0 8px;
+  font-size: 13px;
+  line-height: 20px;
 }
 
 body.wenpai-ui-page .wenpai-app .wenpai-lede {
@@ -123,13 +156,31 @@ body.wenpai-ui-page .wenpai-app .wenpai-actions {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 8px 0 0;
+  margin: 4px 0 0;
   padding-top: 8px;
+}
+
+body.wenpai-ui-page .wenpai-app .field + .wenpai-actions {
+  border-top: 0;
 }
 
 body.wenpai-ui-page .wenpai-app .notice {
   font-size: 12px;
   line-height: 18px;
+}
+
+body.wenpai-ui-page .wenpai-app .wenpai-notice-wrap {
+  margin-bottom: 16px;
+}
+
+body.wenpai-ui-page .wenpai-app .wenpai-page-head + .notice,
+body.wenpai-ui-page .wenpai-app .wenpai-page-head + .wenpai-notice-wrap,
+body.wenpai-ui-page .wenpai-app .wenpai-page-head + .next {
+  margin-top: 0;
+}
+
+body.wenpai-ui-page .wenpai-app .next {
+  margin-bottom: 0;
 }
 
 body.wenpai-ui-page .wenpai-app .mode .btn-primary {
@@ -145,7 +196,25 @@ body.wenpai-ui-page .wenpai-app input[type="number"]::-webkit-inner-spin-button 
   margin: 0;
 }
 
-/* help: steps stay stacked; boundary rows keep kit tile */
+/* help steps: tighter action under hint */
+body.wenpai-ui-page .wenpai-app .wpdocs-help-step .wenpai-actions {
+  margin: 0;
+  padding-top: 2px;
+}
+
 body.wenpai-ui-page .wenpai-app .wpdocs-help-step .hint {
   margin-top: 0;
+}
+
+/* info-only advanced note (no control) */
+body.wenpai-ui-page .wenpai-app .field.is-note > .field-label {
+  font-weight: 600;
+}
+
+body.wenpai-ui-page .wenpai-app .field.is-note > .d {
+  display: block;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--wenpai-ink-3);
+  font-weight: 400;
 }

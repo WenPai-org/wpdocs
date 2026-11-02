@@ -45,6 +45,7 @@ endif;
 			array(
 				'for'     => 'wp_path',
 				'label'   => __( '旧路径', 'wpdocs' ),
+				'bad'     => __( '请填写以 / 开头的路径。', 'wpdocs' ),
 				'help'    => __( '保存前会规范成以 / 开头的路径，同一路径只有一条。不会劫持 wp-admin、wp-json 等保留路径。', 'wpdocs' ),
 				'control' => '<input id="wp_path" type="text" name="wp_path" placeholder="/document/old" required autocomplete="off" />',
 			)
@@ -81,7 +82,7 @@ endif;
 		$dry_ctl  = '<div class="field-ctl-row">';
 		$dry_ctl .= '<input id="dry-path" type="text" placeholder="/document/old" autocomplete="off" />';
 		$dry_ctl .= '<button type="button" class="btn btn-ghost" data-wpdocs-dry-run>' . esc_html__( '试跳转', 'wpdocs' ) . '</button>';
-		$dry_ctl .= '</div><p class="hint d">' . esc_html__( '对应 GET /wpdocs/v1/redirects/dry-run?path=。不增加命中次数。', 'wpdocs' ) . '</p>';
+		$dry_ctl .= '</div><p class="hint d">' . esc_html__( '试一条旧路径会怎样跳，不增加命中次数。', 'wpdocs' ) . '</p>';
 		$dry_ctl .= '<div class="preview-out" data-dry-out hidden></div>';
 		View::field(
 			array(

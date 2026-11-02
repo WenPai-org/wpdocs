@@ -69,14 +69,22 @@ endif;
 if ( 0 === $bind_n && 0 === $redir_n ) :
 	?>
 	<div class="next">
-		<p><?php esc_html_e( '还没有绑定或跳转。保存绑定后这里会出现计数；若站点曾用旧文档桥，启用本插件时会一次性导入跳转。', 'wpdocs' ); ?></p>
+		<div class="tile accent"><?php echo View::icon( 'map' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+		<div>
+			<strong><?php esc_html_e( '还没有绑定或跳转', 'wpdocs' ); ?></strong>
+			<p class="d"><?php esc_html_e( '保存绑定后这里会出现计数；若站点曾用旧文档桥，启用本插件时会一次性导入跳转。', 'wpdocs' ); ?></p>
+		</div>
 		<a class="btn btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-bindings' ) ); ?>"><?php esc_html_e( '去绑定', 'wpdocs' ); ?></a>
 	</div>
 	<?php
 elseif ( ! $home_ok && ! $partial_ok && '' !== $base_show ) :
 	?>
 	<div class="next">
-		<p><?php esc_html_e( '暂时无法探测文档站，请检查文档站地址后重试。', 'wpdocs' ); ?></p>
+		<div class="tile bad"><?php echo View::icon( 'external' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+		<div>
+			<strong><?php esc_html_e( '暂时无法探测文档站', 'wpdocs' ); ?></strong>
+			<p class="d"><?php esc_html_e( '请检查文档站地址后重试。', 'wpdocs' ); ?></p>
+		</div>
 		<a class="btn btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs' ) ); ?>"><?php esc_html_e( '重新探测', 'wpdocs' ); ?></a>
 	</div>
 	<?php

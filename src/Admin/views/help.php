@@ -26,12 +26,12 @@ View::page_head(
 	</div>
 	<div class="field wpdocs-help-step">
 		<span class="field-label"><?php esc_html_e( '2. 建绑定', 'wpdocs' ); ?></span>
-		<p class="hint d"><?php esc_html_e( '在「绑定」填写文章 ID 与文档书/页 slug 或 page id。批量可走 REST resolve-batch。', 'wpdocs' ); ?></p>
+		<p class="hint d"><?php esc_html_e( '在「绑定」填写文章 ID 与文档书/页别名或页面 ID。', 'wpdocs' ); ?></p>
 		<div class="wenpai-actions"><a class="btn btn-ghost" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-bindings' ) ); ?>"><?php esc_html_e( '打开绑定', 'wpdocs' ); ?></a></div>
 	</div>
 	<div class="field wpdocs-help-step">
 		<span class="field-label"><?php esc_html_e( '3. 配跳转', 'wpdocs' ); ?></span>
-		<p class="hint d"><?php esc_html_e( '在「跳转」登记旧路径；matched 为 301，gone 为 410。启用时若存在旧 cocobook_redirects 表会一次性导入。', 'wpdocs' ); ?></p>
+		<p class="hint d"><?php esc_html_e( '在「跳转」登记旧路径；已匹配为 301，已失效为 410。启用时若存在旧跳转表会一次性导入。', 'wpdocs' ); ?></p>
 		<div class="wenpai-actions"><a class="btn btn-ghost" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-redirects' ) ); ?>"><?php esc_html_e( '打开跳转', 'wpdocs' ); ?></a></div>
 	</div>
 </section>
@@ -42,7 +42,7 @@ View::page_head(
 		<div class="tile"><?php echo View::icon( 'info' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
 		<div>
 			<div class="t"><?php esc_html_e( '本插件做什么', 'wpdocs' ); ?></div>
-			<div class="d"><?php esc_html_e( '品牌站侧 Bind / Redirect，以及文档站只读探测。', 'wpdocs' ); ?></div>
+			<div class="d"><?php esc_html_e( '品牌站侧绑定与跳转，以及文档站只读探测。', 'wpdocs' ); ?></div>
 		</div>
 	</div>
 	<div class="simple-row is-static">
