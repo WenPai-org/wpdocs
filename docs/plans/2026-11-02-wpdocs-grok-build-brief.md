@@ -59,6 +59,7 @@
 
 - `docs/contracts/wpdocs-v1.md`
 - `docs/plans/2026-11-02-wpdocs-full-plan.md`
+- `docs/design/admin-ui-a.md`（档 A 自洽规范；无 linuxjoy 时以此为准）
 
 ### 3.1 表
 
@@ -125,15 +126,20 @@ Grok 任务 = **按规范把骨架做实到可审原型 + 可测**，不是另�
 
 ## 5. Admin UI 规范与标准（档 A · 强制）
 
-### 5.1 必读（linuxjoy，按顺序）
+### 5.1 必读（按顺序）
 
-工位若在 Mac linuxjoy 可读；否则从 FeiCode / 共享说明摘录：
+**本仓（无 linuxjoy 也能开工）：**
+
+1. `docs/design/admin-ui-a.md`
+2. `docs/contracts/wpdocs-v1.md`
+3. 本 brief + `docs/plans/2026-11-02-wpdocs-full-plan.md`
+
+**有 linuxjoy 时再加深：**
 
 1. `docs/design/wenpai-admin-ui/tiers.yml` → **`wpdocs: A`**
 2. Skill：`.agents/skills/wenpai-admin-ui/SKILL.md`
-3. `docs/design/wenpai-admin-ui/standards.md`、`components.md`、`ux.md`、`gate.md`
-4. `docs/design/wenpai-admin-ui/system-plan.md`、`use-plan.md`（档 A 流程）
-5. 命令：`python3 scripts/wenpai/wenpai-admin-tier.py wpdocs`（必须退出 0）
+3. `standards.md`、`components.md`、`ux.md`、`gate.md`、`system-plan.md`、`use-plan.md`
+4. 命令：`python3 scripts/wenpai/wenpai-admin-tier.py wpdocs`（必须退出 0）
 
 kit：**wenpai-admin-ui 0.2.3**（`WenPai-org/wenpai-admin-ui`）。vendor：
 

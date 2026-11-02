@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>文派文档 · 绑定</title>
+	<style>
+		* { box-sizing: border-box; }
+		body {
+			margin: 0;
+			background: #f0f0f1;
+			color: #1e1e1e;
+			font: 14px/22px -apple-system, "Noto Sans", "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Source Han Sans SC", "Microsoft YaHei", sans-serif;
+		}
+		#wpadminbar {
+			height: 32px;
+			background: #1d2327;
+			color: #fff;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 0 16px;
+			font-size: 13px;
+		}
+		#adminmenumain {
+			position: fixed;
+			top: 32px;
+			left: 0;
+			bottom: 0;
+			width: 160px;
+			background: #1d2327;
+			color: #f0f0f1;
+			padding: 12px 0;
+			overflow: auto;
+		}
+		#adminmenumain .wp-menu-name {
+			padding: 8px 12px;
+			font-weight: 600;
+			color: #fff;
+		}
+		#adminmenumain a {
+			display: block;
+			padding: 6px 12px 6px 20px;
+			color: #c3c4c7;
+			text-decoration: none;
+		}
+		#adminmenumain a.is-current {
+			background: #2c3338;
+			color: #fff;
+			box-shadow: inset 4px 0 0 #3858e9;
+		}
+		#wpcontent { margin-left: 160px; padding: 0; min-width: 0; }
+		.wenpai-app {
+			--wenpai-accent: #3858e9;
+			--wenpai-accent-hover: #2c47c5;
+			--wenpai-accent-soft: #eef1fd;
+			--wenpai-ink: #1e1e1e;
+			--wenpai-ink-2: #50575e;
+			--wenpai-ink-3: #646970;
+			--wenpai-line: #e0e0e0;
+			--wenpai-line-soft: #f0f0f1;
+			--wenpai-card-line: #e5e5e5;
+			--wenpai-ok: #00a32a;
+			--wenpai-ok-soft: #edfaef;
+			--wenpai-ok-ink: #007017;
+			--wenpai-warn: #dba617;
+			--wenpai-warn-soft: #fbf3dc;
+			--wenpai-warn-ink: #9a7208;
+			--wenpai-bad: #d63638;
+			--wenpai-bad-soft: #fbe9ea;
+		}
+		.wenpai-app a { color: var(--wenpai-accent); text-decoration: none; }
+		.wenpai-app a:focus-visible,
+		.wenpai-app button:focus-visible,
+		.wenpai-app input:focus-visible,
+		.wenpai-app select:focus-visible {
+			outline: 2px solid var(--wenpai-accent);
+			outline-offset: 2px;
+		}
+		.wenpai-head {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			min-height: 56px;
+			padding: 0 32px;
+			background: #fff;
+			border-bottom: 1px solid var(--wenpai-line);
+		}
+		.wenpai-mark { width: 28px; height: 28px; color: var(--wenpai-accent); flex: none; }
+		.wenpai-brand { font-weight: 600; margin-right: 8px; }
+		.wenpai-tabs { display: flex; gap: 4px; flex: 1; flex-wrap: wrap; }
+		.wenpai-tab {
+			display: inline-flex;
+			align-items: center;
+			gap: 6px;
+			height: 56px;
+			padding: 0 12px;
+			color: var(--wenpai-ink-2);
+			font-weight: 500;
+			border-bottom: 2px solid transparent;
+		}
+		.wenpai-tab.is-current { color: var(--wenpai-accent); border-bottom-color: var(--wenpai-accent); }
+		.wenpai-ico { width: 18px; height: 18px; }
+		.wenpai-head-right { display: flex; gap: 16px; font-size: 13px; }
+		.wenpai-wrap { max-width: 1120px; margin: 0 auto; padding: 24px 32px 48px; }
+		.wenpai-main { display: flex; flex-direction: column; gap: 20px; }
+		.page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+		.page-head h1 { margin: 0; font-size: 24px; line-height: 32px; font-weight: 600; }
+		.lede { margin: 6px 0 0; font-size: 13px; line-height: 20px; color: var(--wenpai-ink-3); }
+		.mode .seg { display: inline-flex; border: 1px solid var(--wenpai-line); border-radius: 6px; overflow: hidden; }
+		.seg a { padding: 6px 12px; font-size: 13px; color: var(--wenpai-ink-2); }
+		.seg a.is-on { background: var(--wenpai-accent-soft); color: var(--wenpai-accent); font-weight: 600; }
+		.card {
+			background: #fff;
+			border: 1px solid var(--wenpai-card-line);
+			border-radius: 12px;
+			padding: 20px 24px;
+			max-width: none;
+			box-shadow: none;
+		}
+		.section-title { margin: 0; font-size: 16px; line-height: 24px; font-weight: 600; }
+		.section-desc { margin: 4px 0 8px; font-size: 13px; line-height: 20px; color: var(--wenpai-ink-3); }
+		.field { padding: 14px 0; border-top: 1px solid var(--wenpai-line); }
+		.field > label { display: block; font-weight: 600; margin-bottom: 6px; }
+		.field .d { display: block; font-weight: 400; color: var(--wenpai-ink-3); font-size: 13px; margin-top: 2px; }
+		.hint { margin: 6px 0 0; font-size: 13px; line-height: 20px; color: var(--wenpai-ink-3); }
+		.hint.is-bad { color: var(--wenpai-bad); }
+		.field-ctl-row { display: flex; gap: 8px; align-items: center; max-width: 28rem; }
+		.field-ctl-row input { flex: 1; max-width: none; }
+		input, select {
+			appearance: none;
+			height: 36px;
+			max-width: 28rem;
+			width: 100%;
+			border: 1px solid var(--wenpai-line);
+			border-radius: 6px;
+			padding: 0 10px;
+			font: inherit;
+			background: #fff;
+		}
+		select {
+			background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2350575e' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+			background-repeat: no-repeat;
+			background-position: right 10px center;
+			padding-right: 28px;
+		}
+		.btn {
+			appearance: none;
+			height: 36px;
+			padding: 0 14px;
+			border-radius: 6px;
+			border: 0;
+			font: inherit;
+			font-weight: 500;
+			cursor: pointer;
+			display: inline-flex;
+			align-items: center;
+		}
+		.btn-primary { background: var(--wenpai-accent); color: #fff; }
+		.btn-primary:hover { background: var(--wenpai-accent-hover); }
+		.btn-ghost { background: #fff; color: var(--wenpai-accent); border: 1px solid var(--wenpai-line); }
+		.wenpai-actions { padding-top: 8px; }
+		.notice { padding: 12px 16px; border-radius: 6px; margin: 0 0 16px; }
+		.notice.bad { background: var(--wenpai-bad-soft); color: var(--wenpai-bad); }
+		.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+		.tbl th {
+			text-align: left;
+			font-weight: 500;
+			color: var(--wenpai-ink-2);
+			padding: 8px 10px;
+			border-bottom: 1px solid var(--wenpai-line);
+		}
+		.tbl td { padding: 10px; border-bottom: 1px solid var(--wenpai-line-soft); vertical-align: top; }
+		.tbl code { font-size: 12px; }
+		.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; white-space: nowrap; }
+		.pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+		.pill.ok { color: var(--wenpai-ok-ink); }
+		.pill.warn { color: var(--wenpai-warn-ink); }
+		.empty { padding: 16px 0 8px; color: var(--wenpai-ink-2); }
+		.preview-out {
+			margin-top: 8px;
+			padding: 10px 12px;
+			background: var(--wenpai-line-soft);
+			border-radius: 6px;
+			font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+			font-size: 13px;
+			max-width: 28rem;
+		}
+		.foot {
+			margin-top: 32px;
+			padding-top: 12px;
+			border-top: 1px solid var(--wenpai-line);
+			color: var(--wenpai-ink-3);
+			font-size: 12px;
+			line-height: 18px;
+			display: flex;
+			gap: 16px;
+		}
+		@media (max-width: 782px) {
+			#adminmenumain { display: none; }
+			#wpcontent { margin-left: 0; }
+			.wenpai-head { flex-wrap: wrap; height: auto; padding: 8px 16px; }
+			.wenpai-tab { height: 40px; }
+			.wenpai-wrap { padding: 16px; }
+			.page-head { flex-direction: column; }
+		}
+	</style>
+</head>
+<body class="wp-admin wpdocs-admin wenpai-ui-page" data-state="ok" data-mode="simple">
+	<div id="wpadminbar"><span>仪表盘</span><span>管理员</span></div>
+	<div id="adminmenumain">
+		<div class="wp-menu-name">文派文档</div>
+		<a href="status.html">状态</a>
+		<a class="is-current" href="bindings.html">绑定</a>
+		<a href="redirects.html">跳转</a>
+	</div>
+	<div id="wpcontent">
+		<div class="wenpai-app">
+			<header class="wenpai-head">
+				<svg class="wenpai-mark" viewBox="0 0 28 28" aria-hidden="true">
+					<path fill="currentColor" d="M8 3.5h7.4L21.5 9.6V23a1.5 1.5 0 0 1-1.5 1.5H8A1.5 1.5 0 0 1 6.5 23V5A1.5 1.5 0 0 1 8 3.5zm7.2 1.3v5.1h5.1z"/>
+				</svg>
+				<span class="wenpai-brand">文派文档</span>
+				<nav class="wenpai-tabs" aria-label="文派文档">
+					<a class="wenpai-tab" href="status.html">
+						<svg class="wenpai-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 22a10 10 0 1 1 0-20 10 10 0 0 1 0 20zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm-1-3h2v2h-2v-2zm0-8h2v6h-2V9z"/></svg>
+						状态
+					</a>
+					<a class="wenpai-tab is-current" href="bindings.html">
+						<svg class="wenpai-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M10.6 13.4a3.5 3.5 0 0 1 0-4.95l2.12-2.12a3.5 3.5 0 0 1 4.95 4.95l-.7.7-1.42-1.41.7-.71a1.5 1.5 0 1 0-2.12-2.12L12 9.88a1.5 1.5 0 0 0 0 2.12l.7.7-1.41 1.42-.7-.7zm2.8-2.8a3.5 3.5 0 0 1 0 4.95l-2.12 2.12a3.5 3.5 0 0 1-4.95-4.95l.7-.7 1.42 1.41-.7.71a1.5 1.5 0 1 0 2.12 2.12L12 14.12a1.5 1.5 0 0 0 0-2.12l-.7-.7 1.41-1.42.7.7z"/></svg>
+						绑定
+					</a>
+					<a class="wenpai-tab" href="redirects.html">
+						<svg class="wenpai-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 12l8-6v3.5c5.5 0 9 1.8 10 6.5-2.2-2.6-5.2-3.5-10-3.5V18L3 12z"/></svg>
+						跳转
+					</a>
+				</nav>
+				<div class="wenpai-head-right">
+					<a href="https://wpcy.com/document">帮助</a>
+					<a href="https://wpcy.com/support">反馈</a>
+				</div>
+			</header>
+			<div class="wenpai-wrap">
+				<main class="wenpai-main">
+					<div class="page-head">
+						<div>
+							<h1>绑定</h1>
+							<p class="lede">把 WordPress 文章对到文档站的一页。不改文档站内容。</p>
+						</div>
+						<div class="mode">
+							<nav class="seg" aria-label="显示深度">
+								<a href="?mode=simple">简单</a>
+								<a href="?mode=advanced">高级</a>
+							</nav>
+						</div>
+					</div>
+
+					<div class="notice bad" data-when="bad">请填写有效的文章 ID。</div>
+
+					<section class="card">
+						<h2 class="section-title">手工绑定</h2>
+						<p class="section-desc">一篇文章对应一页文档。外部 ID 给评论挂件用，可留空。</p>
+						<form action="#" method="get" onsubmit="return false;">
+							<div class="field">
+								<label for="wp-post-id">文章 ID</label>
+								<input id="wp-post-id" name="wp_post_id" type="number" min="1" required value="42">
+								<p class="hint is-bad" data-when="bad">请填写有效的文章 ID。</p>
+								<p class="hint d">WordPress 文章或页面的数字 ID。</p>
+							</div>
+							<div class="field">
+								<label for="wp-post-type">文章类型</label>
+								<select id="wp-post-type" name="wp_post_type">
+									<option value="post" selected>文章</option>
+									<option value="page">页面</option>
+								</select>
+							</div>
+							<div class="field">
+								<label for="docs-page-id">文档页 ID</label>
+								<input id="docs-page-id" name="docs_page_id" type="number" min="0" value="1001">
+								<p class="hint d">文档站页面的数字 ID，没有可填 0。</p>
+							</div>
+							<div class="field">
+								<label for="docs-book-slug">书册别名</label>
+								<input id="docs-book-slug" name="docs_book_slug" type="text" value="getting-started" autocomplete="off">
+							</div>
+							<div class="field">
+								<label for="docs-page-slug">页面别名</label>
+								<input id="docs-page-slug" name="docs_page_slug" type="text" value="install" autocomplete="off">
+							</div>
+							<div class="field">
+								<label for="external-id">外部 ID</label>
+								<input id="external-id" name="external_id" type="text" value="wpcy:post:42" placeholder="wpcy:post:42" autocomplete="off">
+								<p class="hint d">可选。评论挂件用来对文章，例如 wpcy:post:42。</p>
+							</div>
+							<div class="field" data-for-mode="advanced">
+								<label for="bind-source">来源</label>
+								<select id="bind-source" name="source">
+									<option value="manual" selected>手工</option>
+									<option value="slug">别名匹配</option>
+									<option value="import">导入</option>
+								</select>
+								<p class="hint d">别名匹配可按文章别名对照文档页别名，本轮只展示形状。</p>
+							</div>
+							<div class="field" data-for-mode="advanced">
+								<label for="bind-status">状态</label>
+								<select id="bind-status" name="status">
+									<option value="active" selected>已启用</option>
+									<option value="disabled">已停用</option>
+								</select>
+							</div>
+							<div class="field" data-for-mode="advanced">
+								<label for="resolve-post">按 ID 反查</label>
+								<div class="field-ctl-row">
+									<input id="resolve-post" type="number" min="1" placeholder="文章 ID 或文档页 ID" autocomplete="off">
+									<button type="button" class="btn btn-ghost" data-resolve>反查</button>
+								</div>
+								<p class="hint d">对应 GET /wpdocs/v1/bindings/resolve。不写命中、不改表。</p>
+								<div class="preview-out" data-resolve-out hidden></div>
+							</div>
+							<div class="field" data-for-mode="advanced">
+								<span>文章列表</span>
+								<span class="d">文章列表会多一列「文档绑定」，显示书册/页面别名。该列不套本页顶栏。</span>
+							</div>
+							<div class="wenpai-actions">
+								<button type="submit" class="btn btn-primary">保存绑定</button>
+							</div>
+						</form>
+					</section>
+
+					<section class="card">
+						<h2 class="section-title">已有绑定</h2>
+						<p class="section-desc">每篇文章最多一条。长列表截断显示，不另做分页。</p>
+						<table class="tbl" data-when="ok bad">
+							<thead>
+								<tr>
+									<th>文章</th>
+									<th>文档页</th>
+									<th>外部 ID</th>
+									<th>来源</th>
+									<th>状态</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>42 <code>文章</code></td>
+									<td>getting-started/install <code>#1001</code></td>
+									<td><code>wpcy:post:42</code></td>
+									<td>手工</td>
+									<td><span class="pill ok">已启用</span></td>
+								</tr>
+								<tr>
+									<td>108 <code>页面</code></td>
+									<td>getting-started/permalinks <code>#1008</code></td>
+									<td>—</td>
+									<td>别名匹配</td>
+									<td><span class="pill ok">已启用</span></td>
+								</tr>
+								<tr>
+									<td>56 <code>文章</code></td>
+									<td>faq/redirects <code>#2010</code></td>
+									<td>—</td>
+									<td>导入</td>
+									<td><span class="pill warn">已停用</span></td>
+								</tr>
+							</tbody>
+						</table>
+						<div class="empty" data-when="empty">
+							还没有文章绑定到文档页。保存上方表单后会出现在这里。
+						</div>
+					</section>
+				</main>
+				<footer class="foot">
+					<span>文派文档 0.3.0-dev</span>
+					<a href="https://wpcy.com/document">文档</a>
+				</footer>
+			</div>
+		</div>
+	</div>
+	<script>
+		(function () {
+			var params = new URLSearchParams(location.search);
+			var state = params.get("state") || "ok";
+			if (state !== "empty" && state !== "bad") state = "ok";
+			var mode = params.get("mode") === "advanced" ? "advanced" : "simple";
+			document.body.setAttribute("data-state", state);
+			document.body.setAttribute("data-mode", mode);
+			document.querySelectorAll("[data-when], [data-for-mode]").forEach(function (el) {
+				var when = el.getAttribute("data-when");
+				var forMode = el.getAttribute("data-for-mode");
+				var hide = false;
+				if (when && when.split(/\s+/).indexOf(state) === -1) hide = true;
+				if (forMode && forMode !== mode) hide = true;
+				el.hidden = hide;
+			});
+			document.querySelectorAll(".seg a").forEach(function (a) {
+				var u = new URL(a.href, location.href);
+				var want = u.searchParams.get("mode") || "simple";
+				a.classList.toggle("is-on", want === mode);
+				if (state !== "ok") u.searchParams.set("state", state);
+				a.setAttribute("href", "bindings.html" + u.search);
+			});
+			var resolveBtn = document.querySelector("[data-resolve]");
+			if (resolveBtn) {
+				resolveBtn.addEventListener("click", function () {
+					var input = document.getElementById("resolve-post");
+					var out = document.querySelector("[data-resolve-out]");
+					var v = input && input.value ? String(input.value) : "";
+					out.hidden = false;
+					if (v === "42" || v === "1001") {
+						out.textContent = "文章 42 ↔ getting-started/install（#1001）";
+					} else if (!v) {
+						out.textContent = "暂时无法反查，请填写文章 ID 或文档页 ID。";
+					} else {
+						out.textContent = "没有对应绑定。";
+					}
+				});
+			}
+		})();
+	</script>
+</body>
+</html>

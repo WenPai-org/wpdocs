@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>文派文档 · 状态</title>
+	<style>
+		* { box-sizing: border-box; }
+		body {
+			margin: 0;
+			background: #f0f0f1;
+			color: #1e1e1e;
+			font: 14px/22px -apple-system, "Noto Sans", "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Source Han Sans SC", "Microsoft YaHei", sans-serif;
+		}
+		#wpadminbar {
+			height: 32px;
+			background: #1d2327;
+			color: #fff;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 0 16px;
+			font-size: 13px;
+		}
+		#adminmenumain {
+			position: fixed;
+			top: 32px;
+			left: 0;
+			bottom: 0;
+			width: 160px;
+			background: #1d2327;
+			color: #f0f0f1;
+			padding: 12px 0;
+			overflow: auto;
+		}
+		#adminmenumain .wp-menu-name {
+			padding: 8px 12px;
+			font-weight: 600;
+			color: #fff;
+		}
+		#adminmenumain a {
+			display: block;
+			padding: 6px 12px 6px 20px;
+			color: #c3c4c7;
+			text-decoration: none;
+		}
+		#adminmenumain a.is-current {
+			background: #2c3338;
+			color: #fff;
+			box-shadow: inset 4px 0 0 #3858e9;
+		}
+		#wpcontent { margin-left: 160px; padding: 0; min-width: 0; }
+		.wenpai-app {
+			--wenpai-accent: #3858e9;
+			--wenpai-accent-hover: #2c47c5;
+			--wenpai-accent-soft: #eef1fd;
+			--wenpai-ink: #1e1e1e;
+			--wenpai-ink-2: #50575e;
+			--wenpai-ink-3: #646970;
+			--wenpai-line: #e0e0e0;
+			--wenpai-line-soft: #f0f0f1;
+			--wenpai-card-line: #e5e5e5;
+			--wenpai-ok: #00a32a;
+			--wenpai-ok-soft: #edfaef;
+			--wenpai-ok-ink: #007017;
+			--wenpai-warn: #dba617;
+			--wenpai-warn-soft: #fbf3dc;
+			--wenpai-warn-ink: #9a7208;
+			--wenpai-bad: #d63638;
+			--wenpai-bad-soft: #fbe9ea;
+		}
+		.wenpai-app a { color: var(--wenpai-accent); text-decoration: none; }
+		.wenpai-app a:focus-visible,
+		.wenpai-app button:focus-visible {
+			outline: 2px solid var(--wenpai-accent);
+			outline-offset: 2px;
+		}
+		.wenpai-head {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			min-height: 56px;
+			padding: 0 32px;
+			background: #fff;
+			border-bottom: 1px solid var(--wenpai-line);
+		}
+		.wenpai-mark { width: 28px; height: 28px; color: var(--wenpai-accent); flex: none; }
+		.wenpai-brand { font-weight: 600; margin-right: 8px; }
+		.wenpai-tabs { display: flex; gap: 4px; flex: 1; flex-wrap: wrap; }
+		.wenpai-tab {
+			display: inline-flex;
+			align-items: center;
+			gap: 6px;
+			height: 56px;
+			padding: 0 12px;
+			color: var(--wenpai-ink-2);
+			font-weight: 500;
+			border-bottom: 2px solid transparent;
+		}
+		.wenpai-tab.is-current { color: var(--wenpai-accent); border-bottom-color: var(--wenpai-accent); }
+		.wenpai-ico { width: 18px; height: 18px; }
+		.wenpai-head-right { display: flex; gap: 16px; font-size: 13px; }
+		.wenpai-wrap { max-width: 1120px; margin: 0 auto; padding: 24px 32px 48px; }
+		.wenpai-main { display: flex; flex-direction: column; gap: 20px; }
+		.page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+		.page-head h1 { margin: 0; font-size: 24px; line-height: 32px; font-weight: 600; }
+		.lede { margin: 6px 0 0; font-size: 13px; line-height: 20px; color: var(--wenpai-ink-3); }
+		.card {
+			background: #fff;
+			border: 1px solid var(--wenpai-card-line);
+			border-radius: 12px;
+			padding: 20px 24px;
+			max-width: none;
+			box-shadow: none;
+		}
+		.section-title { margin: 0; font-size: 16px; line-height: 24px; font-weight: 600; }
+		.section-desc { margin: 4px 0 8px; font-size: 13px; line-height: 20px; color: var(--wenpai-ink-3); }
+		.simple-row {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			padding: 12px 0;
+			border-top: 1px solid var(--wenpai-line);
+		}
+		.simple-row:first-child { border-top: 0; }
+		.simple-row .k { flex: 1; font-weight: 500; }
+		.simple-row .v { color: var(--wenpai-ink-2); font-size: 13px; }
+		.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; white-space: nowrap; }
+		.pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+		.pill.ok { color: var(--wenpai-ok-ink); }
+		.pill.warn { color: var(--wenpai-warn-ink); }
+		.pill.bad { color: var(--wenpai-bad); }
+		.btn {
+			appearance: none;
+			height: 36px;
+			padding: 0 14px;
+			border-radius: 6px;
+			border: 0;
+			font: inherit;
+			font-weight: 500;
+			cursor: pointer;
+			display: inline-flex;
+			align-items: center;
+		}
+		.btn-primary { background: var(--wenpai-accent); color: #fff; }
+		.btn-primary:hover { background: var(--wenpai-accent-hover); }
+		.btn-ghost { background: #fff; color: var(--wenpai-accent); border: 1px solid var(--wenpai-line); }
+		.notice { padding: 12px 16px; border-radius: 6px; margin: 0; }
+		.notice + .notice { margin-top: 12px; }
+		.notice.info { background: var(--wenpai-accent-soft); }
+		.notice.warn { background: var(--wenpai-warn-soft); color: var(--wenpai-warn-ink); }
+		.notice.bad { background: var(--wenpai-bad-soft); color: var(--wenpai-bad); }
+		.next {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 16px;
+			background: #fff;
+			border: 1px solid var(--wenpai-card-line);
+			border-radius: 12px;
+			padding: 16px 24px;
+		}
+		.next p { margin: 0; }
+		.empty { padding: 8px 0; color: var(--wenpai-ink-2); }
+		.foot {
+			margin-top: 32px;
+			padding-top: 12px;
+			border-top: 1px solid var(--wenpai-line);
+			color: var(--wenpai-ink-3);
+			font-size: 12px;
+			line-height: 18px;
+			display: flex;
+			gap: 16px;
+		}
+		@media (max-width: 782px) {
+			#adminmenumain { display: none; }
+			#wpcontent { margin-left: 0; }
+			.wenpai-head { flex-wrap: wrap; height: auto; padding: 8px 16px; }
+			.wenpai-tab { height: 40px; }
+			.wenpai-wrap { padding: 16px; }
+			.page-head { flex-direction: column; }
+		}
+	</style>
+</head>
+<body class="wp-admin wpdocs-admin wenpai-ui-page" data-state="ok">
+	<div id="wpadminbar"><span>仪表盘</span><span>管理员</span></div>
+	<div id="adminmenumain">
+		<div class="wp-menu-name">文派文档</div>
+		<a class="is-current" href="status.html">状态</a>
+		<a href="bindings.html">绑定</a>
+		<a href="redirects.html">跳转</a>
+	</div>
+	<div id="wpcontent">
+		<div class="wenpai-app">
+			<header class="wenpai-head">
+				<svg class="wenpai-mark" viewBox="0 0 28 28" aria-hidden="true">
+					<path fill="currentColor" d="M8 3.5h7.4L21.5 9.6V23a1.5 1.5 0 0 1-1.5 1.5H8A1.5 1.5 0 0 1 6.5 23V5A1.5 1.5 0 0 1 8 3.5zm7.2 1.3v5.1h5.1z"/>
+				</svg>
+				<span class="wenpai-brand">文派文档</span>
+				<nav class="wenpai-tabs" aria-label="文派文档">
+					<a class="wenpai-tab is-current" href="status.html">
+						<svg class="wenpai-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 22a10 10 0 1 1 0-20 10 10 0 0 1 0 20zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm-1-3h2v2h-2v-2zm0-8h2v6h-2V9z"/></svg>
+						状态
+					</a>
+					<a class="wenpai-tab" href="bindings.html">
+						<svg class="wenpai-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M10.6 13.4a3.5 3.5 0 0 1 0-4.95l2.12-2.12a3.5 3.5 0 0 1 4.95 4.95l-.7.7-1.42-1.41.7-.71a1.5 1.5 0 1 0-2.12-2.12L12 9.88a1.5 1.5 0 0 0 0 2.12l.7.7-1.41 1.42-.7-.7zm2.8-2.8a3.5 3.5 0 0 1 0 4.95l-2.12 2.12a3.5 3.5 0 0 1-4.95-4.95l.7-.7 1.42 1.41-.7.71a1.5 1.5 0 1 0 2.12 2.12L12 14.12a1.5 1.5 0 0 0 0-2.12l-.7-.7 1.41-1.42.7.7z"/></svg>
+						绑定
+					</a>
+					<a class="wenpai-tab" href="redirects.html">
+						<svg class="wenpai-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 12l8-6v3.5c5.5 0 9 1.8 10 6.5-2.2-2.6-5.2-3.5-10-3.5V18L3 12z"/></svg>
+						跳转
+					</a>
+				</nav>
+				<div class="wenpai-head-right">
+					<a href="https://wpcy.com/document">帮助</a>
+					<a href="https://wpcy.com/support">反馈</a>
+				</div>
+			</header>
+			<div class="wenpai-wrap">
+				<main class="wenpai-main">
+					<div class="page-head">
+						<div>
+							<h1>状态</h1>
+							<p class="lede">文档站与发布树只读诊断。不把正文写入站点选项。</p>
+						</div>
+						<button type="button" class="btn btn-ghost" data-when="ok">重新探测</button>
+					</div>
+
+					<div class="next" data-when="empty">
+						<p>还没有绑定或跳转。保存绑定后这里会出现计数；若站点曾用旧文档桥，启用本插件时会一次性导入跳转。</p>
+						<a class="btn btn-primary" href="bindings.html">去绑定</a>
+					</div>
+					<div class="next" data-when="bad">
+						<p>暂时无法探测文档站，请检查文档站地址后重试。</p>
+						<button type="button" class="btn btn-primary">重新探测</button>
+					</div>
+
+					<div class="notice info" data-when="ok">若站点曾使用旧文档桥，启用本插件时会把旧跳转一次性导入。</div>
+					<div class="notice bad" data-when="bad">暂时无法探测文档站，请检查文档站地址后重试。</div>
+					<div class="notice warn" data-when="empty">尚未填写文档站地址。探测会在保存地址后出现结果。</div>
+
+					<section class="card">
+						<h2 class="section-title">探测</h2>
+						<p class="section-desc">版本 0.3.0-dev。发布树只读，不写文档站。</p>
+						<div data-when="ok">
+							<div class="simple-row">
+								<span class="k">文档站</span>
+								<span class="v">https://docs.example.test</span>
+								<span class="pill ok">已连接</span>
+							</div>
+							<div class="simple-row">
+								<span class="k">首页</span>
+								<span class="v">200 · 82ms</span>
+								<span class="pill ok">正常</span>
+							</div>
+							<div class="simple-row">
+								<span class="k">站点地图</span>
+								<span class="v">200 · 110ms</span>
+								<span class="pill ok">正常</span>
+							</div>
+							<div class="simple-row">
+								<span class="k">绑定</span>
+								<span class="v">12</span>
+							</div>
+							<div class="simple-row">
+								<span class="k">跳转</span>
+								<span class="v">48</span>
+							</div>
+						</div>
+						<div data-when="empty">
+							<div class="simple-row">
+								<span class="k">文档站</span>
+								<span class="v">未填写</span>
+								<span class="pill warn">未连接</span>
+							</div>
+							<div class="simple-row">
+								<span class="k">首页</span>
+								<span class="v">尚未探测</span>
+								<span class="pill warn">等待</span>
+							</div>
+							<div class="simple-row">
+								<span class="k">站点地图</span>
+								<span class="v">尚未探测</span>
+								<span class="pill warn">等待</span>
+							</div>
+							<div class="simple-row">
+								<span class="k">绑定</span>
+								<span class="v">0</span>
+							</div>
+							<div class="simple-row">
+								<span class="k">跳转</span>
+								<span class="v">0</span>
+							</div>
+						</div>
+						<div data-when="bad">
+							<div class="simple-row">
+								<span class="k">文档站</span>
+								<span class="v">https://docs.example.test</span>
+								<span class="pill bad">探测失败</span>
+							</div>
+							<div class="simple-row">
+								<span class="k">首页</span>
+								<span class="v">无响应</span>
+								<span class="pill bad">失败</span>
+							</div>
+							<div class="simple-row">
+								<span class="k">站点地图</span>
+								<span class="v">无法读取</span>
+								<span class="pill bad">失败</span>
+							</div>
+							<div class="simple-row">
+								<span class="k">绑定</span>
+								<span class="v">0</span>
+							</div>
+							<div class="simple-row">
+								<span class="k">跳转</span>
+								<span class="v">0</span>
+							</div>
+						</div>
+					</section>
+				</main>
+				<footer class="foot">
+					<span>文派文档 0.3.0-dev</span>
+					<a href="https://wpcy.com/document">文档</a>
+				</footer>
+			</div>
+		</div>
+	</div>
+	<script>
+		(function () {
+			var params = new URLSearchParams(location.search);
+			var state = params.get("state") || "ok";
+			if (state !== "empty" && state !== "bad") state = "ok";
+			document.body.setAttribute("data-state", state);
+			document.querySelectorAll("[data-when]").forEach(function (el) {
+				el.hidden = el.getAttribute("data-when").split(/\s+/).indexOf(state) === -1;
+			});
+		})();
+	</script>
+</body>
+</html>
