@@ -81,7 +81,7 @@ View::error_notice();
 		);
 		$dry_ctl  = '<div class="field-ctl-row">';
 		$dry_ctl .= '<input id="dry-run-path" type="text" placeholder="/old-post/" autocomplete="off" />';
-		$dry_ctl .= '<button type="button" class="btn btn-ghost" data-wpdocs-dry-run>' . esc_html__( '试一下', 'wpdocs' ) . '</button>';
+		$dry_ctl .= '<button type="button" class="btn btn-ghost" data-wpdocs-dry-run>' . View::icon( 'eye' ) . esc_html__( '试一下', 'wpdocs' ) . '</button>';
 		$dry_ctl .= '</div><p class="hint d">' . esc_html__( '只告诉你会不会跳、跳到哪。不真跳、不改表。', 'wpdocs' ) . '</p>';
 		$dry_ctl .= '<div class="preview-out" data-dry-run-out hidden></div>';
 		View::field(

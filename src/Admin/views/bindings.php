@@ -74,7 +74,7 @@ View::error_notice();
 		);
 		$suggest_ctl  = '<div class="field-ctl-row">';
 		$suggest_ctl .= '<input id="wpdocs-suggest-q" type="search" placeholder="' . esc_attr__( '关键词或别名', 'wpdocs' ) . '" autocomplete="off" />';
-		$suggest_ctl .= '<button type="button" class="btn btn-ghost" data-wpdocs-suggest>' . esc_html__( '搜索文档页', 'wpdocs' ) . '</button>';
+		$suggest_ctl .= '<button type="button" class="btn btn-ghost" data-wpdocs-suggest>' . View::icon( 'eye' ) . esc_html__( '搜索', 'wpdocs' ) . '</button>';
 		$suggest_ctl .= '</div><p class="hint">' . esc_html__( '需配置 WPDOCS_TOKEN_*。点候选填入上方别名与文档页 ID。', 'wpdocs' ) . '</p>';
 		$suggest_ctl .= '<div class="wpdocs-suggest-out" data-suggest-out hidden></div>';
 		View::field(
@@ -128,7 +128,7 @@ View::error_notice();
 		);
 		$resolve_ctl  = '<div class="field-ctl-row">';
 		$resolve_ctl .= '<input id="resolve-post" type="number" min="1" placeholder="' . esc_attr__( '文章 ID 或文档页 ID', 'wpdocs' ) . '" autocomplete="off" />';
-		$resolve_ctl .= '<button type="button" class="btn btn-ghost" data-wpdocs-resolve>' . esc_html__( '反查', 'wpdocs' ) . '</button>';
+		$resolve_ctl .= '<button type="button" class="btn btn-ghost" data-wpdocs-resolve>' . View::icon( 'eye' ) . esc_html__( '反查', 'wpdocs' ) . '</button>';
 		$resolve_ctl .= '</div><p class="hint d">' . esc_html__( '按文章 ID 或文档页 ID 查已有绑定。不写命中、不改表。', 'wpdocs' ) . '</p>';
 		$resolve_ctl .= '<div class="preview-out" data-resolve-out hidden></div>';
 		View::field(

@@ -34,11 +34,18 @@ body.wenpai-ui-page .wenpai-app .field select.is-invalid {
 
 /* number/url also sit in kit `.field-ctl-row` (kit already covers text). */
 body.wenpai-ui-page .wenpai-app .field-ctl-row input[type="number"],
-body.wenpai-ui-page .wenpai-app .field-ctl-row input[type="url"] {
+body.wenpai-ui-page .wenpai-app .field-ctl-row input[type="url"],
+body.wenpai-ui-page .wenpai-app .field-ctl-row input[type="search"] {
   flex: 1 1 auto;
   width: auto;
   max-width: none;
   min-width: 0;
+}
+
+body.wenpai-ui-page .wenpai-app .field-ctl-row .btn .wenpai-ico {
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
 }
 
 /* preview result colors (kit is gray; product paints ok/bad) */

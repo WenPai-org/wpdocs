@@ -116,8 +116,29 @@ final class View {
 		echo '</div></div>';
 	}
 
+	/**
+	 * Kit icons first; product aliases match prototypes/wpdocs tab SVGs (link / share).
+	 */
 	public static function icon( string $name ): string {
-		return class_exists( 'Wenpai_Admin_Icons', false ) ? \Wenpai_Admin_Icons::svg( $name ) : '';
+		$local = self::local_icon_path( $name );
+		if ( '' !== $local ) {
+			return '<svg class="wenpai-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="' . esc_attr( $local ) . '"/></svg>';
+		}
+		if ( class_exists( 'Wenpai_Admin_Icons', false ) ) {
+			return \Wenpai_Admin_Icons::svg( $name );
+		}
+		return '';
+	}
+
+	/** @return string Path `d` or empty. */
+	private static function local_icon_path( string $name ): string {
+		// From prototypes/wpdocs/*.html tab icons (APPROVAL).
+		$map = array(
+			'status' => 'M12 22a10 10 0 1 1 0-20 10 10 0 0 1 0 20zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm-1-3h2v2h-2v-2zm0-8h2v6h-2V9z',
+			'link'   => 'M10.6 13.4a3.5 3.5 0 0 1 0-4.95l2.12-2.12a3.5 3.5 0 0 1 4.95 4.95l-.7.7-1.42-1.41.7-.71a1.5 1.5 0 1 0-2.12-2.12L12 9.88a1.5 1.5 0 0 0 0 2.12l.7.7-1.41 1.42-.7-.7zm2.8-2.8a3.5 3.5 0 0 1 0 4.95l-2.12 2.12a3.5 3.5 0 0 1-4.95-4.95l.7-.7 1.42 1.41-.7.71a1.5 1.5 0 1 0 2.12 2.12L12 14.12a1.5 1.5 0 0 0 0-2.12l-.7-.7 1.41-1.42.7.7z',
+			'share'  => 'M3 12l8-6v3.5c5.5 0 9 1.8 10 6.5-2.2-2.6-5.2-3.5-10-3.5V18L3 12z',
+		);
+		return $map[ $name ] ?? '';
 	}
 
 	public static function saved_notice(): void {
