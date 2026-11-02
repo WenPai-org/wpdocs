@@ -9,6 +9,7 @@ namespace Wpdocs\Rest;
 
 use Wpdocs\Bind\Repository as BindRepo;
 use Wpdocs\Bind\ResolveDraft;
+use Wpdocs\Bind\Suggest;
 use Wpdocs\Http\BookStackClient;
 use Wpdocs\Publish\HttpSource;
 use Wpdocs\Publish\Probe;
@@ -122,6 +123,31 @@ final class Controller {
 					'page'  => array(
 						'type'    => 'integer',
 						'default' => 1,
+					),
+				),
+			)
+		);
+		register_rest_route(
+			$ns,
+			'/suggest',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( self::class, 'suggest' ),
+				'permission_callback' => array( self::class, 'can_manage' ),
+				'args'                => array(
+					'q'     => array(
+						'type'              => 'string',
+						'required'          => true,
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+					'count' => array(
+						'type'    => 'integer',
+						'default' => 12,
+					),
+					'type'  => array(
+						'type'              => 'string',
+						'default'           => 'page',
+						'sanitize_callback' => 'sanitize_key',
 					),
 				),
 			)
@@ -373,6 +399,67 @@ final class Controller {
 		if ( '' === $q ) {
 			return new WP_Error( 'wpdocs_bad_search', 'q is required', array( 'status' => 400 ) );
 		}
+		$count = max( 1, min( 100, (int) ( $req->get_param( 'count' ) ?: 20 ) ) );
+		$page  = max( 1, (int) ( $req->get_param( 'page' ) ?: 1 ) );
+		$pack  = self::bookstack_search( $q, $count, $page );
+		if ( is_wp_error( $pack ) ) {
+			return $pack;
+		}
+		$items = array();
+		foreach ( $pack['raw'] as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			$n = Suggest::normalize_search_row( $row );
+			if ( null !== $n ) {
+				$items[] = $n;
+			}
+		}
+		return new WP_REST_Response(
+			array(
+				'q'     => $q,
+				'total' => (int) ( $pack['total'] ?? count( $items ) ),
+				'items' => $items,
+			)
+		);
+	}
+
+	/**
+	 * GET /suggest?q= — bind candidates from BookStack search (pages by default).
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public static function suggest( WP_REST_Request $req ) {
+		$q = trim( (string) $req->get_param( 'q' ) );
+		if ( '' === $q ) {
+			return new WP_Error( 'wpdocs_bad_suggest', 'q is required', array( 'status' => 400 ) );
+		}
+		$count = max( 1, min( 50, (int) ( $req->get_param( 'count' ) ?: 12 ) ) );
+		$type  = sanitize_key( (string) ( $req->get_param( 'type' ) ?: 'page' ) );
+		if ( 'all' === $type ) {
+			$type = '';
+		}
+		$pack = self::bookstack_search( $q, $count, 1 );
+		if ( is_wp_error( $pack ) ) {
+			return $pack;
+		}
+		$items = Suggest::bind_candidates( $pack['raw'], $type );
+		return new WP_REST_Response(
+			array(
+				'q'     => $q,
+				'type'  => '' === $type ? 'all' : $type,
+				'total' => count( $items ),
+				'items' => $items,
+			)
+		);
+	}
+
+	/**
+	 * Shared Token search. Never stores bodies in options.
+	 *
+	 * @return array{raw:array<int,mixed>,total:int}|WP_Error
+	 */
+	private static function bookstack_search( string $q, int $count, int $page ) {
 		$client = BookStackClient::from_config(
 			array(
 				'base_url' => HttpSource::base_url(),
@@ -385,9 +472,7 @@ final class Controller {
 				array( 'status' => 503 )
 			);
 		}
-		$count = max( 1, min( 100, (int) ( $req->get_param( 'count' ) ?: 20 ) ) );
-		$page  = max( 1, (int) ( $req->get_param( 'page' ) ?: 1 ) );
-		$res   = $client->search( $q, $count, $page );
+		$res = $client->search( $q, $count, $page );
 		if ( empty( $res['ok'] ) ) {
 			$status = 502;
 			if ( BookStackClient::ERR_AUTH === ( $res['error'] ?? '' ) ) {
@@ -406,36 +491,11 @@ final class Controller {
 				)
 			);
 		}
-		$data  = isset( $res['data'] ) && is_array( $res['data'] ) ? $res['data'] : array();
-		$raw   = isset( $data['data'] ) && is_array( $data['data'] ) ? $data['data'] : array();
-		$items = array();
-		foreach ( $raw as $row ) {
-			if ( ! is_array( $row ) ) {
-				continue;
-			}
-			$type = (string) ( $row['type'] ?? '' );
-			if ( '' === $type && isset( $row['_type'] ) ) {
-				$type = (string) $row['_type'];
-			}
-			$items[] = array(
-				'type'  => $type,
-				'id'    => (int) ( $row['id'] ?? 0 ),
-				'name'  => (string) ( $row['name'] ?? $row['title'] ?? '' ),
-				'slug'  => (string) ( $row['slug'] ?? '' ),
-				'url'   => (string) ( $row['url'] ?? '' ),
-				'book'  => isset( $row['book'] ) && is_array( $row['book'] ) ? array(
-					'id'   => (int) ( $row['book']['id'] ?? 0 ),
-					'slug' => (string) ( $row['book']['slug'] ?? '' ),
-					'name' => (string) ( $row['book']['name'] ?? '' ),
-				) : null,
-			);
-		}
-		return new WP_REST_Response(
-			array(
-				'q'     => $q,
-				'total' => (int) ( $data['total'] ?? count( $items ) ),
-				'items' => $items,
-			)
+		$data = isset( $res['data'] ) && is_array( $res['data'] ) ? $res['data'] : array();
+		$raw  = isset( $data['data'] ) && is_array( $data['data'] ) ? $data['data'] : array();
+		return array(
+			'raw'   => $raw,
+			'total' => (int) ( $data['total'] ?? count( $raw ) ),
 		);
 	}
 }

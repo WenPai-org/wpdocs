@@ -7,7 +7,7 @@
  * - Unmatched 404 inserts are capped (UNMATCHED_LOG_CAP / WPDOCS_UNMATCHED_LOG_CAP).
  * - Reserved paths are rejected on upsert and skipped on 404 log.
  * - Legacy import is one-shot when this table is empty (does not overwrite existing rows).
- * TODO: confirm old column set and whether cocobook_docs_404 option still needs a one-shot import.
+ * - Old option `cocobook_docs_404` (path => [hits, last]) is imported once into unmatched rows.
  *
  * @package Wpdocs
  */
@@ -96,6 +96,7 @@ final class Repository {
 		);
 		update_option( self::DB_OPTION, self::DB_VERSION, false );
 		self::maybe_import_legacy();
+		self::maybe_import_legacy_404_option();
 	}
 
 	/** One-shot copy from {$prefix}cocobook_redirects if new table empty. */
@@ -115,6 +116,57 @@ final class Repository {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$wpdb->query( "INSERT INTO {$new} (wp_path, wp_post_id, wp_title, page_id, status, source, hits, last_hit, created_at, updated_at)
 			SELECT wp_path, wp_post_id, wp_title, page_id, status, source, hits, last_hit, created_at, updated_at FROM {$old}" );
+	}
+
+	/**
+	 * One-shot: cocobook_docs_404 option → unmatched rows (skip reserved / noisy).
+	 * Flag option `wpdocs_404_imported` prevents repeats.
+	 */
+	private static function maybe_import_legacy_404_option(): void {
+		if ( get_option( 'wpdocs_404_imported' ) ) {
+			return;
+		}
+		$log = \Wpdocs\Compat\Legacy::get_option( 'wpdocs_404', array() );
+		if ( ! is_array( $log ) || array() === $log ) {
+			update_option( 'wpdocs_404_imported', 1, false );
+			return;
+		}
+		foreach ( $log as $path => $meta ) {
+			$path = Path::norm_path( (string) $path );
+			if ( '' === $path || Path::should_skip_404_log( $path ) ) {
+				continue;
+			}
+			if ( self::find( $path ) ) {
+				continue;
+			}
+			$hits = 0;
+			$last = null;
+			if ( is_array( $meta ) ) {
+				$hits = (int) ( $meta[0] ?? 0 );
+				$last = isset( $meta[1] ) ? (string) $meta[1] : null;
+			}
+			$row_id = self::upsert(
+				array(
+					'wp_path' => $path,
+					'status'  => self::UNMATCHED,
+					'source'  => '404',
+				)
+			);
+			if ( $row_id > 0 && ( $hits > 0 || $last ) ) {
+				global $wpdb;
+				$wpdb->update(
+					self::table(),
+					array(
+						'hits'     => max( 0, $hits ),
+						'last_hit' => $last ? $last : null,
+					),
+					array( 'id' => $row_id ),
+					array( '%d', '%s' ),
+					array( '%d' )
+				);
+			}
+		}
+		update_option( 'wpdocs_404_imported', 1, false );
 	}
 
 	/** @return object|null */

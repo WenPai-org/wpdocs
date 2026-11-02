@@ -121,7 +121,8 @@
 
 ## 7. 立刻下一步
 
-1. 实现 `Http\BookStackClient` + Status 接入
-2. Bind 保存校验
-3. 打通 search suggest
-4. 补 `redirect-vs-cocobook-docs` 旧仓对照 TODO
+1. ~~实现 `Http\BookStackClient` + Status 接入~~（已）
+2. ~~Bind 保存校验~~（已）
+3. ~~打通 search suggest~~（`/search` + `/suggest` + 绑定页 UI）
+4. ~~补 `redirect-vs-cocobook-docs` 旧仓对照 TODO~~（已）
+5. 下一步（P1 余量）：绑定列表显示远端 title / broken；发布树短 TTL 缓存；slug 漂移抽检

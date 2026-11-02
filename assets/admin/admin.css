@@ -178,6 +178,37 @@ body.wenpai-ui-page .wenpai-app .field.is-note .field-ctl .hint {
   margin-top: 0;
 }
 
+/* bind suggest results */
+body.wenpai-ui-page .wenpai-app .wpdocs-suggest-out {
+  margin-top: 8px;
+}
+
+body.wenpai-ui-page .wenpai-app .wpdocs-suggest-out[hidden] {
+  display: none;
+}
+
+body.wenpai-ui-page .wenpai-app .wpdocs-suggest-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 36rem;
+}
+
+body.wenpai-ui-page .wenpai-app .wpdocs-suggest-list .btn {
+  width: 100%;
+  justify-content: flex-start;
+  height: auto;
+  min-height: 32px;
+  padding: 6px 10px;
+  white-space: normal;
+  text-align: left;
+  font-size: 13px;
+  line-height: 18px;
+}
+
 /* delete confirm gate sits above the list table */
 body.wenpai-ui-page .wenpai-app .card > .wenpai-gate {
   margin: 8px 0 12px;

@@ -52,6 +52,7 @@
 | GET \| POST | `/redirects` | 列表 / upsert |
 | GET | `/redirects/dry-run?path=` | 预览匹配；**不写 hits** |
 | GET | `/search?q=` | BookStack 搜索代理（需 `WPDOCS_TOKEN_*`）；不写库、不缓存正文 |
+| GET | `/suggest?q=` | 绑定候选（默认只要 `page`）；填 `docs_page_id` / book+page slug |
 
 错误用 `WP_Error` 习惯；JSON 不泄密钥。命名空间保持 **`wpdocs/v1`**（不用 `wenpai-doc/v1` / `cocobook-docs/v1`）。
 

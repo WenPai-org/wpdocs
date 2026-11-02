@@ -2,10 +2,10 @@
 /**
  * Pure redirect plan (no hits, no inserts). Used by REST dry-run and tests.
  *
- * Behaviour vs cocobook-docs Redirects.php (contract; old tree not cloned this round):
- * - Dry-run never writes hits/last_hit and never inserts unmatched 404 rows.
- * - Matched plans expose page_id; they do not store or return a baked-in absolute URL.
- * TODO: confirm old dry-run (if any) vs 301/410 parity when cocobook-docs is at hand.
+ * Behaviour vs cocobook-docs Redirects.php (backup 2026-10-28):
+ * - Dry-run is wpdocs-only (old had no REST preview); never writes hits / 404 rows.
+ * - Matched plans expose page_id; URL built at request time (never baked absolute).
+ * - 301/410 parity with old maybe_redirect for matched/gone.
  *
  * @package Wpdocs
  */

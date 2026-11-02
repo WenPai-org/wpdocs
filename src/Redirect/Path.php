@@ -2,10 +2,10 @@
 /**
  * Path helpers for redirects (no $wpdb).
  *
- * Behaviour vs cocobook-docs Redirects.php (contract; old tree not cloned this round):
+ * Behaviour vs cocobook-docs Redirects.php (backup 2026-10-28):
  * - wp_path is host-free, query-free, no trailing slash except `/`.
- * - Reserved WP entry points never redirect and are never 404-logged.
- * TODO: confirm the old plugin's exact reserved list when cocobook-docs is at hand.
+ * - Old plugin skipped `/wp-*` prefix + asset extensions in option 404 log; wpdocs uses
+ *   explicit RESERVED list (same intent, clearer) + SKIP_404_EXTENSIONS.
  *
  * @package Wpdocs
  */

@@ -7,12 +7,15 @@
 - `GET /wpdocs/v1/search?q=`：BookStack 搜索代理
 - Status `publish.api`：Token 已配时 ping `/api/system`；Studio 状态行展示
 - Bind 保存（后台 + REST）：有 Token 且 `docs_page_id>0` 时先校验远端页
+- `GET /wpdocs/v1/suggest?q=`：搜索文档页候选；绑定页「搜索文档页」一点即填
+- 激活时一次性导入旧 option `cocobook_docs_404` → unmatched 行
 
 ### Changed
 - REST 命名空间保持 `wpdocs/v1`（不用 wenpai-doc / cocobook-docs）
 - 主栏模块间距 `gap: 20px`
 - Admin `.field` 回到 kit `280px|1fr`（`field-label` + `field-ctl`）；去掉产品侧单列堆叠覆盖
 - Status 探测结果 transient 缓存 5 分钟；`?refresh=1` / 保存地址强制重探；多路 HEAD 并行
+- `tests/redirect-vs-cocobook-docs.md` 对照旧仓勾完；Redirect TODO 注释清除
 
 
 ## 0.3.0-dev — 2026-11-02

@@ -319,8 +319,133 @@
     }
   }
 
+  function bindSuggest() {
+    var btn = document.querySelector("[data-wpdocs-suggest]");
+    var input = document.getElementById("wpdocs-suggest-q");
+    var out = document.querySelector("[data-suggest-out]");
+    if (!btn || !input || !out) return;
+
+    function renderItems(items) {
+      out.innerHTML = "";
+      if (!items || !items.length) {
+        showPreview(out, "没有匹配的文档页。", "bad");
+        return;
+      }
+      out.hidden = false;
+      out.classList.remove("is-ok", "is-bad");
+      out.textContent = "";
+      var list = document.createElement("ul");
+      list.className = "wpdocs-suggest-list";
+      for (var i = 0; i < items.length; i++) {
+        (function (item) {
+          var li = document.createElement("li");
+          var pick = document.createElement("button");
+          pick.type = "button";
+          pick.className = "btn btn-ghost";
+          var book = item.docs_book_slug || "";
+          var slug = item.docs_page_slug || "";
+          var title = item.title || slug || "#" + (item.docs_page_id || 0);
+          pick.textContent =
+            title +
+            " · " +
+            (book ? book + "/" : "") +
+            slug +
+            " · #" +
+            (item.docs_page_id || 0);
+          pick.addEventListener("click", function () {
+            if (item.docs_page_id != null) {
+              setInputValue("docs_page_id", item.docs_page_id);
+            }
+            if (item.docs_book_slug) {
+              setInputValue("docs_book_slug", item.docs_book_slug);
+            }
+            if (item.docs_page_slug) {
+              setInputValue("docs_page_slug", item.docs_page_slug);
+            }
+            showPreview(
+              out,
+              "已填入 #" +
+                (item.docs_page_id || 0) +
+                " · " +
+                (item.docs_book_slug || "") +
+                "/" +
+                (item.docs_page_slug || ""),
+              "ok"
+            );
+          });
+          li.appendChild(pick);
+          list.appendChild(li);
+        })(items[i]);
+      }
+      out.appendChild(list);
+    }
+
+    function run() {
+      var v = String(input.value || "").trim();
+      if (!v) {
+        showPreview(out, "请填写搜索关键词。", "bad");
+        setFieldBad(input, true);
+        input.focus();
+        return;
+      }
+      setFieldBad(input, false);
+      setBusy(btn, true);
+      clearPreview(out);
+      showPreview(out, "搜索中…", "");
+      fetch(
+        root +
+          "/suggest?q=" +
+          encodeURIComponent(v) +
+          "&count=12&type=page",
+        {
+          credentials: "same-origin",
+          headers: headers(),
+        }
+      )
+        .then(function (r) {
+          return r.json().then(function (data) {
+            return { ok: r.ok, status: r.status, data: data };
+          });
+        })
+        .then(function (res) {
+          if (!res.ok) {
+            var code = (res.data && (res.data.code || res.data.error)) || "";
+            if (res.status === 503 || code === "wpdocs_no_token") {
+              showPreview(
+                out,
+                "未配置 Token（WPDOCS_TOKEN_ID / SECRET），无法搜索。",
+                "bad"
+              );
+              return;
+            }
+            showPreview(out, "搜索失败，请稍后重试。", "bad");
+            return;
+          }
+          renderItems((res.data && res.data.items) || []);
+        })
+        .catch(function () {
+          showPreview(out, "暂时无法搜索，请稍后重试。", "bad");
+        })
+        .finally(function () {
+          setBusy(btn, false);
+        });
+    }
+
+    btn.addEventListener("click", run);
+    input.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        run();
+      }
+    });
+    input.addEventListener("input", function () {
+      setFieldBad(input, false);
+    });
+  }
+
   bindFill();
   bindResolve();
+  bindSuggest();
   bindDryRun();
   bindFormValidate();
 })();

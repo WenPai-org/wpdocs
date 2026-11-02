@@ -2,14 +2,13 @@
 /**
  * Front-end redirect on template_redirect.
  *
- * Behaviour vs cocobook-docs Redirects.php (contract; old tree not cloned this round):
- * - 404/unmatched rows live in wpdocs_redirects (status=unmatched, source=404), not the
- *   cocobook_docs_404 option. New inserts stop at Repository::UNMATCHED_LOG_CAP.
+ * Behaviour vs cocobook-docs Redirects.php (backup 2026-10-28):
+ * - Live 404s: table rows (status=unmatched, source=404) + cap; old wrote option cocobook_docs_404 (max 200).
+ * - Existing unmatched/pending bumps hits (parity with option counter++).
  * - Reserved WP paths never 301/410 and are never logged.
- * - Matched targets store page_id; URL is resolved at request time (Bind slug or /link/{id}).
- * - GET dry-run never writes hits/last_hit and never inserts 404 rows.
- * TODO: when cocobook-docs is available, confirm old reserved list, 404 storage (option vs table),
- *       and whether unmatched 404s incremented hits. See tests/redirect-vs-cocobook-docs.md.
+ * - Matched targets store page_id; URL resolved at request time (Bind slug or /link/{id}).
+ * - GET dry-run never writes hits and never inserts 404 rows (old had no dry-run API).
+ * See tests/redirect-vs-cocobook-docs.md.
  *
  * @package Wpdocs
  */
