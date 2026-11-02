@@ -222,7 +222,6 @@ $form_cls       = 'wpdocs-settings-form' . ( $adv ? '' : ' wpdocs-simple' );
 				)
 			);
 			?>
-			?>
 		</div>
 
 		<div class="wpdocs-when-content" data-wpdocs-when-content="cocobook"<?php echo Settings::CONTENT_COCOBOOK === $content_mode ? '' : ' hidden'; ?>>

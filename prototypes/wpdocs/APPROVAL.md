@@ -13,5 +13,6 @@
   - 设置简单：一张卡；主选择切换到 Git 写入后只露 Forgejo 字段
   - 概览：缺 Token 时一条 `.next`「去设置」；状态栈用「内容从哪来」
   - 工具 → 同步（保留正文）：`.wenpai-gate` + 危险钮「从 CocoBook 导入」；无 Token 时钮 disabled
-  - lint `PASS`；人目视仍可再扫高级态
+  - lint `PASS`
+  - 高级态（2026-11-03 续）：`mode=advanced` 下文档站读取露出发布树/文章类型/缓存/评论阈值；简单态 `display:none`；keep/git 隐藏面板 `disabled` 且无启用输入；修掉 keep 面板多余 `?>`
 
