@@ -10,8 +10,10 @@ namespace Wpdocs\Rest;
 use Wpdocs\Bind\Repository as BindRepo;
 use Wpdocs\Bind\ResolveDraft;
 use Wpdocs\Publish\HttpSource;
+use Wpdocs\Publish\Probe;
 use Wpdocs\Redirect\Listener;
 use Wpdocs\Redirect\Repository as RedirectRepo;
+use Throwable;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -99,12 +101,20 @@ final class Controller {
 	}
 
 	public static function status(): WP_REST_Response {
+		try {
+			$publish = HttpSource::status();
+		} catch ( Throwable $e ) {
+			$publish = Probe::failed_status( $e->getMessage() );
+		}
+		if ( ! is_array( $publish ) ) {
+			$publish = Probe::failed_status( 'invalid publish status' );
+		}
 		return new WP_REST_Response(
 			array(
 				'version'   => WPDOCS_VERSION,
 				'bindings'  => BindRepo::count(),
 				'redirects' => RedirectRepo::count(),
-				'publish'   => HttpSource::status(),
+				'publish'   => $publish,
 			)
 		);
 	}

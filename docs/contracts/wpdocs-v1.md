@@ -45,7 +45,7 @@
 
 | 方法 | 路径 | 作用 |
 |------|------|------|
-| GET | `/status` | 版本、计数、docs 探测摘要 |
+| GET | `/status` | 版本、计数、docs / sitemap / 发布树 HEAD 探测摘要 |
 | GET \| POST | `/bindings` | 列表 / upsert |
 | GET | `/bindings/resolve` | 按 post 或 page/slug 反查 |
 | POST | `/bindings/resolve-batch` | `post_name`↔slug 批量草稿；默认 dry-run；`apply=true` 才 upsert |
@@ -68,10 +68,10 @@ Update URI 恒为 `https://updates.wenpai.net`。
 
 ---
 
-## 5. 附录（G3+ 可补）
+## 5. 附录（G3+）
 
 - Bind 批量 `source=slug` dry-run 请求/响应形状（见下）
-- Publish status JSON 字段表（sitemap HEAD、发布树 HEAD 等）
+- Publish status JSON 字段表（见下）
 
 ### Bind 批量 resolve（G3）
 
@@ -146,3 +146,45 @@ Update URI 恒为 `https://updates.wenpai.net`。
 - `GET /redirects/dry-run?path=` **不写** `hits` / `last_hit`，**不插入** unmatched 404 行。响应含 `hits_written: false`。matched 带 `page_id`（表内不存绝对 URL）；`target` 若出现则为运行时由 `page_id` 解析。
 - 404 未匹配：`status=unmatched` `source=404` 新行上限为 `WPDOCS_UNMATCHED_LOG_CAP`（缺省 `Repository::UNMATCHED_LOG_CAP` = 500；`0` 关闭新插入）。已有 unmatched/pending 行可增加 hits。
 - reserved（`/wp-admin`、`/wp-login.php`、`/wp-json`、`/xmlrpc.php` 等）不 301/410、不记 404、upsert 拒绝。
+
+### Publish status（G4）
+
+`GET /wpdocs/v1/status`（`manage_options`）。发布探测只读：HTTP **HEAD**，超时 `Probe::TIMEOUT_SEC`（3 秒），跟随最多 2 次跳转。失败写入对应 probe 的 `error` 且 `code=0`，**不抛** REST fatal。响应 **不含** body / markdown / content；**禁止**把探测正文写入 `wp_options`。
+
+Sitemap 路径相对 `base_url`：`/cocobook/sitemap.xml`。发布树默认 `{base_url}/books`；`WPDOCS_TREE_URL` 优先，否则 `wpdocs_settings.tree_url`；该设置键存在且为空字符串则跳过 tree 探测（`skipped=true`，不发请求）。
+
+`publish.ok` **只跟** `home.ok`（docs base 是否 2xx）。sitemap / tree 失败不把整段标为不健康。
+
+#### 响应 JSON
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `version` | string | `WPDOCS_VERSION` |
+| `bindings` | int | `wpdocs_bindings` 行数 |
+| `redirects` | int | `wpdocs_redirects` 行数 |
+| `publish` | object | 探测摘要（见下） |
+
+`publish`：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `base_url` | string | 文档站根，无尾斜杠（缺省 `https://docs.cocobook.com`） |
+| `tree_url` | string | 发布树 HEAD 目标；空则 tree 为 skipped |
+| `timeout` | int | 单次探测秒数，恒 `3` |
+| `home` | object | HEAD `{base_url}/` |
+| `sitemap` | object | HEAD `{base_url}/cocobook/sitemap.xml` |
+| `tree` | object | HEAD `tree_url` |
+| `ok` | bool | 等于 `home.ok` |
+| `error` | string | 组装层 fatal；各 probe 自己的错误在 `*.error`。无 fatal 时为 `""` |
+
+`home` / `sitemap` / `tree` 每项（无 body 字段）：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `url` | string | 实际请求 URL；skipped 且无目标时为 `""` |
+| `method` | string | 恒 `HEAD` |
+| `code` | int | HTTP 状态；传输失败或 skipped 为 `0` |
+| `ms` | int | 耗时毫秒；skipped 为 `0` |
+| `error` | string | `WP_Error` / 异常信息；有 HTTP 响应时为 `""` |
+| `ok` | bool | `code` ∈ [200, 300) 且非 skipped |
+| `skipped` | bool | URL 为空，未发请求 |

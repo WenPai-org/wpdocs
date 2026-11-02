@@ -9,3 +9,4 @@
 - 后台按 wenpai-admin-ui；原 `cocobook-docs` 仓保留作迁移对照，本仓为重构真源。
 - Redirect（相对旧 `cocobook-docs`）：404/未匹配写入 `wpdocs_redirects` 且有上限（默认 500，`WPDOCS_UNMATCHED_LOG_CAP`）；`wp-admin` / `wp-login.php` / `wp-json` / `xmlrpc.php` 等 reserved 不跳转、不记日志；dry-run 不写 `hits`；matched 只存 `page_id`，URL 运行时解析。旧 option `cocobook_docs_404` 不再作为写入目标（见 `tests/redirect-vs-cocobook-docs.md`）。
 - Bind：`POST /wpdocs/v1/bindings/resolve-batch` 按 `post_name`↔`docs_page_slug` 批量草稿（默认 dry-run，`apply=true` 才写入，`source=slug`）。
+- Publish：`GET /status` 对 docs base、`/cocobook/sitemap.xml`、发布树做短超时 HEAD 探测；失败写入 JSON，不抛 fatal，不把正文写入 option。

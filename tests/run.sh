@@ -23,6 +23,9 @@ php tests/RedirectPathTest.php
 echo "== Bind resolve-batch unit tests (no WP) =="
 php tests/BindResolveDraftTest.php
 
+echo "== Publish probe unit tests (no WP) =="
+php tests/PublishProbeTest.php
+
 echo "== dry-run must not persist =="
 # Listener::dry_run body (until the next method) must not call hit() or log_unmatched().
 dry_body="$(awk '
@@ -67,5 +70,37 @@ if ! echo "$apply_block" | grep -q 'BindRepo::apply_slug_drafts'; then
 	exit 1
 fi
 echo "ok resolve_batch upserts only when apply"
+
+echo "== publish probes must not persist body =="
+if grep -E 'update_option|add_option|delete_option|wp_remote_retrieve_body|wp_remote_get\(' src/Publish/*.php; then
+	echo "Publish wrote options or fetched a GET body" >&2
+	exit 1
+fi
+if ! grep -q '/cocobook/sitemap.xml' src/Publish/Probe.php; then
+	echo "sitemap path /cocobook/sitemap.xml missing" >&2
+	exit 1
+fi
+if ! grep -q 'wp_remote_head' src/Publish/HttpSource.php; then
+	echo "HttpSource missing wp_remote_head" >&2
+	exit 1
+fi
+status_body="$(awk '
+	/function status\(/ {grab=1}
+	grab {print}
+	grab && /^	public static function / && !/function status\(/ {exit}
+' src/Rest/Controller.php)"
+if ! echo "$status_body" | grep -q 'HttpSource::status'; then
+	echo "GET /status missing HttpSource::status" >&2
+	exit 1
+fi
+if ! echo "$status_body" | grep -q 'Probe::failed_status'; then
+	echo "GET /status missing Probe::failed_status fallback" >&2
+	exit 1
+fi
+if ! echo "$status_body" | grep -q 'catch ( Throwable'; then
+	echo "GET /status missing Throwable catch" >&2
+	exit 1
+fi
+echo "ok publish HEAD-only, no option writes"
 
 echo "ALL PASS"
