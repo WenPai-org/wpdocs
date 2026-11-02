@@ -49,7 +49,7 @@
 
 | 方法 | 路径 | 作用 |
 |------|------|------|
-| GET | `/status` | 版本、计数、docs / sitemap / 发布树 HEAD 探测摘要 |
+| GET | `/status` | 版本、计数、docs / sitemap / 发布树 HEAD 探测摘要、`metrics` |
 | GET \| POST | `/bindings` | 列表 / upsert |
 | GET | `/bindings/resolve` | 按 post 或 page/slug 反查 |
 | POST | `/bindings/resolve-batch` | `post_name`↔slug 批量草稿；默认 dry-run；`apply=true` 才 upsert |
@@ -171,6 +171,7 @@ Sitemap 路径相对 `base_url`：`/cocobook/sitemap.xml`。发布树默认 `{ba
 | `bindings` | int | `wpdocs_bindings` 行数 |
 | `redirects` | int | `wpdocs_redirects` 行数 |
 | `publish` | object | 探测摘要（见下） |
+| `metrics` | object | 覆盖率 / unmatched / 探测失败率（见下） |
 
 `publish`：
 
@@ -197,6 +198,21 @@ Sitemap 路径相对 `base_url`：`/cocobook/sitemap.xml`。发布树默认 `{ba
 | `ok` | bool | `code` ∈ [200, 300) 且非 skipped |
 | `skipped` | bool | URL 为空，未发请求 |
 
+`metrics`（`Wpdocs\Metrics::snapshot`；日检写入 option `wpdocs_metrics_v1`，最多 14 日，仅计数）：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `bindings.active` | int | `status=active` 绑定数 |
+| `bindings.disabled` | int | 停用绑定数 |
+| `bindings.total` | int | 绑定总行数 |
+| `bindings.eligible` | int | 应覆盖文章数：试点且 `pilot_post_ids` 非空用其长度，否则所选 `post_types` 的已发布数 |
+| `bindings.ratio` | float\|null | `active/eligible`；eligible=0 时为 `null` |
+| `redirects.*` | int | `unmatched` / `matched` / `gone` / `total` |
+| `probe.home_ok` | bool\|null | 本次 `publish.ok`（若传入） |
+| `probe.fail_rate_14d` | float\|null | 历史 `home_ok=false` 比例；无样本为 `null` |
+| `probe.samples` | int | 历史天数 |
+| `history.unmatched` | array | `{day,unmatched}[]` |
+| `history.days` | int | 历史条数 |
 
 ## 8. 设置主轴（内容从哪来）
 

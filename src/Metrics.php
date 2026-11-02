@@ -249,7 +249,11 @@ final class Metrics {
 			return 0;
 		}
 		if ( Settings::MODE_PILOT === Settings::mode() && Settings::CONTENT_COCOBOOK === Settings::content_mode() ) {
-			return count( Settings::pilot_post_ids() );
+			$pilot = Settings::pilot_post_ids();
+			if ( count( $pilot ) > 0 ) {
+				return count( $pilot );
+			}
+			// Empty pilot list → fall back to selected post types (avoid 0-eligible noise).
 		}
 		$types = Settings::post_types();
 		if ( empty( $types ) ) {

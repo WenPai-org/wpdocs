@@ -13,6 +13,7 @@
 - 日检抽查绑定远端：`Bind\DriftCheck`（失效/别名已变摘要进 transient；概览告警）
 - P2 运维：Webhook 同步页给完整 URL 并 bust `RemoteMeta`；远端「无权限」+ 附件数；`docs/ops/wpdocs-ops.md`（导出 / App Passwords REST 矩阵）；帮助页运维节
 - P3：`Metrics`（绑定覆盖 / unmatched / 探测失败率，14 日环）进 `GET /status` 与概览；`tests/fixtures/bookstack` VCR 契约测
+- 试点列表为空时覆盖率分母回退到已发布文章数；契约补 `metrics` 字段；Studio `wpdocs-dev` 对照路线图 §6 验收
 
 ## 0.3.0-dev (UI)
 

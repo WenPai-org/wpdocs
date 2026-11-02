@@ -111,11 +111,12 @@
 
 ## 6. 验收
 
-1. 配置 base + Token → Studio **ok**，能显示 BS `system.version`
-2. 绑定一页：非法 id 被拒；合法 id 显示远端标题
-3. suggest 输入关键词返回真实候选（非空 stub）
-4. 断开 docs 站 → status **bad**，无 fatal、无 option 膨胀
-5. 旧 `cocobook_redirects` 空表导入仍幂等；reserved 路径不跳转
+1. 配置 base + Token → Studio **ok**，能显示 BS `system.version` — **已**（`wpdocs-dev`：`publish.api` ok，`version=v26.09.2`；home HEAD 偶发贴超时边界，重探后 `publish.ok`）
+2. 绑定一页：非法 id 被拒；合法 id 显示远端标题 — **已**（`999999` → `wpdocs_page_invalid`；`5975` 远端标题「PHP 文档编写标准」）
+3. suggest 输入关键词返回真实候选（非空 stub） — **已**（`q=文档` → id 5975）
+4. 断开 docs 站 → status **bad**，无 fatal、无 option 膨胀 — **仍靠单测 / 手工断网**（Probe failed_status 已覆盖；本轮未拔线）
+5. 旧 `cocobook_redirects` 空表导入仍幂等；reserved 路径不跳转 — **已**（dry-run `/wp-admin/` → `reserved`；导入单测既有）
+6. `GET /status.metrics` 有覆盖率 / unmatched / 失败率字段 — **已**（覆盖 1/2=0.5；日检样本可写入）
 
 ---
 
@@ -125,4 +126,5 @@
 2. ~~Bind 保存校验~~（已）
 3. ~~打通 search suggest~~（`/search` + `/suggest` + 绑定页 UI）
 4. ~~补 `redirect-vs-cocobook-docs` 旧仓对照 TODO~~（已）
-5. P1 / P2 / P3（fixtures + 指标）已收口。Git→BS 导入脚本另仓另开；下一批按产品验收 / 发版。
+5. ~~P1 / P2 / P3 + Studio 产品验收（§6）~~（已，`2026-11-03`）
+6. 下一批：**M7 发版通道**（zip / package CDN / `updates.wenpai.net`）另开会话；Git→BS 导入仍另仓。
