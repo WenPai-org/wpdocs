@@ -46,13 +46,19 @@ View::page_head(
 View::saved_notice();
 View::error_notice();
 
+$partial_ok = $site_ok || ( ! $tree_skip && $tree_ok );
+
 if ( '' === $base_show ) :
 	?>
 	<div class="notice warn"><span><?php esc_html_e( '尚未填写文档站地址。探测会在保存地址后出现结果。', 'wpdocs' ); ?></span></div>
 	<?php
-elseif ( ! $home_ok ) :
+elseif ( ! $home_ok && ! $partial_ok ) :
 	?>
 	<div class="notice bad"><span><?php esc_html_e( '暂时无法探测文档站，请检查文档站地址后重试。', 'wpdocs' ); ?></span></div>
+	<?php
+elseif ( ! $home_ok && $partial_ok ) :
+	?>
+	<div class="notice warn"><span><?php esc_html_e( '首页探测超时或失败，但站点地图或发布树仍可达。可点「重新探测」再试。', 'wpdocs' ); ?></span></div>
 	<?php
 else :
 	?>
@@ -67,7 +73,7 @@ if ( 0 === $bind_n && 0 === $redir_n ) :
 		<a class="btn btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-bindings' ) ); ?>"><?php esc_html_e( '去绑定', 'wpdocs' ); ?></a>
 	</div>
 	<?php
-elseif ( ! $home_ok && '' !== $base_show ) :
+elseif ( ! $home_ok && ! $partial_ok && '' !== $base_show ) :
 	?>
 	<div class="next">
 		<p><?php esc_html_e( '暂时无法探测文档站，请检查文档站地址后重试。', 'wpdocs' ); ?></p>
