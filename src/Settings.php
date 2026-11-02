@@ -156,6 +156,13 @@ final class Settings {
 		return untrailingslashit( esc_url_raw( (string) self::get( 'bff_url' ) ) );
 	}
 
+	/**
+	 * Unified comments only when content mode is CocoBook / 文档站.
+	 */
+	public static function comments_enabled(): bool {
+		return self::CONTENT_COCOBOOK === self::content_mode() && (bool) self::get( 'comments' );
+	}
+
 	/** `id:secret` or empty string. */
 	public static function token_pair(): string {
 		$id     = trim( (string) self::get( 'token_id' ) );
@@ -292,15 +299,21 @@ final class Settings {
 			$out['site_tag'] = sanitize_key( (string) $input['site_tag'] );
 		}
 		$out['books'] = self::int_list( $input['books'] ?? array() );
-		if ( isset( $input['bff_url'] ) ) {
-			$out['bff_url'] = untrailingslashit( esc_url_raw( trim( (string) $input['bff_url'] ) ) );
-		}
-
 		if ( isset( $input['content_mode'] ) ) {
 			$cm = sanitize_key( (string) $input['content_mode'] );
 			$out['content_mode'] = in_array( $cm, array( self::CONTENT_KEEP, self::CONTENT_COCOBOOK, self::CONTENT_GIT ), true )
 				? $cm
 				: self::CONTENT_COCOBOOK;
+		}
+
+		// Comments BFF is CocoBook-only; don't wipe when saving keep/git forms.
+		if ( self::CONTENT_COCOBOOK === ( $out['content_mode'] ?? '' ) ) {
+			if ( array_key_exists( 'comments', $input ) || isset( $input['bff_url'] ) ) {
+				$out['comments'] = isset( $input['comments'] ) && '1' === (string) $input['comments'];
+			}
+			if ( isset( $input['bff_url'] ) ) {
+				$out['bff_url'] = untrailingslashit( esc_url_raw( trim( (string) $input['bff_url'] ) ) );
+			}
 		}
 
 		if ( isset( $input['mode'] ) ) {
@@ -327,9 +340,8 @@ final class Settings {
 			$ttl             = (int) $input['page_ttl'];
 			$out['page_ttl'] = $ttl <= 0 ? 0 : max( 60, min( DAY_IN_SECONDS, $ttl ) );
 		}
-		$out['comments']  = isset( $input['comments'] ) && '1' === (string) $input['comments'];
 		$out['redirects'] = isset( $input['redirects'] ) && '1' === (string) $input['redirects'];
-		if ( isset( $input['comment_min_chars'] ) ) {
+		if ( self::CONTENT_COCOBOOK === ( $out['content_mode'] ?? '' ) && isset( $input['comment_min_chars'] ) ) {
 			$out['comment_min_chars'] = max( 1, min( 1000, (int) $input['comment_min_chars'] ) );
 		}
 

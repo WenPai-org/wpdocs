@@ -286,6 +286,30 @@ $giw_standalone = GitBoot::standalone_active();
 			)
 		);
 		?>
+		<div class="simple-row is-action">
+			<div class="tile"><?php echo View::icon( 'feedback' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+			<div>
+				<div class="t"><?php esc_html_e( '统一评论', 'wpdocs' ); ?></div>
+				<div class="d"><?php esc_html_e( '仅文档站模式；与 CocoBook 同一帖。', 'wpdocs' ); ?></div>
+			</div>
+			<div class="r"><?php echo View::toggle_input( 'wpdocs[comments]', $comments_on ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+		</div>
+		<div class="field" data-wpdocs-when-on="comments"<?php echo $comments_on ? '' : ' hidden'; ?>>
+			<label class="field-label" for="wpdocs-bff"><?php esc_html_e( '评论服务', 'wpdocs' ); ?></label>
+			<div class="field-ctl">
+				<input id="wpdocs-bff" type="url" name="wpdocs[bff_url]" value="<?php echo esc_attr( (string) ( $s['bff_url'] ?? '' ) ); ?>" />
+			</div>
+		</div>
+		<?php
+		View::field(
+			array(
+				'for'      => 'wpdocs-minc',
+				'label'    => __( '旧评论迁移阈值', 'wpdocs' ),
+				'advanced' => true,
+				'control'  => '<input id="wpdocs-minc" type="number" min="1" max="1000" name="wpdocs[comment_min_chars]" value="' . esc_attr( (string) ( $s['comment_min_chars'] ?? 30 ) ) . '" />',
+			)
+		);
+		?>
 	</section>
 
 	<section class="card" data-wpdocs-when-content="git"<?php echo Settings::CONTENT_GIT === $content_mode ? '' : ' hidden'; ?>>
@@ -365,20 +389,6 @@ $giw_standalone = GitBoot::standalone_active();
 	<section class="card">
 		<h2 class="section-title"><?php esc_html_e( '其它', 'wpdocs' ); ?></h2>
 		<div class="simple-row is-action">
-			<div class="tile"><?php echo View::icon( 'feedback' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-			<div>
-				<div class="t"><?php esc_html_e( '统一评论', 'wpdocs' ); ?></div>
-				<div class="d"><?php esc_html_e( '与文档站同一帖。', 'wpdocs' ); ?></div>
-			</div>
-			<div class="r"><?php echo View::toggle_input( 'wpdocs[comments]', $comments_on ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-		</div>
-		<div class="field" data-wpdocs-when-on="comments"<?php echo $comments_on ? '' : ' hidden'; ?>>
-			<label class="field-label" for="wpdocs-bff"><?php esc_html_e( '评论服务', 'wpdocs' ); ?></label>
-			<div class="field-ctl">
-				<input id="wpdocs-bff" type="url" name="wpdocs[bff_url]" value="<?php echo esc_attr( (string) ( $s['bff_url'] ?? '' ) ); ?>" />
-			</div>
-		</div>
-		<div class="simple-row is-action">
 			<div class="tile"><?php echo View::icon( 'share' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
 			<div>
 				<div class="t"><?php esc_html_e( '旧链接跳转', 'wpdocs' ); ?></div>
@@ -386,16 +396,6 @@ $giw_standalone = GitBoot::standalone_active();
 			</div>
 			<div class="r"><?php echo View::toggle_input( 'wpdocs[redirects]', $redirects_on ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
 		</div>
-		<?php
-		View::field(
-			array(
-				'for'      => 'wpdocs-minc',
-				'label'    => __( '旧评论迁移阈值', 'wpdocs' ),
-				'advanced' => true,
-				'control'  => '<input id="wpdocs-minc" type="number" min="1" max="1000" name="wpdocs[comment_min_chars]" value="' . esc_attr( (string) ( $s['comment_min_chars'] ?? 30 ) ) . '" />',
-			)
-		);
-		?>
 		<div class="wenpai-actions">
 			<button type="submit" class="btn btn-primary"><?php esc_html_e( '保存', 'wpdocs' ); ?></button>
 		</div>

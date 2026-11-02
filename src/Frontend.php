@@ -111,7 +111,7 @@ final class Frontend {
 		$html  = self::prepare_html( (string) $page['html'] );
 		$out   = '<div class="wpdocs-body" data-cocobook-page="' . esc_attr( (string) $entry['id'] ) . '">' . $html . '</div>';
 		$out  .= self::source_note( $entry, $page );
-		if ( Settings::get( 'comments' ) && ! function_exists( 'wpcy_pc_render_mount' ) && comments_open() ) {
+		if ( Settings::comments_enabled() && ! function_exists( 'wpcy_pc_render_mount' ) && comments_open() ) {
 			$out .= self::comments_mount( $entry );
 		}
 		return $out;
@@ -220,6 +220,9 @@ final class Frontend {
 	 * @param int    $post_id Post ID.
 	 */
 	public static function filter_external_id( $id, $post_id = 0 ) {
+		if ( ! Settings::comments_enabled() ) {
+			return $id;
+		}
 		$entry = self::entry_for( (int) $post_id );
 		return $entry ? self::external_id( $entry ) : $id;
 	}
@@ -241,7 +244,7 @@ final class Frontend {
 	 * @param array<string,mixed>  $block   Block.
 	 */
 	public static function filter_comments_block( $content, $block ) {
-		if ( 'core/comments' !== ( $block['blockName'] ?? '' ) || function_exists( 'wpcy_pc_render_mount' ) || ! Settings::get( 'comments' ) ) {
+		if ( 'core/comments' !== ( $block['blockName'] ?? '' ) || function_exists( 'wpcy_pc_render_mount' ) || ! Settings::comments_enabled() ) {
 			return $content;
 		}
 		$entry = self::current_entry();

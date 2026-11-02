@@ -91,7 +91,7 @@ final class Embed {
 	 * @param string $url   Discussion URL; default = post permalink.
 	 */
 	public static function render( string $page, string $title = '', string $url = '' ): string {
-		if ( is_admin() || is_feed() || ! Settings::get( 'comments' ) ) {
+		if ( is_admin() || is_feed() || ! Settings::comments_enabled() ) {
 			return '';
 		}
 		$id = self::resolve_page( $page );
