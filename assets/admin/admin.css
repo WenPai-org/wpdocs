@@ -218,3 +218,53 @@ body.wenpai-ui-page .wenpai-app .field.is-note > .d {
   color: var(--wenpai-ink-3);
   font-weight: 400;
 }
+
+/* list head + row actions */
+body.wenpai-ui-page .wenpai-app .wpdocs-list-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+body.wenpai-ui-page .wenpai-app .wpdocs-list-head .section-title {
+  margin: 0;
+}
+
+body.wenpai-ui-page .wenpai-app .wpdocs-filter {
+  flex: none;
+  margin: 4px 0 0;
+}
+
+body.wenpai-ui-page .wenpai-app .wpdocs-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+body.wenpai-ui-page .wenpai-app .wpdocs-inline-form {
+  display: inline;
+  margin: 0;
+}
+
+body.wenpai-ui-page .wenpai-app .wpdocs-row-actions .btn {
+  height: 28px;
+  min-height: 28px;
+  padding: 0 8px;
+  font-size: 12px;
+}
+
+body.wenpai-ui-page .wenpai-app .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

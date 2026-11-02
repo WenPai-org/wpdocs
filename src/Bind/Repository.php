@@ -172,4 +172,40 @@ final class Repository {
 		global $wpdb;
 		return (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . self::table() );
 	}
+
+	/** @return object|null */
+	public static function find( int $id ) {
+		if ( $id <= 0 ) {
+			return null;
+		}
+		global $wpdb;
+		return $wpdb->get_row(
+			$wpdb->prepare( 'SELECT * FROM ' . self::table() . ' WHERE id = %d', $id )
+		);
+	}
+
+	public static function set_status( int $id, string $status ): bool {
+		if ( $id <= 0 || ! in_array( $status, array( 'active', 'disabled' ), true ) ) {
+			return false;
+		}
+		global $wpdb;
+		$n = $wpdb->update(
+			self::table(),
+			array(
+				'status'     => $status,
+				'updated_at' => current_time( 'mysql' ),
+			),
+			array( 'id' => $id )
+		);
+		return false !== $n;
+	}
+
+	public static function delete( int $id ): bool {
+		if ( $id <= 0 ) {
+			return false;
+		}
+		global $wpdb;
+		$n = $wpdb->delete( self::table(), array( 'id' => $id ), array( '%d' ) );
+		return false !== $n && $n > 0;
+	}
 }

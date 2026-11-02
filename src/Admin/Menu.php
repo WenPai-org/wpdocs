@@ -159,6 +159,41 @@ final class Menu {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
+
+		if ( isset( $_POST['wpdocs_bind_row_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_bind_row_nonce'] ) ), 'wpdocs_bind_row' ) ) {
+			$row_id = (int) ( $_POST['wpdocs_bind_row_id'] ?? 0 );
+			$action = sanitize_key( (string) ( $_POST['wpdocs_bind_row_action'] ?? '' ) );
+			$ok     = false;
+			if ( 'delete' === $action ) {
+				$ok = BindRepo::delete( $row_id );
+			} elseif ( 'disable' === $action ) {
+				$ok = BindRepo::set_status( $row_id, 'disabled' );
+			} elseif ( 'enable' === $action ) {
+				$ok = BindRepo::set_status( $row_id, 'active' );
+			}
+			$q    = $ok ? 'updated=1' : 'error=1';
+			$mode = isset( $_POST['wpdocs_mode'] ) && 'advanced' === sanitize_key( (string) wp_unslash( $_POST['wpdocs_mode'] ) ) ? '&mode=advanced' : '';
+			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-bindings&' . $q . $mode ) );
+			exit;
+		}
+
+		if ( isset( $_POST['wpdocs_redirect_row_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_redirect_row_nonce'] ) ), 'wpdocs_redirect_row' ) ) {
+			$row_id = (int) ( $_POST['wpdocs_redirect_row_id'] ?? 0 );
+			$action = sanitize_key( (string) ( $_POST['wpdocs_redirect_row_action'] ?? '' ) );
+			$ok     = false;
+			if ( 'delete' === $action ) {
+				$ok = RedirectRepo::delete( $row_id );
+			}
+			$q    = $ok ? 'updated=1' : 'error=1';
+			$mode = isset( $_POST['wpdocs_mode'] ) && 'advanced' === sanitize_key( (string) wp_unslash( $_POST['wpdocs_mode'] ) ) ? '&mode=advanced' : '';
+			$filt = sanitize_key( (string) ( $_POST['wpdocs_redirect_filter'] ?? '' ) );
+			if ( $filt && in_array( $filt, RedirectRepo::statuses(), true ) ) {
+				$q .= '&status=' . rawurlencode( $filt );
+			}
+			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-redirects&' . $q . $mode ) );
+			exit;
+		}
+
 		if ( isset( $_POST['wpdocs_bind_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_bind_nonce'] ) ), 'wpdocs_bind' ) ) {
 			$source = sanitize_key( (string) ( $_POST['source'] ?? 'manual' ) );
 			$status = sanitize_key( (string) ( $_POST['status'] ?? 'active' ) );

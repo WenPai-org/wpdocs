@@ -2,6 +2,9 @@
 /**
  * Bindings page (档 A).
  *
+ * Simple: post id + type + book/page slug.
+ * Advanced: page id, external id, source, status, resolve.
+ *
  * @package Wpdocs
  * @var array<int,object> $items
  */
@@ -28,8 +31,8 @@ View::error_notice();
 
 <section class="card">
 	<h2 class="section-title"><?php esc_html_e( '手工绑定', 'wpdocs' ); ?></h2>
-	<p class="section-desc"><?php esc_html_e( '一篇文章对应一页文档。外部 ID 给评论挂件用，可留空。', 'wpdocs' ); ?></p>
-	<form method="post">
+	<p class="section-desc"><?php esc_html_e( '一篇文章对应一页文档。简单模式用书册/页面别名；高级可填文档页 ID 与外部 ID。', 'wpdocs' ); ?></p>
+	<form method="post" id="wpdocs-bind-form">
 		<?php wp_nonce_field( 'wpdocs_bind', 'wpdocs_bind_nonce' ); ?>
 		<?php if ( $adv ) : ?>
 			<input type="hidden" name="wpdocs_mode" value="advanced" />
@@ -56,16 +59,9 @@ View::error_notice();
 		);
 		View::field(
 			array(
-				'for'     => 'docs_page_id',
-				'label'   => __( '文档页 ID', 'wpdocs' ),
-				'help'    => __( '文档站页面的数字 ID，没有可填 0。', 'wpdocs' ),
-				'control' => '<input id="docs_page_id" type="number" name="docs_page_id" min="0" />',
-			)
-		);
-		View::field(
-			array(
 				'for'     => 'docs_book_slug',
 				'label'   => __( '书册别名', 'wpdocs' ),
+				'help'    => __( '文档站书册 slug，与下方页面别名一起定位一页。', 'wpdocs' ),
 				'control' => '<input id="docs_book_slug" type="text" name="docs_book_slug" autocomplete="off" />',
 			)
 		);
@@ -78,10 +74,20 @@ View::error_notice();
 		);
 		View::field(
 			array(
-				'for'     => 'external_id',
-				'label'   => __( '外部 ID', 'wpdocs' ),
-				'help'    => __( '可选。评论挂件用来对文章，例如 wpcy:post:42。不要填密钥或邮箱。', 'wpdocs' ),
-				'control' => '<input id="external_id" type="text" name="external_id" placeholder="wpcy:post:42" autocomplete="off" />',
+				'for'      => 'docs_page_id',
+				'label'    => __( '文档页 ID', 'wpdocs' ),
+				'help'     => __( '有数字 ID 时可填；没有可留 0，靠别名定位。', 'wpdocs' ),
+				'advanced' => true,
+				'control'  => '<input id="docs_page_id" type="number" name="docs_page_id" min="0" value="0" />',
+			)
+		);
+		View::field(
+			array(
+				'for'      => 'external_id',
+				'label'    => __( '外部 ID', 'wpdocs' ),
+				'help'     => __( '可选。评论挂件用来对文章，例如 wpcy:post:42。不要填密钥或邮箱。', 'wpdocs' ),
+				'advanced' => true,
+				'control'  => '<input id="external_id" type="text" name="external_id" placeholder="wpcy:post:42" autocomplete="off" />',
 			)
 		);
 		View::field(
@@ -134,7 +140,7 @@ View::error_notice();
 
 <section class="card">
 	<h2 class="section-title"><?php esc_html_e( '已有绑定', 'wpdocs' ); ?></h2>
-	<p class="section-desc"><?php esc_html_e( '每篇文章最多一条。长列表截断显示，不另做分页。', 'wpdocs' ); ?></p>
+	<p class="section-desc"><?php esc_html_e( '点「编辑」回填上方表单。长列表截断显示，不另做分页。', 'wpdocs' ); ?></p>
 	<?php if ( array() === $items ) : ?>
 		<p class="empty"><?php esc_html_e( '还没有文章绑定到文档页。保存上方表单后会出现在这里。', 'wpdocs' ); ?></p>
 	<?php else : ?>
@@ -146,6 +152,7 @@ View::error_notice();
 					<th><?php esc_html_e( '外部 ID', 'wpdocs' ); ?></th>
 					<th><?php esc_html_e( '来源', 'wpdocs' ); ?></th>
 					<th><?php esc_html_e( '状态', 'wpdocs' ); ?></th>
+					<th><?php esc_html_e( '操作', 'wpdocs' ); ?></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -155,6 +162,20 @@ View::error_notice();
 				$ext  = (string) ( $row->external_id ?? '' );
 				$type = (string) ( $row->wp_post_type ?? 'post' );
 				$type_label = 'page' === $type ? __( '页面', 'wpdocs' ) : __( '文章', 'wpdocs' );
+				$fill = wp_json_encode(
+					array(
+						'wp_post_id'     => (int) $row->wp_post_id,
+						'wp_post_type'   => $type,
+						'docs_page_id'   => (int) $row->docs_page_id,
+						'docs_book_slug' => (string) $row->docs_book_slug,
+						'docs_page_slug' => (string) $row->docs_page_slug,
+						'external_id'    => $ext,
+						'source'         => (string) ( $row->source ?? 'manual' ),
+						'status'         => (string) ( $row->status ?? 'active' ),
+					)
+				);
+				$row_id = (int) $row->id;
+				$act_q  = $adv ? '&mode=advanced' : '';
 				?>
 				<tr>
 					<td><?php echo (int) $row->wp_post_id; ?> <code><?php echo esc_html( $type_label ); ?></code></td>
@@ -165,6 +186,33 @@ View::error_notice();
 					<td><?php echo '' !== $ext ? '<code>' . esc_html( $ext ) . '</code>' : '—'; ?></td>
 					<td><?php echo esc_html( View::bind_source_label( (string) $row->source ) ); ?></td>
 					<td><span class="pill <?php echo esc_attr( $pill['class'] ); ?>"><?php echo esc_html( $pill['label'] ); ?></span></td>
+					<td class="wpdocs-row-actions">
+						<button type="button" class="btn btn-ghost" data-wpdocs-fill="<?php echo esc_attr( (string) $fill ); ?>"><?php esc_html_e( '编辑', 'wpdocs' ); ?></button>
+						<?php if ( 'disabled' === (string) ( $row->status ?? '' ) ) : ?>
+							<form method="post" class="wpdocs-inline-form">
+								<?php wp_nonce_field( 'wpdocs_bind_row', 'wpdocs_bind_row_nonce' ); ?>
+								<input type="hidden" name="wpdocs_bind_row_id" value="<?php echo $row_id; ?>" />
+								<input type="hidden" name="wpdocs_bind_row_action" value="enable" />
+								<?php if ( $adv ) : ?><input type="hidden" name="wpdocs_mode" value="advanced" /><?php endif; ?>
+								<button type="submit" class="btn btn-ghost"><?php esc_html_e( '启用', 'wpdocs' ); ?></button>
+							</form>
+						<?php else : ?>
+							<form method="post" class="wpdocs-inline-form">
+								<?php wp_nonce_field( 'wpdocs_bind_row', 'wpdocs_bind_row_nonce' ); ?>
+								<input type="hidden" name="wpdocs_bind_row_id" value="<?php echo $row_id; ?>" />
+								<input type="hidden" name="wpdocs_bind_row_action" value="disable" />
+								<?php if ( $adv ) : ?><input type="hidden" name="wpdocs_mode" value="advanced" /><?php endif; ?>
+								<button type="submit" class="btn btn-ghost"><?php esc_html_e( '停用', 'wpdocs' ); ?></button>
+							</form>
+						<?php endif; ?>
+						<form method="post" class="wpdocs-inline-form" onsubmit="return confirm('<?php echo esc_js( __( '确定删除这条绑定？', 'wpdocs' ) ); ?>');">
+							<?php wp_nonce_field( 'wpdocs_bind_row', 'wpdocs_bind_row_nonce' ); ?>
+							<input type="hidden" name="wpdocs_bind_row_id" value="<?php echo $row_id; ?>" />
+							<input type="hidden" name="wpdocs_bind_row_action" value="delete" />
+							<?php if ( $adv ) : ?><input type="hidden" name="wpdocs_mode" value="advanced" /><?php endif; ?>
+							<button type="submit" class="btn btn-ghost"><?php esc_html_e( '删除', 'wpdocs' ); ?></button>
+						</form>
+					</td>
 				</tr>
 			<?php endforeach; ?>
 			</tbody>

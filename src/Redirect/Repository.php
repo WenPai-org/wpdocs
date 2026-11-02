@@ -245,4 +245,24 @@ final class Repository {
 		}
 		return (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . self::table() );
 	}
+
+	/** @return object|null */
+	public static function find_by_id( int $id ) {
+		if ( $id <= 0 ) {
+			return null;
+		}
+		global $wpdb;
+		return $wpdb->get_row(
+			$wpdb->prepare( 'SELECT * FROM ' . self::table() . ' WHERE id = %d', $id )
+		);
+	}
+
+	public static function delete( int $id ): bool {
+		if ( $id <= 0 ) {
+			return false;
+		}
+		global $wpdb;
+		$n = $wpdb->delete( self::table(), array( 'id' => $id ), array( '%d' ) );
+		return false !== $n && $n > 0;
+	}
 }
