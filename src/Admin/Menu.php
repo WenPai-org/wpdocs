@@ -16,6 +16,8 @@ use Wpdocs\Client;
 use Wpdocs\Catalog;
 use Wpdocs\Core;
 use Wpdocs\Compat\Legacy;
+use Wpdocs\Git\Engine as GitEngine;
+use Wpdocs\Import\CocoBook as CocoBookImport;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -190,6 +192,53 @@ final class Menu {
 			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-tools&section=sync&msg=' . ( $ok ? 'synced' : 'sync_error' ) ) );
 			exit;
 		}
+		if ( isset( $_POST['wpdocs_import_cb_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_import_cb_nonce'] ) ), 'wpdocs_import_cb' ) ) {
+			$stats = CocoBookImport::run();
+			$ok    = $stats['fail'] < 1 && $stats['ok'] > 0;
+			Legacy::update_option(
+				'wpdocs_log',
+				array_merge(
+					(array) Legacy::get_option( 'wpdocs_log', array() ),
+					array(
+						array(
+							't' => time(),
+							'l' => 'import',
+							'm' => sprintf( 'CocoBook import ok=%d fail=%d skip=%d', $stats['ok'], $stats['fail'], $stats['skipped'] ),
+						),
+					)
+				)
+			);
+			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-tools&section=sync&msg=' . ( $ok ? 'imported' : ( $stats['ok'] > 0 ? 'imported_partial' : 'import_error' ) ) ) );
+			exit;
+		}
+		if ( isset( $_POST['wpdocs_git_pull_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_git_pull_nonce'] ) ), 'wpdocs_git_pull' ) ) {
+			$force   = ! empty( $_POST['wpdocs_git_force'] );
+			$repo_id = isset( $_POST['wpdocs_git_repo_id'] ) ? (int) $_POST['wpdocs_git_repo_id'] : 0;
+			if ( $repo_id > 0 ) {
+				$res = GitEngine::pull_repo( $repo_id, $force );
+				$ok  = ! is_wp_error( $res );
+			} else {
+				$all = GitEngine::pull_all( $force );
+				$ok  = true;
+				foreach ( $all as $one ) {
+					if ( is_wp_error( $one ) ) {
+						$ok = false;
+						break;
+					}
+				}
+				if ( empty( $all ) ) {
+					$ok = false;
+				}
+			}
+			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-tools&section=git&msg=' . ( $ok ? 'git_ok' : 'git_error' ) ) );
+			exit;
+		}
+		if ( isset( $_POST['wpdocs_git_sync_local_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_git_sync_local_nonce'] ) ), 'wpdocs_git_sync_local' ) ) {
+			$res = GitEngine::sync_local( ! empty( $_POST['wpdocs_git_force'] ) );
+			$ok  = ! is_wp_error( $res );
+			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-tools&section=git&msg=' . ( $ok ? 'git_local' : 'git_error' ) ) );
+			exit;
+		}
 
 		if ( isset( $_POST['wpdocs_bind_row_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_bind_row_nonce'] ) ), 'wpdocs_bind_row' ) ) {
 			$row_id = (int) ( $_POST['wpdocs_bind_row_id'] ?? 0 );
@@ -325,11 +374,11 @@ final class Menu {
 
 
 
-	/** @return string bindings|redirects|sync */
+	/** @return string bindings|redirects|sync|git */
 	private static function tools_section(): string {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$s = isset( $_GET['section'] ) ? sanitize_key( (string) wp_unslash( $_GET['section'] ) ) : '';
-		if ( in_array( $s, array( 'bindings', 'redirects', 'sync' ), true ) ) {
+		if ( in_array( $s, array( 'bindings', 'redirects', 'sync', 'git' ), true ) ) {
 			return $s;
 		}
 		return 'bindings';
@@ -392,6 +441,11 @@ final class Menu {
 					'label' => __( '同步', 'wpdocs' ),
 					'url'   => admin_url( 'admin.php?page=wpdocs-tools&section=sync' ),
 				),
+				array(
+					'id'    => 'git',
+					'label' => __( 'Git', 'wpdocs' ),
+					'url'   => admin_url( 'admin.php?page=wpdocs-tools&section=git' ),
+				),
 			)
 		);
 		$sub = ob_get_clean();
@@ -399,7 +453,8 @@ final class Menu {
 		$titles = array(
 			'bindings'  => array( __( '绑定', 'wpdocs' ), __( '把 WordPress 文章对到文档站的一页。危险或批量动作放在工具。', 'wpdocs' ) ),
 			'redirects' => array( __( '跳转', 'wpdocs' ), __( '旧文章地址转到文档站。没对上就回原文章，不拦截。', 'wpdocs' ) ),
-			'sync'      => array( __( '同步', 'wpdocs' ), __( '测试连接、重建书目索引与查看同步日志。不写文档站。', 'wpdocs' ) ),
+			'sync'      => array( __( '同步', 'wpdocs' ), __( '测试连接、重建书目索引；可将 CocoBook 正文导入进文章。', 'wpdocs' ) ),
+			'git'       => array( __( 'Git', 'wpdocs' ), __( '从 Forgejo / 本地仓拉取 Markdown 写入文章（Git it Write）。', 'wpdocs' ) ),
 		);
 		$title = $titles[ $section ][0] ?? __( '工具', 'wpdocs' );
 		$lede  = $titles[ $section ][1] ?? '';
@@ -414,6 +469,8 @@ final class Menu {
 			include WPDOCS_DIR . 'src/Admin/views/bindings.php';
 		} elseif ( 'redirects' === $section ) {
 			include WPDOCS_DIR . 'src/Admin/views/redirects.php';
+		} elseif ( 'git' === $section ) {
+			include WPDOCS_DIR . 'src/Admin/views/git.php';
 		} else {
 			include WPDOCS_DIR . 'src/Admin/views/sync.php';
 		}

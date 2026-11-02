@@ -13,6 +13,10 @@
 | Bind | 本插件表 `wpdocs_bindings` | 不写 BookStack；不嵌 Cyberforums 业务 UI |
 | Redirect | 本插件表 `wpdocs_redirects` | 不管 docs 站内 `slug_history` |
 | Publish | 只读探测 docs / 发布树 / sitemap | 正文、Markdown **永不**进 `wp_options` |
+| 内容模式 | `content_mode` ∈ `keep` \| `cocobook` \| `git` | 三选一；见下 |
+| CocoBook 读取 | `Frontend` body-swap；范围仍用 `mode` pilot/all | 不改正文库 |
+| CocoBook 导入 | 工具「从 CocoBook 导入」写入 `post_content` | 覆盖 WP 正文，需确认 |
+| Git 导入 | 内置 Git it Write（Forgejo / 本地目录） | 独立 GIW 插件激活时不加载内置副本 |
 | 阅读壳 / SEO / 反馈 / 相关 | `cocobook-docs-theme` | 本插件不改主题 |
 | 评论挂件 | Cyberforums + 可选 `external_id` | 本插件不自建评论 |
 

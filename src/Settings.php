@@ -16,13 +16,25 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Read/write access to the plugin option `wpdocs_settings`.
  *
+ * Content modes (上线方式):
+ *  - keep      保留现有文章正文
+ *  - cocobook  从 CocoBook / BookStack 读取（运行时换正文；可试点/全部）
+ *  - git       从 Git（Forgejo/本地）导入 Markdown 写入文章（整合 Git it Write）
+ *
+ * Legacy `mode` off|pilot|all is kept as CocoBook rollout scope.
+ *
  * @since 0.1.0
  */
 final class Settings {
 
 	public const OPTION = 'wpdocs_settings';
 
-	/** Rollout modes. */
+	/** Content source modes. */
+	public const CONTENT_KEEP     = 'keep';
+	public const CONTENT_COCOBOOK = 'cocobook';
+	public const CONTENT_GIT      = 'git';
+
+	/** CocoBook rollout (when content_mode = cocobook). */
 	public const MODE_OFF   = 'off';
 	public const MODE_PILOT = 'pilot';
 	public const MODE_ALL   = 'all';
@@ -40,6 +52,7 @@ final class Settings {
 			'site_tag'       => '',
 			'books'          => array(),
 			'bff_url'        => 'https://comments.cyberforums.com',
+			'content_mode'   => self::CONTENT_COCOBOOK,
 			'mode'           => self::MODE_PILOT,
 			'pilot_post_ids' => array(),
 			'post_types'     => array( 'post' ),
@@ -50,6 +63,15 @@ final class Settings {
 			'refresh_secret' => '',
 			'redirects'      => false, // 301 legacy WP paths to CocoBook (see Redirects).
 			'comment_min_chars' => 30, // Legacy comments shorter than this are not migrated.
+			// Git import (ex-Git it Write).
+			'git_forgejo_url'          => '',
+			'git_forgejo_token'        => '',
+			'git_webhook_secret'       => '',
+			'git_base_directory'       => '',
+			'git_default_post_type'    => 'post',
+			'git_default_post_author'  => 1,
+			'git_sync_interval'        => 'hourly',
+			'git_repositories'         => array(),
 		);
 	}
 
@@ -60,7 +82,25 @@ final class Settings {
 	 */
 	public static function raw(): array {
 		$saved = Legacy::get_option( self::OPTION, array() );
-		return array_merge( self::defaults(), is_array( $saved ) ? $saved : array() );
+		$all   = array_merge( self::defaults(), is_array( $saved ) ? $saved : array() );
+		return self::migrate_content_mode( $all );
+	}
+
+	/**
+	 * Derive content_mode from legacy mode=off when unset.
+	 *
+	 * @param array<string,mixed> $all Settings.
+	 * @return array<string,mixed>
+	 */
+	private static function migrate_content_mode( array $all ): array {
+		if ( empty( $all['content_mode'] ) || ! is_string( $all['content_mode'] ) ) {
+			$m = (string) ( $all['mode'] ?? self::MODE_PILOT );
+			$all['content_mode'] = self::MODE_OFF === $m ? self::CONTENT_KEEP : self::CONTENT_COCOBOOK;
+		}
+		if ( ! in_array( $all['content_mode'], array( self::CONTENT_KEEP, self::CONTENT_COCOBOOK, self::CONTENT_GIT ), true ) ) {
+			$all['content_mode'] = self::CONTENT_COCOBOOK;
+		}
+		return $all;
 	}
 
 	/**
@@ -99,6 +139,9 @@ final class Settings {
 			'token_id'       => 'WPDOCS_TOKEN_ID',
 			'token_secret'   => 'WPDOCS_TOKEN_SECRET',
 			'refresh_secret' => 'WPDOCS_REFRESH_SECRET',
+			'git_forgejo_url'   => 'WPDOCS_GIT_FORGEJO_URL',
+			'git_forgejo_token'=> 'WPDOCS_GIT_FORGEJO_TOKEN',
+			'git_webhook_secret' => 'WPDOCS_GIT_WEBHOOK_SECRET',
 		);
 		return $map[ $key ] ?? null;
 	}
@@ -120,13 +163,26 @@ final class Settings {
 		return ( '' === $id || '' === $secret ) ? '' : $id . ':' . $secret;
 	}
 
-	/** Whether the connection is configured. */
+	/** Whether the CocoBook connection is configured. */
 	public static function is_configured(): bool {
 		return '' !== self::base_url() && '' !== self::token_pair();
 	}
 
-	/** Current rollout mode. */
+	/** keep | cocobook | git */
+	public static function content_mode(): string {
+		$m = (string) self::get( 'content_mode' );
+		return in_array( $m, array( self::CONTENT_KEEP, self::CONTENT_COCOBOOK, self::CONTENT_GIT ), true )
+			? $m
+			: self::CONTENT_COCOBOOK;
+	}
+
+	/**
+	 * CocoBook rollout. Forced off when content_mode is not cocobook.
+	 */
 	public static function mode(): string {
+		if ( self::CONTENT_COCOBOOK !== self::content_mode() ) {
+			return self::MODE_OFF;
+		}
 		$m = (string) self::get( 'mode' );
 		return in_array( $m, array( self::MODE_OFF, self::MODE_PILOT, self::MODE_ALL ), true ) ? $m : self::MODE_PILOT;
 	}
@@ -158,6 +214,50 @@ final class Settings {
 		$v = self::get( 'post_types' );
 		$v = is_array( $v ) ? $v : array( 'post' );
 		return array_values( array_filter( array_map( 'sanitize_key', $v ) ) );
+	}
+
+	/**
+	 * Git general settings shape for GIW host.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public static function git_general(): array {
+		$token = (string) self::get( 'git_forgejo_token' );
+		return array(
+			'webhook_secret'       => (string) self::get( 'git_webhook_secret' ),
+			'forgejo_url'          => untrailingslashit( (string) self::get( 'git_forgejo_url' ) ),
+			'forgejo_access_token' => $token,
+			'base_directory'       => (string) self::get( 'git_base_directory' ),
+			'default_post_type'    => sanitize_key( (string) self::get( 'git_default_post_type' ) ) ?: 'post',
+			'default_post_author'  => max( 1, (int) self::get( 'git_default_post_author' ) ),
+			'sync_interval'        => sanitize_key( (string) self::get( 'git_sync_interval' ) ) ?: 'hourly',
+			'target_blog_id'       => 0,
+		);
+	}
+
+	/**
+	 * @return array<int,array<string,mixed>>
+	 */
+	public static function git_repositories(): array {
+		$repos = self::get( 'git_repositories' );
+		if ( ! is_array( $repos ) || empty( $repos ) ) {
+			// One-shot adopt from standalone GIW if present.
+			$legacy = get_option( 'giw_repositories', null );
+			if ( is_array( $legacy ) && ! empty( $legacy ) ) {
+				return $legacy;
+			}
+			return array();
+		}
+		return $repos;
+	}
+
+	/**
+	 * @param array<int,array<string,mixed>> $repos Repos.
+	 */
+	public static function save_git_repositories( array $repos ): void {
+		$cur                   = self::raw();
+		$cur['git_repositories'] = $repos;
+		Legacy::update_option( self::OPTION, $cur );
 	}
 
 	/**
@@ -195,12 +295,25 @@ final class Settings {
 		if ( isset( $input['bff_url'] ) ) {
 			$out['bff_url'] = untrailingslashit( esc_url_raw( trim( (string) $input['bff_url'] ) ) );
 		}
+
+		if ( isset( $input['content_mode'] ) ) {
+			$cm = sanitize_key( (string) $input['content_mode'] );
+			$out['content_mode'] = in_array( $cm, array( self::CONTENT_KEEP, self::CONTENT_COCOBOOK, self::CONTENT_GIT ), true )
+				? $cm
+				: self::CONTENT_COCOBOOK;
+		}
+
 		if ( isset( $input['mode'] ) ) {
 			$m           = sanitize_key( (string) $input['mode'] );
 			$out['mode'] = in_array( $m, array( self::MODE_OFF, self::MODE_PILOT, self::MODE_ALL ), true ) ? $m : self::MODE_PILOT;
 		}
+		// Keep + content_mode=keep ⇒ force rollout off for Frontend.
+		if ( self::CONTENT_KEEP === ( $out['content_mode'] ?? '' ) ) {
+			$out['mode'] = self::MODE_OFF;
+		}
+
 		if ( isset( $input['pilot_post_ids'] ) ) {
-			$out['pilot_post_ids'] = self::int_list( $input['pilot_post_ids'] ); // accepts "1, 2" or an array
+			$out['pilot_post_ids'] = self::int_list( $input['pilot_post_ids'] );
 		}
 		if ( isset( $input['post_types'] ) ) {
 			$types             = is_array( $input['post_types'] ) ? $input['post_types'] : explode( ',', (string) $input['post_types'] );
@@ -220,11 +333,93 @@ final class Settings {
 			$out['comment_min_chars'] = max( 1, min( 1000, (int) $input['comment_min_chars'] ) );
 		}
 
+		// Git fields.
+		if ( isset( $input['git_forgejo_url'] ) && ! self::is_locked( 'git_forgejo_url' ) ) {
+			$out['git_forgejo_url'] = untrailingslashit( esc_url_raw( trim( (string) $input['git_forgejo_url'] ) ) );
+		}
+		if ( ! self::is_locked( 'git_forgejo_token' ) ) {
+			if ( isset( $input['git_forgejo_token'] ) && '' !== trim( (string) $input['git_forgejo_token'] ) ) {
+				$out['git_forgejo_token'] = sanitize_text_field( (string) $input['git_forgejo_token'] );
+			}
+			if ( ! empty( $input['git_forgejo_token_clear'] ) ) {
+				$out['git_forgejo_token'] = '';
+			}
+		}
+		if ( isset( $input['git_webhook_secret'] ) && ! self::is_locked( 'git_webhook_secret' ) ) {
+			$secret = trim( (string) $input['git_webhook_secret'] );
+			if ( '' !== $secret ) {
+				$out['git_webhook_secret'] = sanitize_text_field( $secret );
+			}
+		}
+		if ( isset( $input['git_base_directory'] ) ) {
+			$out['git_base_directory'] = sanitize_text_field( (string) $input['git_base_directory'] );
+		}
+		if ( isset( $input['git_default_post_type'] ) ) {
+			$out['git_default_post_type'] = sanitize_key( (string) $input['git_default_post_type'] ) ?: 'post';
+		}
+		if ( isset( $input['git_default_post_author'] ) ) {
+			$out['git_default_post_author'] = max( 1, (int) $input['git_default_post_author'] );
+		}
+		if ( isset( $input['git_sync_interval'] ) ) {
+			$iv = sanitize_key( (string) $input['git_sync_interval'] );
+			$out['git_sync_interval'] = in_array( $iv, array( 'every_30_minutes', 'hourly', 'every_6_hours', 'every_12_hours', 'daily' ), true )
+				? $iv
+				: 'hourly';
+		}
+		if ( isset( $input['git_repositories'] ) && is_array( $input['git_repositories'] ) ) {
+			$out['git_repositories'] = self::sanitize_git_repos( $input['git_repositories'] );
+		}
+
 		if ( '' === (string) $out['refresh_secret'] ) {
 			$out['refresh_secret'] = wp_generate_password( 40, false, false );
 		}
+		if ( self::CONTENT_GIT === ( $out['content_mode'] ?? '' ) && '' === (string) ( $out['git_webhook_secret'] ?? '' ) ) {
+			$out['git_webhook_secret'] = wp_generate_password( 32, false, false );
+		}
+
+		// Adopt standalone GIW general settings once when switching to git with empty forgejo url.
+		if ( self::CONTENT_GIT === ( $out['content_mode'] ?? '' ) && '' === (string) ( $out['git_forgejo_url'] ?? '' ) ) {
+			$giw = get_option( 'giw_general_settings', array() );
+			if ( is_array( $giw ) && ! empty( $giw['forgejo_url'] ) ) {
+				$out['git_forgejo_url']    = untrailingslashit( (string) $giw['forgejo_url'] );
+				$out['git_forgejo_token']  = (string) ( $giw['forgejo_access_token'] ?? $out['git_forgejo_token'] );
+				$out['git_webhook_secret'] = (string) ( $giw['webhook_secret'] ?? $out['git_webhook_secret'] );
+				$out['git_base_directory'] = (string) ( $giw['base_directory'] ?? $out['git_base_directory'] );
+			}
+		}
 
 		Legacy::update_option( self::OPTION, $out );
+		return $out;
+	}
+
+	/**
+	 * @param array<int|string,mixed> $raw Raw repo rows from form.
+	 * @return array<int,array<string,mixed>>
+	 */
+	private static function sanitize_git_repos( array $raw ): array {
+		$out = array();
+		$i   = 0;
+		foreach ( $raw as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			$user = sanitize_text_field( (string) ( $row['username'] ?? '' ) );
+			$repo = sanitize_text_field( (string) ( $row['repository'] ?? '' ) );
+			if ( '' === $user && '' === $repo ) {
+				continue;
+			}
+			++$i;
+			$out[ $i ] = array(
+				'username'         => $user,
+				'repository'       => $repo,
+				'folder'           => sanitize_text_field( (string) ( $row['folder'] ?? '' ) ),
+				'branch'           => sanitize_text_field( (string) ( $row['branch'] ?? 'main' ) ) ?: 'main',
+				'post_type'        => sanitize_key( (string) ( $row['post_type'] ?? 'post' ) ) ?: 'post',
+				'post_author'      => max( 1, (int) ( $row['post_author'] ?? 1 ) ),
+				'content_template' => (string) ( $row['content_template'] ?? '%%content%%' ),
+				'last_publish'     => (int) ( $row['last_publish'] ?? 0 ),
+			);
+		}
 		return $out;
 	}
 

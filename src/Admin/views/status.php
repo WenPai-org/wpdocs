@@ -20,13 +20,22 @@ $tree_ok   = ! empty( $st['tree']['ok'] );
 $bind_n    = (int) \Wpdocs\Bind\Repository::count();
 $redir_n   = (int) \Wpdocs\Redirect\Repository::count();
 $base_show = Settings::base_url();
+$content   = Settings::content_mode();
+$content_lab = array(
+	Settings::CONTENT_KEEP     => __( '保留', 'wpdocs' ),
+	Settings::CONTENT_COCOBOOK => __( 'CocoBook 读取', 'wpdocs' ),
+	Settings::CONTENT_GIT      => __( 'Git 导入', 'wpdocs' ),
+);
 $mode      = Settings::mode();
 $mode_lab  = array(
 	Settings::MODE_OFF   => __( '关闭', 'wpdocs' ),
 	Settings::MODE_PILOT => __( '试点', 'wpdocs' ),
 	Settings::MODE_ALL   => __( '全部', 'wpdocs' ),
 );
-$mode_txt = $mode_lab[ $mode ] ?? $mode;
+$mode_txt = ( $content_lab[ $content ] ?? $content );
+if ( Settings::CONTENT_COCOBOOK === $content ) {
+	$mode_txt .= ' · ' . ( $mode_lab[ $mode ] ?? $mode );
+}
 
 $fmt_probe = static function ( array $p ) use ( $base_show ): string {
 	$code = (int) ( $p['code'] ?? 0 );
@@ -204,7 +213,7 @@ endif;
 	}
 	View::status_row(
 		array(
-			'title'      => __( '接管模式', 'wpdocs' ),
+			'title'      => __( '内容模式', 'wpdocs' ),
 			'detail'     => $mode_txt,
 			'icon'       => 'flash',
 			'pill'       => Settings::MODE_OFF === $mode ? __( '未开启', 'wpdocs' ) : __( '已开启', 'wpdocs' ),

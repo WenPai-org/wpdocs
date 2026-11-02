@@ -1,6 +1,6 @@
 <?php
 /**
- * Tools · sync — 一卡一事；主钮只有「立即同步」。
+ * Tools · sync — 连接、CocoBook 导入、日志。
  *
  * @package Wpdocs
  *
@@ -22,10 +22,13 @@ $state   = Core::state();
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $msg = isset( $_GET['msg'] ) ? sanitize_key( (string) wp_unslash( $_GET['msg'] ) ) : '';
 $notices = array(
-	'test_ok'    => array( 'ok', __( '连接正常。', 'wpdocs' ) ),
-	'test_error' => array( 'bad', __( '暂时无法连接文档站，请检查 Token 后重试。', 'wpdocs' ) ),
-	'synced'     => array( 'ok', __( '同步完成。', 'wpdocs' ) ),
-	'sync_error' => array( 'bad', __( '暂时无法同步，请查看下方日志。', 'wpdocs' ) ),
+	'test_ok'          => array( 'ok', __( '连接正常。', 'wpdocs' ) ),
+	'test_error'       => array( 'bad', __( '暂时无法连接文档站，请检查 Token 后重试。', 'wpdocs' ) ),
+	'synced'           => array( 'ok', __( '同步完成。', 'wpdocs' ) ),
+	'sync_error'       => array( 'bad', __( '暂时无法同步，请查看下方日志。', 'wpdocs' ) ),
+	'imported'         => array( 'ok', __( '已将 CocoBook 正文写入绑定文章。', 'wpdocs' ) ),
+	'imported_partial' => array( 'ok', __( '部分文章已导入；失败项见日志。', 'wpdocs' ) ),
+	'import_error'     => array( 'bad', __( '未能导入。请确认已绑定且 Token 可用。', 'wpdocs' ) ),
 );
 if ( isset( $notices[ $msg ] ) ) {
 	echo '<div class="notice ' . esc_attr( $notices[ $msg ][0] ) . '"><span>' . esc_html( $notices[ $msg ][1] ) . '</span></div>';
@@ -67,7 +70,7 @@ if ( isset( $notices[ $msg ] ) ) {
 	<?php elseif ( ! Settings::is_configured() ) : ?>
 		<div class="empty">
 			<p><?php esc_html_e( '还没配置文档站 Token。先到设置页填好连接，再回来同步。', 'wpdocs' ); ?></p>
-			<p><a class="btn btn-secondary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-settings&mode=advanced' ) ); ?>"><?php esc_html_e( '去设置', 'wpdocs' ); ?></a></p>
+			<p><a class="btn btn-secondary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-settings' ) ); ?>"><?php esc_html_e( '去设置', 'wpdocs' ); ?></a></p>
 		</div>
 	<?php endif; ?>
 	<?php
@@ -83,6 +86,18 @@ if ( isset( $notices[ $msg ] ) ) {
 		)
 	);
 	?>
+</section>
+
+<section class="card">
+	<h2 class="section-title"><?php esc_html_e( '导入到文章', 'wpdocs' ); ?></h2>
+	<p class="section-desc"><?php esc_html_e( '把已绑定的 CocoBook 页正文写入 WordPress（覆盖 post_content）。适合「保留」模式：导入后由 WP 持有正文，不再运行时读取。', 'wpdocs' ); ?></p>
+	<div class="wenpai-actions">
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=sync' ) ); ?>" style="display:inline" onsubmit="return confirm('<?php echo esc_js( __( '将覆盖已绑定文章的正文，确定？', 'wpdocs' ) ); ?>');">
+			<?php wp_nonce_field( 'wpdocs_import_cb', 'wpdocs_import_cb_nonce' ); ?>
+			<button type="submit" class="btn btn-ghost" <?php disabled( ! Settings::is_configured() ); ?>><?php esc_html_e( '从 CocoBook 导入', 'wpdocs' ); ?></button>
+		</form>
+		<a class="btn btn-ghost" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=git' ) ); ?>"><?php esc_html_e( '从 Git 导入…', 'wpdocs' ); ?></a>
+	</div>
 </section>
 
 <section class="card">

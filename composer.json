@@ -1,0 +1,15 @@
+{
+  "name": "wenpai/wpdocs",
+  "description": "文派文档",
+  "license": "GPL-2.0-or-later",
+  "require": {
+    "php": ">=8.0",
+    "erusev/parsedown": "^1.7",
+    "erusev/parsedown-extra": "^0.8.1",
+    "symfony/yaml": "^5.4"
+  },
+  "config": {
+    "sort-packages": true,
+    "optimize-autoloader": true
+  }
+}

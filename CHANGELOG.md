@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0-dev (三种内容模式 + Git)
+
+- 上线方式改为三种：**保留** / **CocoBook 读取** / **Git 导入**
+- 整合 Git it Write 核心（`lib/git-it-write` + composer Parsedown/Yaml）：Forgejo 远程仓与本地目录、Webhook `giw/v1/publish`、工具 · Git 拉取
+- CocoBook「导入到文章」：把已绑定页 HTML 写入 `post_content`（适合保留模式）
+- 旧 `mode=off|pilot|all` 保留为 CocoBook 读取范围；`mode=off` 无 `content_mode` 时迁移为保留
+
 ## 0.3.0-dev (UI)
 
 - 档 A 三屏：概览 / 设置 / 工具（绑定·跳转·同步为工具内 subnav）

@@ -32,6 +32,7 @@ final class Plugin {
 		Legacy::register_aliases();
 		Core::init();
 		Listener::register();
+		\Wpdocs\Git\Bootstrap::maybe_boot();
 		add_action( 'admin_init', array( RedirectRepo::class, 'install' ) );
 		add_action( 'admin_init', array( BindRepo::class, 'install' ) );
 		add_action( 'rest_api_init', array( Controller::class, 'register' ) );

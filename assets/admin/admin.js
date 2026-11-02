@@ -471,15 +471,33 @@
   function refreshDisclosure() {
     var form = document.getElementById("wpdocs-settings-form");
     if (!form) return;
-    var mode = (form.querySelector('input[name="wpdocs[mode]"]:checked') || {}).value || "off";
+    var content =
+      (form.querySelector('input[name="wpdocs[content_mode]"]:checked') || {})
+        .value || "cocobook";
+    form.querySelectorAll("[data-wpdocs-when-content]").forEach(function (el) {
+      var need = (el.getAttribute("data-wpdocs-when-content") || "")
+        .split(",")
+        .map(function (s) {
+          return s.trim();
+        })
+        .filter(Boolean);
+      el.hidden = need.indexOf(content) === -1;
+    });
+    var mode =
+      (form.querySelector('input[name="wpdocs[mode]"]:checked') || {}).value ||
+      "off";
     form.querySelectorAll("[data-wpdocs-when-mode]").forEach(function (el) {
       var need = el.getAttribute("data-wpdocs-when-mode");
       el.hidden = need !== mode;
     });
     var commentsOn = false;
-    var ccb = form.querySelector('[data-wpdocs-toggle-cb][name="wpdocs[comments]"]');
+    var ccb = form.querySelector(
+      '[data-wpdocs-toggle-cb][name="wpdocs[comments]"]'
+    );
     if (ccb) commentsOn = !!ccb.checked;
-    form.querySelectorAll('[data-wpdocs-when-on="comments"]').forEach(function (el) {
+    form.querySelectorAll('[data-wpdocs-when-on="comments"]').forEach(function (
+      el
+    ) {
       el.hidden = !commentsOn;
     });
     // choice is-on class
@@ -504,7 +522,11 @@
   document.addEventListener("change", function (e) {
     var t = e.target;
     if (!t) return;
-    if (t.matches && t.matches('input[name="wpdocs[mode]"]')) {
+    if (
+      t.matches &&
+      (t.matches('input[name="wpdocs[mode]"]') ||
+        t.matches('input[name="wpdocs[content_mode]"]'))
+    ) {
       refreshDisclosure();
     }
   });

@@ -1,7 +1,8 @@
 .DS_Store
 *.zip
-vendor/
+# vendor/ is committed so Studio / zip installs work without composer.
 node_modules/
+.tmp-giw/
 .phpunit.result.cache
 tests/__pycache__/
 *.pyc
