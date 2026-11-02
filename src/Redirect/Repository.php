@@ -2,6 +2,13 @@
 /**
  * Redirects table (new name; can import from legacy cocobook_redirects).
  *
+ * Behaviour vs cocobook-docs Redirects.php (contract; old tree not cloned this round):
+ * - Table is wpdocs_redirects; matched stores page_id, never an absolute docs URL.
+ * - Unmatched 404 inserts are capped (UNMATCHED_LOG_CAP / WPDOCS_UNMATCHED_LOG_CAP).
+ * - Reserved paths are rejected on upsert and skipped on 404 log.
+ * - Legacy import is one-shot when this table is empty (does not overwrite existing rows).
+ * TODO: confirm old column set and whether cocobook_docs_404 option still needs a one-shot import.
+ *
  * @package Wpdocs
  */
 
@@ -21,6 +28,12 @@ final class Repository {
 	public const UNMATCHED = 'unmatched';
 	public const GONE      = 'gone';
 
+	/**
+	 * Max unmatched/404 rows that may be inserted. Existing rows are kept.
+	 * Override with WPDOCS_UNMATCHED_LOG_CAP (0 disables new 404 inserts).
+	 */
+	public const UNMATCHED_LOG_CAP = 500;
+
 	public static function table(): string {
 		global $wpdb;
 		return $wpdb->prefix . 'wpdocs_redirects';
@@ -29,6 +42,29 @@ final class Repository {
 	/** @return string[] */
 	public static function statuses(): array {
 		return array( self::MATCHED, self::PENDING, self::UNMATCHED, self::GONE );
+	}
+
+	public static function unmatched_log_cap(): int {
+		if ( defined( 'WPDOCS_UNMATCHED_LOG_CAP' ) ) {
+			return max( 0, (int) WPDOCS_UNMATCHED_LOG_CAP );
+		}
+		$cap = self::UNMATCHED_LOG_CAP;
+		if ( function_exists( 'apply_filters' ) ) {
+			$cap = (int) apply_filters( 'wpdocs_unmatched_log_cap', $cap );
+		}
+		return max( 0, $cap );
+	}
+
+	/** Whether a new unmatched row may be inserted given the current unmatched count. */
+	public static function can_insert_unmatched( ?int $current = null ): bool {
+		$cap = self::unmatched_log_cap();
+		if ( $cap <= 0 ) {
+			return false;
+		}
+		if ( null === $current ) {
+			$current = self::count( self::UNMATCHED );
+		}
+		return $current < $cap;
 	}
 
 	public static function install( bool $force = false ): void {
@@ -94,12 +130,13 @@ final class Repository {
 	}
 
 	public static function norm_path( string $path ): string {
-		$path = preg_replace( '/[?#].*$/', '', $path );
-		$path = '/' . ltrim( (string) $path, '/' );
-		return ( '/' === $path ) ? '/' : rtrim( $path, '/' );
+		return Path::norm_path( $path );
 	}
 
 	public static function hit( int $id ): void {
+		if ( $id <= 0 ) {
+			return;
+		}
 		global $wpdb;
 		$wpdb->query(
 			$wpdb->prepare(
@@ -111,13 +148,47 @@ final class Repository {
 	}
 
 	/**
+	 * Insert or bump an unmatched 404 row. Never called from dry-run.
+	 *
+	 * @return int Row id, or 0 when skipped (reserved, noisy asset, or cap).
+	 */
+	public static function log_unmatched( string $path ): int {
+		$path = Path::norm_path( $path );
+		if ( Path::should_skip_404_log( $path ) ) {
+			return 0;
+		}
+		$existing = self::find( $path );
+		if ( $existing ) {
+			if ( in_array( $existing->status, array( self::UNMATCHED, self::PENDING ), true ) ) {
+				self::hit( (int) $existing->id );
+			}
+			return (int) $existing->id;
+		}
+		if ( ! self::can_insert_unmatched() ) {
+			return 0;
+		}
+		return self::upsert(
+			array(
+				'wp_path' => $path,
+				'status'  => self::UNMATCHED,
+				'source'  => '404',
+				'page_id' => 0,
+			)
+		);
+	}
+
+	/**
 	 * @param array<string,mixed> $data
 	 */
 	public static function upsert( array $data ): int {
 		global $wpdb;
 		$path = self::norm_path( (string) ( $data['wp_path'] ?? '' ) );
-		if ( '' === $path || '/' === $path ) {
+		if ( '' === $path || '/' === $path || Path::is_reserved( $path ) ) {
 			return 0;
+		}
+		if ( isset( $data['target_url'] ) || isset( $data['url'] ) ) {
+			// Matched rows store page_id only; refuse baked-in absolute URLs.
+			unset( $data['target_url'], $data['url'] );
 		}
 		$now = current_time( 'mysql' );
 		$row = array(
@@ -130,6 +201,9 @@ final class Repository {
 			'updated_at' => $now,
 		);
 		if ( ! in_array( $row['status'], self::statuses(), true ) ) {
+			$row['status'] = self::UNMATCHED;
+		}
+		if ( self::MATCHED === $row['status'] && $row['page_id'] <= 0 ) {
 			$row['status'] = self::UNMATCHED;
 		}
 		$existing = self::find( $path );

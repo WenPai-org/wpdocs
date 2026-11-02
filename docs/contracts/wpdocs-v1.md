@@ -71,3 +71,9 @@ Update URI 恒为 `https://updates.wenpai.net`。
 
 - Bind 批量 `source=slug` dry-run 请求/响应形状
 - Publish status JSON 字段表（sitemap HEAD、发布树 HEAD 等）
+
+### Redirect dry-run / 404 日志（G2 勘误）
+
+- `GET /redirects/dry-run?path=` **不写** `hits` / `last_hit`，**不插入** unmatched 404 行。响应含 `hits_written: false`。matched 带 `page_id`（表内不存绝对 URL）；`target` 若出现则为运行时由 `page_id` 解析。
+- 404 未匹配：`status=unmatched` `source=404` 新行上限为 `WPDOCS_UNMATCHED_LOG_CAP`（缺省 `Repository::UNMATCHED_LOG_CAP` = 500；`0` 关闭新插入）。已有 unmatched/pending 行可增加 hits。
+- reserved（`/wp-admin`、`/wp-login.php`、`/wp-json`、`/xmlrpc.php` 等）不 301/410、不记 404、upsert 拒绝。
