@@ -27,22 +27,22 @@ View::page_head(
 	View::field(
 		array(
 			'label'   => __( '填文档站', 'wpdocs' ),
-			'control' => '<p class="hint d">' . esc_html__( '在「设置」填写文档站地址与 Token，再到「状态」确认探测为正常。', 'wpdocs' ) . '</p>'
+			'control' => '<p class="hint d">' . esc_html__( '在「设置」填写文档站地址与 Token，再到「概览」确认探测为正常。', 'wpdocs' ) . '</p>'
 				. '<div class="wenpai-actions"><a class="btn btn-ghost" href="' . esc_url( admin_url( 'admin.php?page=wpdocs-settings' ) ) . '">' . esc_html__( '打开设置', 'wpdocs' ) . '</a></div>',
 		)
 	);
 	View::field(
 		array(
 			'label'   => __( '建绑定', 'wpdocs' ),
-			'control' => '<p class="hint d">' . esc_html__( '在「绑定」填写文章 ID 与文档书册/页面别名。简单模式够用；高级可补文档页 ID、外部 ID 与来源。', 'wpdocs' ) . '</p>'
-				. '<div class="wenpai-actions"><a class="btn btn-ghost" href="' . esc_url( admin_url( 'admin.php?page=wpdocs-bindings' ) ) . '">' . esc_html__( '打开绑定', 'wpdocs' ) . '</a></div>',
+			'control' => '<p class="hint d">' . esc_html__( '在「工具 → 绑定」填写文章 ID 与文档书册/页面别名。简单模式够用；高级可补文档页 ID、外部 ID 与来源。', 'wpdocs' ) . '</p>'
+				. '<div class="wenpai-actions"><a class="btn btn-ghost" href="' . esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=bindings' ) ) . '">' . esc_html__( '打开绑定', 'wpdocs' ) . '</a></div>',
 		)
 	);
 	View::field(
 		array(
 			'label'   => __( '配跳转', 'wpdocs' ),
-			'control' => '<p class="hint d">' . esc_html__( '在「跳转」登记旧路径；已匹配为 301，已下线为 410。启用时若存在旧跳转表会一次性导入。', 'wpdocs' ) . '</p>'
-				. '<div class="wenpai-actions"><a class="btn btn-ghost" href="' . esc_url( admin_url( 'admin.php?page=wpdocs-redirects' ) ) . '">' . esc_html__( '打开跳转', 'wpdocs' ) . '</a></div>',
+			'control' => '<p class="hint d">' . esc_html__( '在「工具 → 跳转」登记旧路径；已匹配为 301，已下线为 410。启用时若存在旧跳转表会一次性导入。', 'wpdocs' ) . '</p>'
+				. '<div class="wenpai-actions"><a class="btn btn-ghost" href="' . esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=redirects' ) ) . '">' . esc_html__( '打开跳转', 'wpdocs' ) . '</a></div>',
 		)
 	);
 	?>

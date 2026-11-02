@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0-dev (UI)
+
+- 档 A 三屏：概览 / 设置 / 工具（绑定·跳转·同步为工具内 subnav）
+- 设置页：choice 模式卡、kit toggle、chk-grid 书目、渐进披露；同步迁到工具
+- 概览只答「现在怎样」，地址表单迁入设置
+
+
 ## 0.3.0-dev
 
 - 恢复旧 cocobook-docs 设置能力：连接（Token）、书目/站点标签、关闭/试点/全部、评论 BFF、缓存 TTL、测试连接/立即同步、Webhook 刷新

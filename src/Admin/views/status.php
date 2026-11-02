@@ -1,15 +1,13 @@
 <?php
 /**
- * Status / overview (档 A).
- *
- * Overview answers: what / how now / whether to act.
- * Address form stays here (product need); constant names stay out of notices.
+ * Overview (档 A：概览 = 现在怎样).
  *
  * @package Wpdocs
  * @var array<string,mixed> $st
  */
 
 use Wpdocs\Admin\View;
+use Wpdocs\Settings;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -21,10 +19,14 @@ $tree_skip = ! empty( $st['tree']['skipped'] );
 $tree_ok   = ! empty( $st['tree']['ok'] );
 $bind_n    = (int) \Wpdocs\Bind\Repository::count();
 $redir_n   = (int) \Wpdocs\Redirect\Repository::count();
-$opt       = get_option( 'wpdocs_settings', array() );
-$base_in   = is_array( $opt ) ? (string) ( $opt['base_url'] ?? ( $st['base_url'] ?? '' ) ) : '';
-$tree_in   = is_array( $opt ) && array_key_exists( 'tree_url', $opt ) ? (string) $opt['tree_url'] : '';
-$base_show = (string) ( $st['base_url'] ?? '' );
+$base_show = Settings::base_url();
+$mode      = Settings::mode();
+$mode_lab  = array(
+	Settings::MODE_OFF   => __( '关闭', 'wpdocs' ),
+	Settings::MODE_PILOT => __( '试点', 'wpdocs' ),
+	Settings::MODE_ALL   => __( '全部', 'wpdocs' ),
+);
+$mode_txt = $mode_lab[ $mode ] ?? $mode;
 
 $fmt_probe = static function ( array $p ) use ( $base_show ): string {
 	$code = (int) ( $p['code'] ?? 0 );
@@ -42,28 +44,28 @@ $fmt_probe = static function ( array $p ) use ( $base_show ): string {
 $refresh = '<a class="btn btn-ghost" href="' . esc_url( admin_url( 'admin.php?page=wpdocs&refresh=1' ) ) . '">' . esc_html__( '重新探测', 'wpdocs' ) . '</a>';
 
 View::page_head(
-	__( '状态', 'wpdocs' ),
-	__( '文档站与发布树只读探测。不把正文写入站点选项。', 'wpdocs' ),
+	__( '概览', 'wpdocs' ),
+	__( '文档站探测与接管状态。配置请到设置；绑定与同步请到工具。', 'wpdocs' ),
 	$refresh
 );
 View::saved_notice();
 View::error_notice();
 
-$partial_ok   = $site_ok || ( ! $tree_skip && $tree_ok );
-$show_next    = false;
+$configured   = Settings::is_configured() || ( '' !== $base_show );
 $empty_maps   = ( 0 === $bind_n && 0 === $redir_n );
-$probe_failed = ( '' !== $base_show && ! $home_ok && ! $partial_ok );
+$probe_failed = ( '' !== $base_show && ! $home_ok && ! ( $site_ok || ( ! $tree_skip && $tree_ok ) ) );
+$show_next    = false;
 
-if ( $empty_maps ) :
+if ( ! $configured ) :
 	$show_next = true;
 	?>
 	<div class="next">
-		<div class="tile accent"><?php echo View::icon( 'map' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+		<div class="tile accent"><?php echo View::icon( 'settings' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
 		<div>
-			<strong><?php esc_html_e( '还没有绑定或跳转', 'wpdocs' ); ?></strong>
-			<p class="d"><?php esc_html_e( '保存绑定后这里会出现计数；若站点曾用旧文档桥，启用本插件时会一次性导入跳转。', 'wpdocs' ); ?></p>
+			<strong><?php esc_html_e( '还没连上文档站', 'wpdocs' ); ?></strong>
+			<p class="d"><?php esc_html_e( '先填写文档站地址与 Token，再回来看探测结果。', 'wpdocs' ); ?></p>
 		</div>
-		<a class="btn btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-bindings' ) ); ?>"><?php esc_html_e( '去绑定', 'wpdocs' ); ?></a>
+		<a class="btn btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-settings' ) ); ?>"><?php esc_html_e( '去设置', 'wpdocs' ); ?></a>
 	</div>
 	<?php
 elseif ( $probe_failed ) :
@@ -78,31 +80,30 @@ elseif ( $probe_failed ) :
 		<a class="btn btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs&refresh=1' ) ); ?>"><?php esc_html_e( '重新探测', 'wpdocs' ); ?></a>
 	</div>
 	<?php
+elseif ( $empty_maps && Settings::MODE_OFF !== $mode ) :
+	$show_next = true;
+	?>
+	<div class="next">
+		<div class="tile accent"><?php echo View::icon( 'link' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+		<div>
+			<strong><?php esc_html_e( '还没有绑定或跳转', 'wpdocs' ); ?></strong>
+			<p class="d"><?php esc_html_e( '在工具里添加绑定，或同步书目后按标签对应文章。', 'wpdocs' ); ?></p>
+		</div>
+		<a class="btn btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=bindings' ) ); ?>"><?php esc_html_e( '去工具', 'wpdocs' ); ?></a>
+	</div>
+	<?php
 endif;
 
-// Notices: no engineering keys; skip info when .next already covers empty/import tip.
-if ( '' === $base_show ) :
-	?>
-	<div class="notice warn"><span><?php esc_html_e( '尚未填写文档站地址。探测会在保存地址后出现结果。', 'wpdocs' ); ?></span></div>
-	<?php
-elseif ( $probe_failed && ! $show_next ) :
-	?>
-	<div class="notice bad"><span><?php esc_html_e( '暂时无法探测文档站，请检查文档站地址后重试。', 'wpdocs' ); ?></span></div>
-	<?php
-elseif ( ! $home_ok && $partial_ok ) :
+if ( '' !== $base_show && ! $home_ok && ( $site_ok || ( ! $tree_skip && $tree_ok ) ) && ! $show_next ) :
 	?>
 	<div class="notice warn"><span><?php esc_html_e( '首页探测超时或失败，但站点地图或发布树仍可达。可点「重新探测」再试。', 'wpdocs' ); ?></span></div>
-	<?php
-elseif ( $home_ok && ! $empty_maps ) :
-	?>
-	<div class="notice info"><span><?php esc_html_e( '若站点曾使用旧文档桥，启用本插件时会把旧跳转一次性导入。', 'wpdocs' ); ?></span></div>
 	<?php
 endif;
 ?>
 
 <section class="card">
-	<h2 class="section-title"><?php esc_html_e( '探测', 'wpdocs' ); ?></h2>
-	<p class="section-desc"><?php echo esc_html( sprintf( /* translators: %s: plugin version */ __( '版本 %s。发布树只读，不写文档站。', 'wpdocs' ), WPDOCS_VERSION ) ); ?></p>
+	<h2 class="section-title"><?php esc_html_e( '现在怎样', 'wpdocs' ); ?></h2>
+	<p class="section-desc"><?php echo esc_html( sprintf( __( '版本 %s。发布树只读，不写文档站。', 'wpdocs' ), WPDOCS_VERSION ) ); ?></p>
 	<?php
 	View::status_row(
 		array(
@@ -139,7 +140,7 @@ endif;
 		View::status_row(
 			array(
 				'title'      => __( '发布树', 'wpdocs' ),
-				'detail'     => __( '已跳过（未配置或显式留空）', 'wpdocs' ),
+				'detail'     => __( '已跳过', 'wpdocs' ),
 				'icon'       => 'server',
 				'pill'       => __( '已跳过', 'wpdocs' ),
 				'pill_class' => 'warn',
@@ -163,7 +164,7 @@ endif;
 		View::status_row(
 			array(
 				'title'      => __( '文档站接口', 'wpdocs' ),
-				'detail'     => __( '未配置接口令牌，搜索与反查不可用', 'wpdocs' ),
+				'detail'     => __( '未配置 Token，搜索与同步不可用', 'wpdocs' ),
 				'icon'       => 'plug',
 				'pill'       => __( '已跳过', 'wpdocs' ),
 				'pill_class' => 'warn',
@@ -191,6 +192,16 @@ endif;
 	}
 	View::status_row(
 		array(
+			'title'      => __( '接管模式', 'wpdocs' ),
+			'detail'     => $mode_txt,
+			'icon'       => 'flash',
+			'pill'       => Settings::MODE_OFF === $mode ? __( '未开启', 'wpdocs' ) : __( '已开启', 'wpdocs' ),
+			'pill_class' => Settings::MODE_OFF === $mode ? 'warn' : 'ok',
+			'tile_class' => Settings::MODE_OFF === $mode ? 'warn' : 'ok',
+		)
+	);
+	View::status_row(
+		array(
 			'title'      => __( '绑定', 'wpdocs' ),
 			'detail'     => (string) $bind_n,
 			'icon'       => 'link',
@@ -210,31 +221,4 @@ endif;
 		)
 	);
 	?>
-</section>
-
-<section class="card">
-	<h2 class="section-title"><?php esc_html_e( '探测地址', 'wpdocs' ); ?></h2>
-	<p class="section-desc"><?php esc_html_e( '保存后立即刷新探测。发布树留空则用「文档站/books」。', 'wpdocs' ); ?></p>
-	<form method="post">
-		<?php wp_nonce_field( 'wpdocs_settings', 'wpdocs_settings_nonce' ); ?>
-		<?php
-		View::field(
-			array(
-				'for'     => 'wpdocs-base-url',
-				'label'   => __( '文档站地址', 'wpdocs' ),
-				'help'    => __( '用于首页与站点地图的探测。', 'wpdocs' ),
-				'control' => '<input id="wpdocs-base-url" type="url" name="base_url" value="' . esc_attr( $base_in ) . '" placeholder="https://docs.example.test" />',
-			)
-		);
-		View::field(
-			array(
-				'for'     => 'wpdocs-tree-url',
-				'label'   => __( '发布树地址（可选）', 'wpdocs' ),
-				'help'    => __( '留空则用「文档站/books」；保存为空字符串则跳过发布树探测。', 'wpdocs' ),
-				'control' => '<input id="wpdocs-tree-url" type="url" name="tree_url" value="' . esc_attr( $tree_in ) . '" />',
-			)
-		);
-		?>
-		<div class="wenpai-actions"><button type="submit" class="btn btn-primary"><?php esc_html_e( '保存并刷新探测', 'wpdocs' ); ?></button></div>
-	</form>
 </section>

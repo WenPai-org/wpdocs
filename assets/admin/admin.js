@@ -448,4 +448,70 @@
   bindSuggest();
   bindDryRun();
   bindFormValidate();
+
+  function syncToggle(btn) {
+    var row = btn.closest(".simple-row, .field, form, .card");
+    if (!row) return;
+    var cb = row.querySelector("[data-wpdocs-toggle-cb]");
+    if (!cb) return;
+    var on = !!cb.checked;
+    btn.classList.toggle("on", on);
+    var label = on ? btn.getAttribute("data-on") : btn.getAttribute("data-off");
+    // Keep <i></i> then text
+    var ico = btn.querySelector("i");
+    btn.textContent = "";
+    if (ico) btn.appendChild(ico);
+    else {
+      var i = document.createElement("i");
+      btn.appendChild(i);
+    }
+    btn.appendChild(document.createTextNode(label || (on ? "已开启" : "未开启")));
+  }
+
+  function refreshDisclosure() {
+    var form = document.getElementById("wpdocs-settings-form");
+    if (!form) return;
+    var mode = (form.querySelector('input[name="wpdocs[mode]"]:checked') || {}).value || "off";
+    form.querySelectorAll("[data-wpdocs-when-mode]").forEach(function (el) {
+      var need = el.getAttribute("data-wpdocs-when-mode");
+      el.hidden = need !== mode;
+    });
+    var commentsOn = false;
+    var ccb = form.querySelector('[data-wpdocs-toggle-cb][name="wpdocs[comments]"]');
+    if (ccb) commentsOn = !!ccb.checked;
+    form.querySelectorAll('[data-wpdocs-when-on="comments"]').forEach(function (el) {
+      el.hidden = !commentsOn;
+    });
+    // choice is-on class
+    form.querySelectorAll(".choice-cards .choice").forEach(function (lab) {
+      var r = lab.querySelector('input[type="radio"]');
+      lab.classList.toggle("is-on", !!(r && r.checked));
+    });
+  }
+
+  document.addEventListener("click", function (e) {
+    var btn = e.target && e.target.closest ? e.target.closest("[data-wpdocs-toggle]") : null;
+    if (!btn) return;
+    e.preventDefault();
+    var row = btn.closest(".simple-row, .field, form, .card");
+    var cb = row && row.querySelector("[data-wpdocs-toggle-cb]");
+    if (!cb) return;
+    cb.checked = !cb.checked;
+    syncToggle(btn);
+    refreshDisclosure();
+  });
+
+  document.addEventListener("change", function (e) {
+    var t = e.target;
+    if (!t) return;
+    if (t.matches && t.matches('input[name="wpdocs[mode]"]')) {
+      refreshDisclosure();
+    }
+  });
+
+  document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll("[data-wpdocs-toggle]").forEach(syncToggle);
+    refreshDisclosure();
+  });
+
 })();

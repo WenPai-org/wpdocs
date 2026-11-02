@@ -16,19 +16,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+$embed  = ! empty( $wpdocs_embed );
 $adv    = View::is_advanced();
 $filter = isset( $filter ) ? (string) $filter : '';
 ob_start();
-View::mode_toggle( 'wpdocs-redirects' );
+View::mode_toggle( 'wpdocs-tools' );
 $mode_html = ob_get_clean();
 
-View::page_head(
-	__( '跳转', 'wpdocs' ),
-	__( '旧文章地址转到文档站。没对上就回原文章，不拦截。', 'wpdocs' ),
-	$mode_html
-);
-View::saved_notice();
-View::error_notice();
+if ( ! $embed ) {
+	View::page_head( __( '跳转', 'wpdocs' ), __( '旧文章地址转到文档站。没对上就回原文章，不拦截。', 'wpdocs' ), $mode_html );
+	View::saved_notice();
+	View::error_notice();
+} else {
+	echo $mode_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+}
 if ( $adv ) :
 	?>
 	<div class="notice info" data-for-mode="advanced"><span><?php esc_html_e( '启用时若跳转表为空且存在旧跳转表，会一次性导入。目标用文档页 ID，不写死网址。', 'wpdocs' ); ?></span></div>

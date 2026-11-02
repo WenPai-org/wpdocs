@@ -45,6 +45,7 @@ final class Settings {
 			'post_types'     => array( 'post' ),
 			'new_page_prefix'=> '/document/',
 			'page_ttl'       => 0, // 0 = never expire; refreshed only when CocoBook changes.
+			'tree_url'       => '',
 			'comments'       => true,
 			'refresh_secret' => '',
 			'redirects'      => false, // 301 legacy WP paths to CocoBook (see Redirects).
@@ -169,18 +170,23 @@ final class Settings {
 		$cur = self::raw();
 		$out = $cur;
 
-		if ( isset( $input['base_url'] ) ) {
+		if ( isset( $input['base_url'] ) && ! self::is_locked( 'base_url' ) ) {
 			$out['base_url'] = untrailingslashit( esc_url_raw( trim( (string) $input['base_url'] ) ) );
 		}
-		if ( isset( $input['token_id'] ) ) {
+		if ( array_key_exists( 'tree_url', $input ) ) {
+			$out['tree_url'] = esc_url_raw( trim( (string) $input['tree_url'] ) );
+		}
+		if ( isset( $input['token_id'] ) && ! self::is_locked( 'token_id' ) ) {
 			$out['token_id'] = sanitize_text_field( (string) $input['token_id'] );
 		}
 		// Secret is write-only: empty input keeps the stored value.
-		if ( isset( $input['token_secret'] ) && '' !== trim( (string) $input['token_secret'] ) ) {
-			$out['token_secret'] = sanitize_text_field( (string) $input['token_secret'] );
-		}
-		if ( ! empty( $input['token_secret_clear'] ) ) {
-			$out['token_secret'] = '';
+		if ( ! self::is_locked( 'token_secret' ) ) {
+			if ( isset( $input['token_secret'] ) && '' !== trim( (string) $input['token_secret'] ) ) {
+				$out['token_secret'] = sanitize_text_field( (string) $input['token_secret'] );
+			}
+			if ( ! empty( $input['token_secret_clear'] ) ) {
+				$out['token_secret'] = '';
+			}
 		}
 		if ( isset( $input['site_tag'] ) ) {
 			$out['site_tag'] = sanitize_key( (string) $input['site_tag'] );
@@ -208,8 +214,8 @@ final class Settings {
 			$ttl             = (int) $input['page_ttl'];
 			$out['page_ttl'] = $ttl <= 0 ? 0 : max( 60, min( DAY_IN_SECONDS, $ttl ) );
 		}
-		$out['comments'] = ! empty( $input['comments'] );
-		$out['redirects'] = ! empty( $input['redirects'] );
+		$out['comments']  = isset( $input['comments'] ) && '1' === (string) $input['comments'];
+		$out['redirects'] = isset( $input['redirects'] ) && '1' === (string) $input['redirects'];
 		if ( isset( $input['comment_min_chars'] ) ) {
 			$out['comment_min_chars'] = max( 1, min( 1000, (int) $input['comment_min_chars'] ) );
 		}

@@ -51,3 +51,6 @@ cd prototypes/wpdocs && python3 -m http.server 8765
 | 密钥、token、真邮箱 | 未写入；文档站用 `https://docs.example.test` |
 
 G5 等人签 `APPROVAL.md` 后再 vendor `wenpai-admin-ui` 0.2.3，用 kit CSS 换掉本内联皮。
+
+## IA（2026-11-02）
+横 Tab：概览 / 设置 / 工具。绑定、跳转、同步在工具内 `.wenpai-subnav`。

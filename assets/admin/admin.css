@@ -246,12 +246,44 @@ body.wenpai-ui-page .wenpai-app .sr-only {
   border: 0;
 }
 
-/* Settings groups (ported connection / books / rollout). */
-.wenpai-app .field-group { margin: 0 0 20px; }
-.wenpai-app .field-group-title {
-	font-size: 13px;
-	font-weight: 600;
-	margin: 0 0 12px;
-	color: var(--wenpai-fg, #1e1e1e);
+
+
+/* Tools subnav sits in page-head right / under lede. */
+.wenpai-app .wenpai-page-head .wenpai-subnav { margin: 0; }
+.wenpai-app .wenpai-subnav .seg { display: inline-flex; }
+
+/* Settings books list — kit chk-grid, capped height. */
+.wenpai-app .wpdocs-books {
+  max-height: 16em;
+  overflow: auto;
+  max-width: 36em;
 }
-.wenpai-app .wpdocs-books label { margin: 2px 0; }
+
+/* Choice cards on settings — one column on simple stack if needed. */
+.wenpai-app .wpdocs-settings-form .choice-cards {
+  width: 100%;
+}
+
+/* Screen-reader checkbox driving kit toggle. */
+.wenpai-app .wpdocs-toggle-cb.screen-reader-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+/* Preview-out ok/bad (tools dry-run / suggest). */
+.wenpai-app .preview-out.is-ok,
+.wenpai-app .wpdocs-suggest-out.is-ok {
+  background: #d4edda;
+  color: #155724;
+}
+.wenpai-app .preview-out.is-bad,
+.wenpai-app .wpdocs-suggest-out.is-bad {
+  background: #f8d7da;
+  color: #d63638;
+}

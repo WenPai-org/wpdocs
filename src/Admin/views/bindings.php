@@ -15,18 +15,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+$embed = ! empty( $wpdocs_embed );
 $adv = View::is_advanced();
 ob_start();
-View::mode_toggle( 'wpdocs-bindings' );
+View::mode_toggle( 'wpdocs-tools' );
 $mode_html = ob_get_clean();
 
-View::page_head(
-	__( '绑定', 'wpdocs' ),
-	__( '把 WordPress 文章对到文档站的一页。不改文档站内容。', 'wpdocs' ),
-	$mode_html
-);
-View::saved_notice();
-View::error_notice();
+if ( ! $embed ) {
+	View::page_head( __( '绑定', 'wpdocs' ), __( '把 WordPress 文章对到文档站的一页。不改文档站内容。', 'wpdocs' ), $mode_html );
+	View::saved_notice();
+	View::error_notice();
+} else {
+	echo $mode_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+}
 ?>
 
 <section class="card">

@@ -59,11 +59,12 @@ final class Menu {
 			'dashicons-book-alt',
 			58
 		);
-		add_submenu_page( 'wpdocs', __( '状态', 'wpdocs' ), __( '状态', 'wpdocs' ), 'manage_options', 'wpdocs', array( self::class, 'render_status' ) );
-		add_submenu_page( 'wpdocs', __( '绑定', 'wpdocs' ), __( '绑定', 'wpdocs' ), 'manage_options', 'wpdocs-bindings', array( self::class, 'render_bindings' ) );
-		add_submenu_page( 'wpdocs', __( '跳转', 'wpdocs' ), __( '跳转', 'wpdocs' ), 'manage_options', 'wpdocs-redirects', array( self::class, 'render_redirects' ) );
+		add_submenu_page( 'wpdocs', __( '概览', 'wpdocs' ), __( '概览', 'wpdocs' ), 'manage_options', 'wpdocs', array( self::class, 'render_status' ) );
 		add_submenu_page( 'wpdocs', __( '设置', 'wpdocs' ), __( '设置', 'wpdocs' ), 'manage_options', 'wpdocs-settings', array( self::class, 'render_settings' ) );
-		// 空 parent：不进左侧菜单（帮助不占第四 Tab）；标题靠 help_admin_title。
+		add_submenu_page( 'wpdocs', __( '工具', 'wpdocs' ), __( '工具', 'wpdocs' ), 'manage_options', 'wpdocs-tools', array( self::class, 'render_tools' ) );
+		// Deep links keep working; not listed under parent (档 A：横 Tab 只有概览/设置/工具).
+		add_submenu_page( '', __( '绑定', 'wpdocs' ), __( '绑定', 'wpdocs' ), 'manage_options', 'wpdocs-bindings', array( self::class, 'render_bindings' ) );
+		add_submenu_page( '', __( '跳转', 'wpdocs' ), __( '跳转', 'wpdocs' ), 'manage_options', 'wpdocs-redirects', array( self::class, 'render_redirects' ) );
 		add_submenu_page( '', __( '帮助', 'wpdocs' ), __( '帮助', 'wpdocs' ), 'manage_options', 'wpdocs-help', array( self::class, 'render_help' ) );
 	}
 
@@ -114,8 +115,8 @@ final class Menu {
 			'current'            => $current,
 			'tabs'               => array(
 				array(
-					'id'        => 'status',
-					'label'     => __( '状态', 'wpdocs' ),
+					'id'        => 'overview',
+					'label'     => __( '概览', 'wpdocs' ),
 					'url'       => admin_url( 'admin.php?page=wpdocs' ),
 					'icon_html' => $icon( 'status' ),
 				),
@@ -126,16 +127,10 @@ final class Menu {
 					'icon_html' => $icon( 'settings' ),
 				),
 				array(
-					'id'        => 'bindings',
-					'label'     => __( '绑定', 'wpdocs' ),
-					'url'       => admin_url( 'admin.php?page=wpdocs-bindings' ),
-					'icon_html' => $icon( 'link' ),
-				),
-				array(
-					'id'        => 'redirects',
-					'label'     => __( '跳转', 'wpdocs' ),
-					'url'       => admin_url( 'admin.php?page=wpdocs-redirects' ),
-					'icon_html' => $icon( 'share' ),
+					'id'        => 'tools',
+					'label'     => __( '工具', 'wpdocs' ),
+					'url'       => admin_url( 'admin.php?page=wpdocs-tools' ),
+					'icon_html' => $icon( 'tools' ),
 				),
 			),
 			'help_url'           => admin_url( 'admin.php?page=wpdocs-help' ),
@@ -186,13 +181,13 @@ final class Menu {
 			Client::$force = true;
 			$res = Client::get( 'system' );
 			$ok  = ! is_wp_error( $res );
-			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-settings&msg=' . ( $ok ? 'test_ok' : 'test_error' ) ) );
+			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-tools&section=sync&msg=' . ( $ok ? 'test_ok' : 'test_error' ) ) );
 			exit;
 		}
 		if ( isset( $_POST['wpdocs_sync_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_sync_nonce'] ) ), 'wpdocs_sync' ) ) {
 			$cat = Core::sync_now();
 			$ok  = ! is_wp_error( $cat );
-			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-settings&msg=' . ( $ok ? 'synced' : 'sync_error' ) ) );
+			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-tools&section=sync&msg=' . ( $ok ? 'synced' : 'sync_error' ) ) );
 			exit;
 		}
 
@@ -209,7 +204,7 @@ final class Menu {
 			}
 			$q    = $ok ? 'updated=1' : 'error=1';
 			$mode = isset( $_POST['wpdocs_mode'] ) && 'advanced' === sanitize_key( (string) wp_unslash( $_POST['wpdocs_mode'] ) ) ? '&mode=advanced' : '';
-			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-bindings&' . $q . $mode ) );
+			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-tools&section=bindings&' . $q . $mode ) );
 			exit;
 		}
 
@@ -239,7 +234,7 @@ final class Menu {
 			if ( $filt && in_array( $filt, RedirectRepo::statuses(), true ) ) {
 				$q .= '&status=' . rawurlencode( $filt );
 			}
-			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-redirects&' . $q . $mode ) );
+			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-tools&section=redirects&' . $q . $mode ) );
 			exit;
 		}
 
@@ -264,7 +259,7 @@ final class Menu {
 				if ( $client ) {
 					$probe = $client->page( $page_id );
 					if ( empty( $probe['ok'] ) ) {
-						wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-bindings&error=1' . $mode ) );
+						wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-tools&section=bindings&error=1' . $mode ) );
 						exit;
 					}
 					$data = isset( $probe['data'] ) && is_array( $probe['data'] ) ? $probe['data'] : array();
@@ -289,7 +284,7 @@ final class Menu {
 				)
 			);
 			$q = $id ? 'updated=1' : 'error=1';
-			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-bindings&' . $q . $mode ) );
+			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-tools&section=bindings&' . $q . $mode ) );
 			exit;
 		}
 		if ( isset( $_POST['wpdocs_redir_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_redir_nonce'] ) ), 'wpdocs_redir' ) ) {
@@ -309,21 +304,7 @@ final class Menu {
 			if ( isset( $_POST['wpdocs_mode'] ) && 'advanced' === sanitize_key( (string) wp_unslash( $_POST['wpdocs_mode'] ) ) ) {
 				$mode = '&mode=advanced';
 			}
-			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-redirects&' . $q . $mode ) );
-			exit;
-		}
-		if ( isset( $_POST['wpdocs_settings_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_settings_nonce'] ) ), 'wpdocs_settings' ) ) {
-			$base = esc_url_raw( (string) ( $_POST['base_url'] ?? '' ) );
-			$tree = isset( $_POST['tree_url'] ) ? esc_url_raw( (string) wp_unslash( $_POST['tree_url'] ) ) : '';
-			$opt  = get_option( 'wpdocs_settings', array() );
-			if ( ! is_array( $opt ) ) {
-				$opt = array();
-			}
-			$opt['base_url'] = $base;
-			$opt['tree_url'] = $tree;
-			update_option( 'wpdocs_settings', $opt, false );
-			HttpSource::bust_status_cache();
-			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs&updated=1&refresh=1' ) );
+			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-tools&section=redirects&' . $q . $mode ) );
 			exit;
 		}
 	}
@@ -335,36 +316,109 @@ final class Menu {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only refresh flag.
 		$fresh = isset( $_GET['refresh'] ) && '1' === (string) wp_unslash( $_GET['refresh'] );
 		$st    = HttpSource::status( $fresh );
-		self::open_shell( 'status' );
+		self::open_shell( 'overview' );
 		include WPDOCS_DIR . 'src/Admin/views/status.php';
-		self::close_shell( 'status' );
+		self::close_shell( 'overview' );
+	}
+
+
+
+
+
+	/** @return string bindings|redirects|sync */
+	private static function tools_section(): string {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$s = isset( $_GET['section'] ) ? sanitize_key( (string) wp_unslash( $_GET['section'] ) ) : '';
+		if ( in_array( $s, array( 'bindings', 'redirects', 'sync' ), true ) ) {
+			return $s;
+		}
+		return 'bindings';
+	}
+
+	public static function render_tools(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+		self::render_tools_section( self::tools_section() );
 	}
 
 	public static function render_bindings(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
-		$items = BindRepo::list( 100 );
-		self::open_shell( 'bindings' );
-		include WPDOCS_DIR . 'src/Admin/views/bindings.php';
-		self::close_shell( 'bindings' );
+		self::render_tools_section( 'bindings' );
 	}
 
 	public static function render_redirects(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$filter = isset( $_GET['status'] ) ? sanitize_key( (string) wp_unslash( $_GET['status'] ) ) : '';
-		if ( $filter && ! in_array( $filter, RedirectRepo::statuses(), true ) ) {
-			$filter = '';
-		}
-		$items = RedirectRepo::list( $filter, 100 );
-		self::open_shell( 'redirects' );
-		include WPDOCS_DIR . 'src/Admin/views/redirects.php';
-		self::close_shell( 'redirects' );
+		self::render_tools_section( 'redirects' );
 	}
 
+	private static function render_tools_section( string $section ): void {
+		$items = null;
+		$filter = '';
+		if ( 'bindings' === $section ) {
+			$items = BindRepo::all();
+		} elseif ( 'redirects' === $section ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$filter = isset( $_GET['filter'] ) ? sanitize_key( (string) wp_unslash( $_GET['filter'] ) ) : '';
+			$items  = RedirectRepo::all( $filter );
+		} elseif ( 'sync' === $section ) {
+			$s     = Settings::raw();
+			$books = Settings::is_configured() ? Client::get( 'books', array( 'count' => 500, 'sort' => 'name' ) ) : null;
+			$cat   = Settings::is_configured() ? Catalog::get() : null;
+			$log   = Legacy::get_option( 'wpdocs_log', array() );
+			$log   = is_array( $log ) ? array_reverse( $log ) : array();
+		}
+
+		ob_start();
+		View::subnav(
+			$section,
+			array(
+				array(
+					'id'    => 'bindings',
+					'label' => __( '绑定', 'wpdocs' ),
+					'url'   => admin_url( 'admin.php?page=wpdocs-tools&section=bindings' ),
+				),
+				array(
+					'id'    => 'redirects',
+					'label' => __( '跳转', 'wpdocs' ),
+					'url'   => admin_url( 'admin.php?page=wpdocs-tools&section=redirects' ),
+				),
+				array(
+					'id'    => 'sync',
+					'label' => __( '同步', 'wpdocs' ),
+					'url'   => admin_url( 'admin.php?page=wpdocs-tools&section=sync' ),
+				),
+			)
+		);
+		$sub = ob_get_clean();
+
+		$titles = array(
+			'bindings'  => array( __( '绑定', 'wpdocs' ), __( '把 WordPress 文章对到文档站的一页。危险或批量动作放在工具。', 'wpdocs' ) ),
+			'redirects' => array( __( '跳转', 'wpdocs' ), __( '旧文章地址转到文档站。没对上就回原文章，不拦截。', 'wpdocs' ) ),
+			'sync'      => array( __( '同步', 'wpdocs' ), __( '测试连接、重建书目索引与查看同步日志。不写文档站。', 'wpdocs' ) ),
+		);
+		$title = $titles[ $section ][0] ?? __( '工具', 'wpdocs' );
+		$lede  = $titles[ $section ][1] ?? '';
+
+		self::open_shell( 'tools' );
+		View::page_head( $title, $lede, $sub );
+		View::saved_notice();
+		View::error_notice();
+
+		$wpdocs_embed = true; // views skip their own page_head.
+		if ( 'bindings' === $section ) {
+			include WPDOCS_DIR . 'src/Admin/views/bindings.php';
+		} elseif ( 'redirects' === $section ) {
+			include WPDOCS_DIR . 'src/Admin/views/redirects.php';
+		} else {
+			include WPDOCS_DIR . 'src/Admin/views/sync.php';
+		}
+		self::close_shell( 'tools' );
+	}
 
 	public static function render_settings(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -372,9 +426,6 @@ final class Menu {
 		}
 		$s     = Settings::raw();
 		$books = Settings::is_configured() ? Client::get( 'books', array( 'count' => 500, 'sort' => 'name' ) ) : null;
-		$cat   = Settings::is_configured() ? Catalog::get() : null;
-		$log   = Legacy::get_option( 'wpdocs_log', array() );
-		$log   = is_array( $log ) ? array_reverse( $log ) : array();
 		self::open_shell( 'settings' );
 		include WPDOCS_DIR . 'src/Admin/views/settings.php';
 		self::close_shell( 'settings' );
