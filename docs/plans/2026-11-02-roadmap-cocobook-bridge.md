@@ -93,9 +93,9 @@
 
 ### P3 — 工程化
 
-1. Contract tests 对 BS demo 或录制 fixtures（VCR）
-2. 可选：从 Git Markdown **运维导入 BS**（脚本仓，非本插件）补「内容在 DB、难 PR」短板
-3. 指标：绑定覆盖率、404 unmatched 趋势、探测失败率
+1. Contract tests 对 BS demo 或录制 fixtures（VCR） — **已**（`tests/fixtures/bookstack/*` + `BookStackFixturesTest`）
+2. 可选：从 Git Markdown **运维导入 BS**（脚本仓，非本插件）补「内容在 DB、难 PR」短板 — **搁置**（不进本仓）
+3. 指标：绑定覆盖率、404 unmatched 趋势、探测失败率 — **已**（`Metrics` → `GET /status.metrics` + 概览三行；日检写 14 日环）
 
 ---
 
@@ -125,4 +125,4 @@
 2. ~~Bind 保存校验~~（已）
 3. ~~打通 search suggest~~（`/search` + `/suggest` + 绑定页 UI）
 4. ~~补 `redirect-vs-cocobook-docs` 旧仓对照 TODO~~（已）
-5. P1 / P2 已收口。下一步 **P3**（BS fixtures / 导入脚本仓 / 指标）。
+5. P1 / P2 / P3（fixtures + 指标）已收口。Git→BS 导入脚本另仓另开；下一批按产品验收 / 发版。

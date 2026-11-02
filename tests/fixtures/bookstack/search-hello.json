@@ -1,0 +1,29 @@
+{
+  "total": 2,
+  "data": [
+    {
+      "id": 12,
+      "name": "Getting Started",
+      "slug": "getting-started",
+      "type": "page",
+      "url": "/books/demo/page/getting-started",
+      "book_id": 1,
+      "preview_html": {
+        "name": "Getting Started",
+        "content": "Hello fixture hit"
+      }
+    },
+    {
+      "id": 44,
+      "name": "Hello World Notes",
+      "slug": "hello-world-notes",
+      "type": "page",
+      "url": "/books/demo/page/hello-world-notes",
+      "book_id": 1,
+      "preview_html": {
+        "name": "Hello World Notes",
+        "content": "Another hello"
+      }
+    }
+  ]
+}

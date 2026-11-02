@@ -168,8 +168,13 @@ final class Repository {
 		return $wpdb->get_results( "SELECT * FROM " . self::table() . " ORDER BY id DESC LIMIT {$limit} OFFSET {$offset}" );
 	}
 
-	public static function count(): int {
+	public static function count( string $status = '' ): int {
 		global $wpdb;
+		if ( $status && in_array( $status, array( 'active', 'disabled' ), true ) ) {
+			return (int) $wpdb->get_var(
+				$wpdb->prepare( 'SELECT COUNT(*) FROM ' . self::table() . ' WHERE status = %s', $status )
+			);
+		}
 		return (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . self::table() );
 	}
 

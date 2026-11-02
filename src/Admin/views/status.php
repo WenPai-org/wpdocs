@@ -306,5 +306,65 @@ endif;
 			'tile_class' => $redir_n > 0 ? 'ok' : 'warn',
 		)
 	);
+	$mx = \Wpdocs\Metrics::snapshot( $st );
+	$cov = isset( $mx['bindings'] ) && is_array( $mx['bindings'] ) ? $mx['bindings'] : array();
+	$ratio = $cov['ratio'] ?? null;
+	$cov_detail = sprintf(
+		'%d / %d',
+		(int) ( $cov['active'] ?? 0 ),
+		(int) ( $cov['eligible'] ?? 0 )
+	);
+	if ( null !== $ratio ) {
+		$cov_detail .= ' · ' . (string) round( (float) $ratio * 100, 1 ) . '%';
+	}
+	View::status_row(
+		array(
+			'title'      => __( '绑定覆盖', 'wpdocs' ),
+			'detail'     => $cov_detail,
+			'icon'       => 'link',
+			'pill'       => null !== $ratio && (float) $ratio >= 0.5 ? __( '过半', 'wpdocs' ) : __( '偏低', 'wpdocs' ),
+			'pill_class' => null !== $ratio && (float) $ratio >= 0.5 ? 'ok' : 'warn',
+			'tile_class' => null !== $ratio && (float) $ratio >= 0.5 ? 'ok' : 'warn',
+		)
+	);
+	$unm = (int) ( $mx['redirects']['unmatched'] ?? 0 );
+	$hist_n = (int) ( $mx['history']['days'] ?? 0 );
+	View::status_row(
+		array(
+			'title'      => __( '未匹配 404', 'wpdocs' ),
+			'detail'     => $hist_n > 0
+				? sprintf(
+					/* translators: 1: unmatched count, 2: history days */
+					__( '%1$d 条 · 已记 %2$d 日', 'wpdocs' ),
+					$unm,
+					$hist_n
+				)
+				: (string) $unm,
+			'icon'       => 'share',
+			'pill'       => $unm > 0 ? __( '待处理', 'wpdocs' ) : __( '干净', 'wpdocs' ),
+			'pill_class' => $unm > 0 ? 'warn' : 'ok',
+			'tile_class' => $unm > 0 ? 'warn' : 'ok',
+		)
+	);
+	$fail_r = $mx['probe']['fail_rate_14d'] ?? null;
+	$samp   = (int) ( $mx['probe']['samples'] ?? 0 );
+	$fail_detail = $samp > 0 && null !== $fail_r
+		? sprintf(
+			/* translators: 1: percent, 2: sample days */
+			__( '%1$s%% · %2$d 日样本', 'wpdocs' ),
+			(string) round( (float) $fail_r * 100, 1 ),
+			$samp
+		)
+		: __( '尚无日检样本', 'wpdocs' );
+	View::status_row(
+		array(
+			'title'      => __( '探测失败率', 'wpdocs' ),
+			'detail'     => $fail_detail,
+			'icon'       => 'server',
+			'pill'       => null !== $fail_r && (float) $fail_r > 0.2 ? __( '偏高', 'wpdocs' ) : ( $samp > 0 ? __( '正常', 'wpdocs' ) : __( '等待', 'wpdocs' ) ),
+			'pill_class' => null !== $fail_r && (float) $fail_r > 0.2 ? 'bad' : ( $samp > 0 ? 'ok' : 'warn' ),
+			'tile_class' => null !== $fail_r && (float) $fail_r > 0.2 ? 'bad' : ( $samp > 0 ? 'ok' : 'warn' ),
+		)
+	);
 	?>
 </section>

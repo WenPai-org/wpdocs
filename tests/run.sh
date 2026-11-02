@@ -41,6 +41,12 @@ php tests/CatalogIndexTtlTest.php
 echo "== Bind drift check unit tests (no WP) =="
 php tests/BindDriftCheckTest.php
 
+echo "== Metrics unit tests (no WP) =="
+php tests/MetricsTest.php
+
+echo "== BookStack fixture (VCR) tests (no WP) =="
+php tests/BookStackFixturesTest.php
+
 echo "== dry-run must not persist =="
 # Listener::dry_run body (until the next method) must not call hit() or log_unmatched().
 dry_body="$(awk '
@@ -114,6 +120,10 @@ if ! echo "$status_body" | grep -q 'Probe::failed_status'; then
 fi
 if ! echo "$status_body" | grep -q 'catch ( Throwable'; then
 	echo "GET /status missing Throwable catch" >&2
+	exit 1
+fi
+if ! echo "$status_body" | grep -q 'Metrics::snapshot'; then
+	echo "GET /status missing Metrics::snapshot" >&2
 	exit 1
 fi
 echo "ok publish HEAD-only, no option writes"

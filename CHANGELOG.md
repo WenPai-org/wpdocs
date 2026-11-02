@@ -12,6 +12,7 @@
 - 发布树索引：`Catalog` 用短 TTL（默认 ≤300s），`page_ttl=0` 不再让索引永不过期；页正文缓存仍跟 `page_ttl`，不进 option
 - 日检抽查绑定远端：`Bind\DriftCheck`（失效/别名已变摘要进 transient；概览告警）
 - P2 运维：Webhook 同步页给完整 URL 并 bust `RemoteMeta`；远端「无权限」+ 附件数；`docs/ops/wpdocs-ops.md`（导出 / App Passwords REST 矩阵）；帮助页运维节
+- P3：`Metrics`（绑定覆盖 / unmatched / 探测失败率，14 日环）进 `GET /status` 与概览；`tests/fixtures/bookstack` VCR 契约测
 
 ## 0.3.0-dev (UI)
 

@@ -11,6 +11,7 @@ use Wpdocs\Bind\Repository as BindRepo;
 use Wpdocs\Bind\ResolveDraft;
 use Wpdocs\Bind\Suggest;
 use Wpdocs\Http\BookStackClient;
+use Wpdocs\Metrics;
 use Wpdocs\Publish\HttpSource;
 use Wpdocs\Publish\Probe;
 use Wpdocs\Redirect\Listener;
@@ -174,6 +175,7 @@ final class Controller {
 				'bindings'  => BindRepo::count(),
 				'redirects' => RedirectRepo::count(),
 				'publish'   => $publish,
+				'metrics'   => Metrics::snapshot( $publish ),
 			)
 		);
 	}

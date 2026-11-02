@@ -26,7 +26,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  *    for the total and newest updated_at of books, chapters and pages
  *    (3 tiny requests). Unchanged => nothing happens. Changed => only pages
  *    updated since the last check are cleared, then the catalog is rebuilt.
- *  - Same daily pass samples bindings for remote title/slug drift (Bind\DriftCheck).
+	 *  - Same daily pass samples bindings for remote title/slug drift (Bind\DriftCheck)
+	 *    and records Metrics (coverage / unmatched / probe ok) for GET /status.
  *
  * @since 0.1.0
  */
@@ -236,15 +237,19 @@ final class Core {
 		self::maybe_drift_check();
 	}
 
-	/** Sample bindings for remote broken / slug drift (compact transient only). */
+	/** Sample bindings for remote broken / slug drift; record daily metrics. */
 	private static function maybe_drift_check(): void {
-		if ( ! Settings::is_configured() ) {
-			return;
+		if ( Settings::is_configured() ) {
+			try {
+				\Wpdocs\Bind\DriftCheck::run();
+			} catch ( \Throwable $e ) {
+				Client::log( 'error', 'Drift check failed: ' . $e->getMessage() );
+			}
 		}
 		try {
-			\Wpdocs\Bind\DriftCheck::run();
+			Metrics::record_daily();
 		} catch ( \Throwable $e ) {
-			Client::log( 'error', 'Drift check failed: ' . $e->getMessage() );
+			Client::log( 'error', 'Metrics record failed: ' . $e->getMessage() );
 		}
 	}
 
