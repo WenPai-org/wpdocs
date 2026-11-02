@@ -8,6 +8,7 @@
 namespace Wpdocs\Admin;
 
 use Wpdocs\Bind\Repository as BindRepo;
+use Wpdocs\Bind\RemoteMeta;
 use Wpdocs\Http\BookStackClient;
 use Wpdocs\Publish\HttpSource;
 use Wpdocs\Redirect\Repository as RedirectRepo;
@@ -336,6 +337,9 @@ final class Menu {
 					'status'         => $status,
 				)
 			);
+			if ( $id && $page_id > 0 ) {
+				RemoteMeta::bust( $page_id );
+			}
 			$q = $id ? 'updated=1' : 'error=1';
 			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-tools&section=bindings&' . $q . $mode ) );
 			exit;
@@ -416,8 +420,10 @@ final class Menu {
 	private static function render_tools_section( string $section ): void {
 		$items = null;
 		$filter = '';
+		$remote = array();
 		if ( 'bindings' === $section ) {
-			$items = BindRepo::list();
+			$items  = BindRepo::list();
+			$remote = RemoteMeta::for_rows( is_array( $items ) ? $items : array() );
 		} elseif ( 'redirects' === $section ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$filter = isset( $_GET['filter'] ) ? sanitize_key( (string) wp_unslash( $_GET['filter'] ) ) : '';

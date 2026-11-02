@@ -293,6 +293,41 @@ final class View {
 		);
 	}
 
+	/**
+	 * Remote BookStack probe pill for a binding row.
+	 *
+	 * @param array{state?:string}|string $meta_or_state
+	 * @return array{label:string,class:string}
+	 */
+	public static function bind_remote_pill( $meta_or_state ): array {
+		$state = is_array( $meta_or_state )
+			? (string) ( $meta_or_state['state'] ?? '' )
+			: (string) $meta_or_state;
+		$map = array(
+			'ok'      => array(
+				'label' => __( '远端正常', 'wpdocs' ),
+				'class' => 'ok',
+			),
+			'broken'  => array(
+				'label' => __( '远端失效', 'wpdocs' ),
+				'class' => 'bad',
+			),
+			'stale'   => array(
+				'label' => __( '别名已变', 'wpdocs' ),
+				'class' => 'warn',
+			),
+			'skipped' => array(
+				'label' => __( '未探测', 'wpdocs' ),
+				'class' => '',
+			),
+			'unknown' => array(
+				'label' => __( '探测失败', 'wpdocs' ),
+				'class' => 'warn',
+			),
+		);
+		return $map[ $state ] ?? $map['unknown'];
+	}
+
 	public static function bind_source_label( string $source ): string {
 		$map = array(
 			'manual' => __( '手工', 'wpdocs' ),

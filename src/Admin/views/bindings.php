@@ -169,6 +169,7 @@ if ( ! $embed ) {
 				<tr>
 					<th><?php esc_html_e( '文章', 'wpdocs' ); ?></th>
 					<th><?php esc_html_e( '文档页', 'wpdocs' ); ?></th>
+					<th><?php esc_html_e( '远端', 'wpdocs' ); ?></th>
 					<?php if ( $adv ) : ?>
 						<th><?php esc_html_e( '外部 ID', 'wpdocs' ); ?></th>
 						<th><?php esc_html_e( '来源', 'wpdocs' ); ?></th>
@@ -184,11 +185,16 @@ if ( ! $embed ) {
 				$ext  = (string) ( $row->external_id ?? '' );
 				$type = (string) ( $row->wp_post_type ?? 'post' );
 				$type_label = 'page' === $type ? __( '页面', 'wpdocs' ) : __( '文章', 'wpdocs' );
+				$page_id = (int) ( $row->docs_page_id ?? 0 );
+				$rmeta   = ( isset( $remote ) && is_array( $remote ) && isset( $remote[ $page_id ] ) && is_array( $remote[ $page_id ] ) )
+					? $remote[ $page_id ]
+					: array( 'state' => 'skipped', 'title' => '' );
+				$rpill = View::bind_remote_pill( $rmeta );
 				$fill = wp_json_encode(
 					array(
 						'wp_post_id'     => (int) $row->wp_post_id,
 						'wp_post_type'   => $type,
-						'docs_page_id'   => (int) $row->docs_page_id,
+						'docs_page_id'   => $page_id,
 						'docs_book_slug' => (string) $row->docs_book_slug,
 						'docs_page_slug' => (string) $row->docs_page_slug,
 						'external_id'    => $ext,
@@ -203,8 +209,14 @@ if ( ! $embed ) {
 					<td>
 						<?php echo esc_html( $row->docs_book_slug . '/' . $row->docs_page_slug ); ?>
 						<?php if ( $adv ) : ?>
-							<code>#<?php echo (int) $row->docs_page_id; ?></code>
+							<code>#<?php echo $page_id; ?></code>
 						<?php endif; ?>
+					</td>
+					<td>
+						<?php if ( '' !== (string) ( $rmeta['title'] ?? '' ) ) : ?>
+							<div class="t"><?php echo esc_html( (string) $rmeta['title'] ); ?></div>
+						<?php endif; ?>
+						<span class="pill <?php echo esc_attr( $rpill['class'] ); ?>"><?php echo esc_html( $rpill['label'] ); ?></span>
 					</td>
 					<?php if ( $adv ) : ?>
 						<td><?php echo '' !== $ext ? '<code>' . esc_html( $ext ) . '</code>' : '—'; ?></td>
