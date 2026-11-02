@@ -9,6 +9,7 @@ namespace Wpdocs\Rest;
 
 use Wpdocs\Bind\Repository as BindRepo;
 use Wpdocs\Bind\ResolveDraft;
+use Wpdocs\Http\BookStackClient;
 use Wpdocs\Publish\HttpSource;
 use Wpdocs\Publish\Probe;
 use Wpdocs\Redirect\Listener;
@@ -33,6 +34,13 @@ final class Controller {
 				'methods'             => 'GET',
 				'callback'            => array( self::class, 'status' ),
 				'permission_callback' => array( self::class, 'can_manage' ),
+				'args'                => array(
+					'refresh' => array(
+						'description' => 'Force re-probe (bypass status cache).',
+						'type'        => 'boolean',
+						'default'     => false,
+					),
+				),
 			)
 		);
 		register_rest_route(
@@ -94,15 +102,40 @@ final class Controller {
 				'permission_callback' => array( self::class, 'can_manage' ),
 			)
 		);
+		register_rest_route(
+			$ns,
+			'/search',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( self::class, 'search' ),
+				'permission_callback' => array( self::class, 'can_manage' ),
+				'args'                => array(
+					'q'     => array(
+						'type'              => 'string',
+						'required'          => true,
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+					'count' => array(
+						'type'    => 'integer',
+						'default' => 20,
+					),
+					'page'  => array(
+						'type'    => 'integer',
+						'default' => 1,
+					),
+				),
+			)
+		);
 	}
 
 	public static function can_manage(): bool {
 		return current_user_can( 'manage_options' );
 	}
 
-	public static function status(): WP_REST_Response {
+	public static function status( WP_REST_Request $req ): WP_REST_Response {
+		$fresh = (bool) $req->get_param( 'refresh' );
 		try {
-			$publish = HttpSource::status();
+			$publish = HttpSource::status( $fresh );
 		} catch ( Throwable $e ) {
 			$publish = Probe::failed_status( $e->getMessage() );
 		}
@@ -151,8 +184,39 @@ final class Controller {
 		return $out;
 	}
 
-	public static function upsert_binding( WP_REST_Request $req ): WP_REST_Response {
-		$data = self::request_payload( $req );
+	/**
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public static function upsert_binding( WP_REST_Request $req ) {
+		$data    = self::request_payload( $req );
+		$page_id = (int) ( $data['docs_page_id'] ?? 0 );
+		if ( $page_id > 0 ) {
+			$client = BookStackClient::from_config(
+				array(
+					'base_url' => HttpSource::base_url(),
+				)
+			);
+			if ( $client ) {
+				$probe = $client->page( $page_id );
+				if ( empty( $probe['ok'] ) ) {
+					return new WP_Error(
+						'wpdocs_page_invalid',
+						(string) ( $probe['error'] ?? 'not_found' ),
+						array(
+							'status' => 400,
+							'code'   => (int) ( $probe['code'] ?? 0 ),
+						)
+					);
+				}
+				$remote = isset( $probe['data'] ) && is_array( $probe['data'] ) ? $probe['data'] : array();
+				if ( empty( $data['docs_book_slug'] ) && ! empty( $remote['book_slug'] ) ) {
+					$data['docs_book_slug'] = (string) $remote['book_slug'];
+				}
+				if ( empty( $data['docs_page_slug'] ) && ! empty( $remote['slug'] ) ) {
+					$data['docs_page_slug'] = (string) $remote['slug'];
+				}
+			}
+		}
 		$id   = BindRepo::upsert( $data );
 		$post = (int) ( $data['wp_post_id'] ?? 0 );
 		return new WP_REST_Response(
@@ -297,5 +361,81 @@ final class Controller {
 	public static function dry_run( WP_REST_Request $req ): WP_REST_Response {
 		$path = (string) $req->get_param( 'path' );
 		return new WP_REST_Response( Listener::dry_run( $path ) );
+	}
+
+	/**
+	 * GET /search?q= — BookStack search proxy (Token required).
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public static function search( WP_REST_Request $req ) {
+		$q = trim( (string) $req->get_param( 'q' ) );
+		if ( '' === $q ) {
+			return new WP_Error( 'wpdocs_bad_search', 'q is required', array( 'status' => 400 ) );
+		}
+		$client = BookStackClient::from_config(
+			array(
+				'base_url' => HttpSource::base_url(),
+			)
+		);
+		if ( ! $client ) {
+			return new WP_Error(
+				'wpdocs_no_token',
+				'WPDOCS_TOKEN_ID / WPDOCS_TOKEN_SECRET required',
+				array( 'status' => 503 )
+			);
+		}
+		$count = max( 1, min( 100, (int) ( $req->get_param( 'count' ) ?: 20 ) ) );
+		$page  = max( 1, (int) ( $req->get_param( 'page' ) ?: 1 ) );
+		$res   = $client->search( $q, $count, $page );
+		if ( empty( $res['ok'] ) ) {
+			$status = 502;
+			if ( BookStackClient::ERR_AUTH === ( $res['error'] ?? '' ) ) {
+				$status = 401;
+			} elseif ( BookStackClient::ERR_RATE === ( $res['error'] ?? '' ) ) {
+				$status = 429;
+			} elseif ( BookStackClient::ERR_CONFIG === ( $res['error'] ?? '' ) ) {
+				$status = 400;
+			}
+			return new WP_Error(
+				'wpdocs_search_failed',
+				(string) ( $res['error'] ?? 'http' ),
+				array(
+					'status' => $status,
+					'code'   => (int) ( $res['code'] ?? 0 ),
+				)
+			);
+		}
+		$data  = isset( $res['data'] ) && is_array( $res['data'] ) ? $res['data'] : array();
+		$raw   = isset( $data['data'] ) && is_array( $data['data'] ) ? $data['data'] : array();
+		$items = array();
+		foreach ( $raw as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			$type = (string) ( $row['type'] ?? '' );
+			if ( '' === $type && isset( $row['_type'] ) ) {
+				$type = (string) $row['_type'];
+			}
+			$items[] = array(
+				'type'  => $type,
+				'id'    => (int) ( $row['id'] ?? 0 ),
+				'name'  => (string) ( $row['name'] ?? $row['title'] ?? '' ),
+				'slug'  => (string) ( $row['slug'] ?? '' ),
+				'url'   => (string) ( $row['url'] ?? '' ),
+				'book'  => isset( $row['book'] ) && is_array( $row['book'] ) ? array(
+					'id'   => (int) ( $row['book']['id'] ?? 0 ),
+					'slug' => (string) ( $row['book']['slug'] ?? '' ),
+					'name' => (string) ( $row['book']['name'] ?? '' ),
+				) : null,
+			);
+		}
+		return new WP_REST_Response(
+			array(
+				'q'     => $q,
+				'total' => (int) ( $data['total'] ?? count( $items ) ),
+				'items' => $items,
+			)
+		);
 	}
 }

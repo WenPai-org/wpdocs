@@ -8,6 +8,7 @@
 namespace Wpdocs\Admin;
 
 use Wpdocs\Bind\Repository as BindRepo;
+use Wpdocs\Http\BookStackClient;
 use Wpdocs\Publish\HttpSource;
 use Wpdocs\Redirect\Repository as RedirectRepo;
 
@@ -216,11 +217,35 @@ final class Menu {
 			if ( ! in_array( $status, array( 'active', 'disabled' ), true ) ) {
 				$status = 'active';
 			}
+			$page_id = (int) ( $_POST['docs_page_id'] ?? 0 );
+			$mode    = isset( $_POST['wpdocs_mode'] ) && 'advanced' === sanitize_key( (string) wp_unslash( $_POST['wpdocs_mode'] ) ) ? '&mode=advanced' : '';
+			// When Token is configured and page id is set, refuse dirty rows (page missing / auth fail).
+			if ( $page_id > 0 ) {
+				$client = BookStackClient::from_config(
+					array(
+						'base_url' => HttpSource::base_url(),
+					)
+				);
+				if ( $client ) {
+					$probe = $client->page( $page_id );
+					if ( empty( $probe['ok'] ) ) {
+						wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-bindings&error=1' . $mode ) );
+						exit;
+					}
+					$data = isset( $probe['data'] ) && is_array( $probe['data'] ) ? $probe['data'] : array();
+					if ( empty( $_POST['docs_book_slug'] ) && ! empty( $data['book_slug'] ) ) {
+						$_POST['docs_book_slug'] = (string) $data['book_slug'];
+					}
+					if ( empty( $_POST['docs_page_slug'] ) && ! empty( $data['slug'] ) ) {
+						$_POST['docs_page_slug'] = (string) $data['slug'];
+					}
+				}
+			}
 			$id = BindRepo::upsert(
 				array(
 					'wp_post_id'     => (int) ( $_POST['wp_post_id'] ?? 0 ),
 					'wp_post_type'   => sanitize_key( (string) ( $_POST['wp_post_type'] ?? 'post' ) ),
-					'docs_page_id'   => (int) ( $_POST['docs_page_id'] ?? 0 ),
+					'docs_page_id'   => $page_id,
 					'docs_book_slug' => sanitize_title( (string) ( $_POST['docs_book_slug'] ?? '' ) ),
 					'docs_page_slug' => sanitize_title( (string) ( $_POST['docs_page_slug'] ?? '' ) ),
 					'external_id'    => sanitize_text_field( (string) ( $_POST['external_id'] ?? '' ) ),
@@ -229,7 +254,6 @@ final class Menu {
 				)
 			);
 			$q = $id ? 'updated=1' : 'error=1';
-			$mode = isset( $_POST['wpdocs_mode'] ) && 'advanced' === sanitize_key( (string) wp_unslash( $_POST['wpdocs_mode'] ) ) ? '&mode=advanced' : '';
 			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-bindings&' . $q . $mode ) );
 			exit;
 		}
@@ -263,7 +287,8 @@ final class Menu {
 			$opt['base_url'] = $base;
 			$opt['tree_url'] = $tree;
 			update_option( 'wpdocs_settings', $opt, false );
-			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs&updated=1' ) );
+			HttpSource::bust_status_cache();
+			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs&updated=1&refresh=1' ) );
 			exit;
 		}
 	}
@@ -272,7 +297,9 @@ final class Menu {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
-		$st = HttpSource::status();
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only refresh flag.
+		$fresh = isset( $_GET['refresh'] ) && '1' === (string) wp_unslash( $_GET['refresh'] );
+		$st    = HttpSource::status( $fresh );
 		self::open_shell( 'status' );
 		include WPDOCS_DIR . 'src/Admin/views/status.php';
 		self::close_shell( 'status' );

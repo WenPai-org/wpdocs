@@ -36,7 +36,7 @@ $fmt_probe = static function ( array $p ): string {
 	return sprintf( '%d · %dms', $code, $ms );
 };
 
-$refresh = '<a class="btn btn-ghost" href="' . esc_url( admin_url( 'admin.php?page=wpdocs' ) ) . '">' . esc_html__( '重新探测', 'wpdocs' ) . '</a>';
+$refresh = '<a class="btn btn-ghost" href="' . esc_url( admin_url( 'admin.php?page=wpdocs&refresh=1' ) ) . '">' . esc_html__( '重新探测', 'wpdocs' ) . '</a>';
 
 View::page_head(
 	__( '状态', 'wpdocs' ),
@@ -85,7 +85,7 @@ elseif ( ! $home_ok && ! $partial_ok && '' !== $base_show ) :
 			<strong><?php esc_html_e( '暂时无法探测文档站', 'wpdocs' ); ?></strong>
 			<p class="d"><?php esc_html_e( '请检查文档站地址后重试。', 'wpdocs' ); ?></p>
 		</div>
-		<a class="btn btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs' ) ); ?>"><?php esc_html_e( '重新探测', 'wpdocs' ); ?></a>
+		<a class="btn btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs&refresh=1' ) ); ?>"><?php esc_html_e( '重新探测', 'wpdocs' ); ?></a>
 	</div>
 	<?php
 endif;
@@ -136,6 +136,33 @@ endif;
 				'detail'     => $fmt_probe( (array) ( $st['tree'] ?? array() ) ),
 				'pill'       => $tree_ok ? __( '正常', 'wpdocs' ) : __( '失败', 'wpdocs' ),
 				'pill_class' => $tree_ok ? 'ok' : 'bad',
+			)
+		);
+	}
+	$api = isset( $st['api'] ) && is_array( $st['api'] ) ? $st['api'] : array( 'skipped' => true );
+	if ( empty( $api ) || ! empty( $api['skipped'] ) || empty( $api['configured'] ) ) {
+		View::status_row(
+			array(
+				'title'      => __( 'BookStack API', 'wpdocs' ),
+				'detail'     => __( '未配置 Token（WPDOCS_TOKEN_ID / SECRET）', 'wpdocs' ),
+				'pill'       => __( '已跳过', 'wpdocs' ),
+				'pill_class' => 'warn',
+			)
+		);
+	} else {
+		$api_ok  = ! empty( $api['ok'] );
+		$api_ver = (string) ( $api['version'] ?? '' );
+		$api_ms  = (int) ( $api['ms'] ?? 0 );
+		$api_err = (string) ( $api['error'] ?? '' );
+		$detail  = $api_ok
+			? ( '' !== $api_ver ? sprintf( '%s · %dms', $api_ver, $api_ms ) : sprintf( '%dms', $api_ms ) )
+			: ( '' !== $api_err ? sprintf( '%s · %dms', $api_err, $api_ms ) : sprintf( '%dms', $api_ms ) );
+		View::status_row(
+			array(
+				'title'      => __( 'BookStack API', 'wpdocs' ),
+				'detail'     => $detail,
+				'pill'       => $api_ok ? __( '已连接', 'wpdocs' ) : __( '探测失败', 'wpdocs' ),
+				'pill_class' => $api_ok ? 'ok' : 'bad',
 			)
 		);
 	}

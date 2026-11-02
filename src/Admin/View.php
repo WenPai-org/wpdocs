@@ -57,8 +57,7 @@ final class View {
 	}
 
 	/**
-	 * Stacked field (APPROVAL: label → control → bad hint → help).
-	 * Product CSS forces `.field` to one column; kit default is 280px|1fr settings grid.
+	 * Kit settings field: 280px label | 1fr `.field-ctl` (hint under control).
 	 *
 	 * @param array{label:string,help?:string,bad?:string,for?:string,control:string,advanced?:bool} $args
 	 */
@@ -77,18 +76,19 @@ final class View {
 		}
 		echo '<div class="field"' . $extra . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		if ( '' !== $for ) {
-			echo '<label for="' . esc_attr( $for ) . '">' . esc_html( $label ) . '</label>';
+			echo '<label class="field-label" for="' . esc_attr( $for ) . '">' . esc_html( $label ) . '</label>';
 		} else {
-			echo '<span class="field-label">' . esc_html( $label ) . '</span>';
+			echo '<div class="field-label">' . esc_html( $label ) . '</div>';
 		}
+		echo '<div class="field-ctl">';
 		echo $ctl; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- caller HTML.
 		if ( '' !== $bad ) {
 			echo '<p class="hint is-bad" data-wpdocs-bad hidden>' . esc_html( $bad ) . '</p>';
 		}
 		if ( '' !== $help ) {
-			echo '<p class="hint d">' . esc_html( $help ) . '</p>';
+			echo '<p class="hint">' . esc_html( $help ) . '</p>';
 		}
-		echo '</div>';
+		echo '</div></div>';
 	}
 
 	/**

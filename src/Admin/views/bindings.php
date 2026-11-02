@@ -130,8 +130,8 @@ View::error_notice();
 		?>
 		<?php if ( $adv ) : ?>
 			<div class="field is-note" data-for-mode="advanced">
-				<span class="field-label"><?php esc_html_e( '文章列表', 'wpdocs' ); ?></span>
-				<span class="d"><?php esc_html_e( '文章列表会多一列「文档绑定」，显示书册/页面别名。该列不套本页顶栏。', 'wpdocs' ); ?></span>
+				<div class="field-label"><?php esc_html_e( '文章列表', 'wpdocs' ); ?></div>
+				<div class="field-ctl"><p class="hint"><?php esc_html_e( '文章列表会多一列「文档绑定」，显示书册/页面别名。该列不套本页顶栏。', 'wpdocs' ); ?></p></div>
 			</div>
 		<?php endif; ?>
 		<div class="wenpai-actions"><button type="submit" class="btn btn-primary"><?php esc_html_e( '保存绑定', 'wpdocs' ); ?></button></div>

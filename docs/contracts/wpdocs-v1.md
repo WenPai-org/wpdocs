@@ -51,8 +51,11 @@
 | POST | `/bindings/resolve-batch` | `post_name`↔slug 批量草稿；默认 dry-run；`apply=true` 才 upsert |
 | GET \| POST | `/redirects` | 列表 / upsert |
 | GET | `/redirects/dry-run?path=` | 预览匹配；**不写 hits** |
+| GET | `/search?q=` | BookStack 搜索代理（需 `WPDOCS_TOKEN_*`）；不写库、不缓存正文 |
 
-错误用 `WP_Error` 习惯；JSON 不泄密钥。
+错误用 `WP_Error` 习惯；JSON 不泄密钥。命名空间保持 **`wpdocs/v1`**（不用 `wenpai-doc/v1` / `cocobook-docs/v1`）。
+
+`GET /status` → `publish.api`：Token 未配则 `skipped=true`；已配则对 `/api/system` 做只读 ping（`version` / `ok` / `error`，无 body）。Bind 保存（后台与 `POST /bindings`）在配置了 Token 且 `docs_page_id>0` 时先 `GET /api/pages/{id}`，失败不写脏行。
 
 ---
 

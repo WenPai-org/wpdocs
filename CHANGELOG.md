@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.0-dev (unreleased)
+
+### Added
+- `Wpdocs\Http\BookStackClient`：只读 Token 客户端（system / page / search）
+- `GET /wpdocs/v1/search?q=`：BookStack 搜索代理
+- Status `publish.api`：Token 已配时 ping `/api/system`；Studio 状态行展示
+- Bind 保存（后台 + REST）：有 Token 且 `docs_page_id>0` 时先校验远端页
+
+### Changed
+- REST 命名空间保持 `wpdocs/v1`（不用 wenpai-doc / cocobook-docs）
+- 主栏模块间距 `gap: 20px`
+- Admin `.field` 回到 kit `280px|1fr`（`field-label` + `field-ctl`）；去掉产品侧单列堆叠覆盖
+- Status 探测结果 transient 缓存 5 分钟；`?refresh=1` / 保存地址强制重探；多路 HEAD 并行
+
+
 ## 0.3.0-dev — 2026-11-02
 
 - Admin：vendor wenpai-admin-ui **0.2.3**，三页换 `.wenpai-app` 壳（需 `prototypes/wpdocs/APPROVAL.md`）。

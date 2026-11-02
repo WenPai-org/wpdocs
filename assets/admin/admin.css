@@ -7,41 +7,20 @@ body.wenpai-ui-page .wenpai-app .wenpai-mark svg {
   display: block;
 }
 
-/* —— fields: stacked (label → control → hint) —— */
-body.wenpai-ui-page .wenpai-app .field {
-  grid-template-columns: minmax(0, 1fr);
-  gap: 4px;
-  align-items: stretch;
-  padding: 10px 0;
+/* Modules in main: kit .wenpai-stack gap 20; wpdocs dumps children directly into main. */
+body.wenpai-ui-page .wenpai-app main.wenpai-main {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-body.wenpai-ui-page .wenpai-app .field:first-of-type {
-  padding-top: 4px;
+body.wenpai-ui-page .wenpai-app main.wenpai-main > .wenpai-page-head {
+  margin-bottom: 0;
 }
 
+/* Kit owns `.field` 280|1fr. Product only hides advanced + invalid border. */
 body.wenpai-ui-page .wenpai-app .field[hidden] {
   display: none;
-}
-
-body.wenpai-ui-page .wenpai-app .field > label,
-body.wenpai-ui-page .wenpai-app .field > .field-label {
-  display: block;
-  font-weight: 600;
-  font-size: 14px;
-  line-height: 22px;
-  margin: 0;
-}
-
-body.wenpai-ui-page .wenpai-app .field > .hint,
-body.wenpai-ui-page .wenpai-app .field .hint {
-  margin: 0;
-  font-size: 12px;
-  line-height: 18px;
-  color: var(--wenpai-ink-3);
-}
-
-body.wenpai-ui-page .wenpai-app .field .hint.is-bad {
-  color: var(--wenpai-bad, #d63638);
 }
 
 body.wenpai-ui-page .wenpai-app .field .hint[hidden] {
@@ -53,25 +32,13 @@ body.wenpai-ui-page .wenpai-app .field select.is-invalid {
   border-color: var(--wenpai-bad, #d63638);
 }
 
-.field-ctl-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  max-width: 28rem;
-}
-
-.field-ctl-row input[type="text"],
-.field-ctl-row input[type="number"],
-.field-ctl-row input[type="url"] {
+/* number/url also sit in kit `.field-ctl-row` (kit already covers text). */
+body.wenpai-ui-page .wenpai-app .field-ctl-row input[type="number"],
+body.wenpai-ui-page .wenpai-app .field-ctl-row input[type="url"] {
   flex: 1 1 auto;
   width: auto;
   max-width: none;
   min-width: 0;
-}
-
-.field-ctl-row .btn {
-  flex: none;
-  white-space: nowrap;
 }
 
 /* preview result colors (kit is gray; product paints ok/bad) */
@@ -206,17 +173,9 @@ body.wenpai-ui-page .wenpai-app .wpdocs-help-step .hint {
   margin-top: 0;
 }
 
-/* info-only advanced note (no control) */
-body.wenpai-ui-page .wenpai-app .field.is-note > .field-label {
-  font-weight: 600;
-}
-
-body.wenpai-ui-page .wenpai-app .field.is-note > .d {
-  display: block;
-  font-size: 12px;
-  line-height: 18px;
-  color: var(--wenpai-ink-3);
-  font-weight: 400;
+/* info-only advanced note: label | hint in field-ctl */
+body.wenpai-ui-page .wenpai-app .field.is-note .field-ctl .hint {
+  margin-top: 0;
 }
 
 /* delete confirm gate sits above the list table */

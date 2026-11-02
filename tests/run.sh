@@ -26,6 +26,9 @@ php tests/BindResolveDraftTest.php
 echo "== Publish probe unit tests (no WP) =="
 php tests/PublishProbeTest.php
 
+echo "== BookStack client unit tests (no WP) =="
+php tests/BookStackClientTest.php
+
 echo "== dry-run must not persist =="
 # Listener::dry_run body (until the next method) must not call hit() or log_unmatched().
 dry_body="$(awk '
