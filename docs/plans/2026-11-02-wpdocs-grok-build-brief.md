@@ -258,7 +258,7 @@ Prompt 必须：点名文件、禁止扫整个 `~/Projects`、禁止改 linuxjoy
 - [x] 契约与本 brief 在仓内（另：`docs/design/admin-ui-a.md`、完整计划）  
 - [x] G1 原型落地（`prototypes/wpdocs/{status,bindings,redirects}.html`）  
 - [x] G2–G4 行为与测试说明落地（`tests/run.sh` ALL PASS；main `14eae03`）  
-- [ ] G5 仅在 APPROVAL 后（**BLOCKED**：等人签 `prototypes/wpdocs/APPROVAL.md`）  
+- [x] G5 Admin 换壳（`APPROVAL.md` 已签；kit 0.2.3；`wenpai-admin-lint` PASS；Studio `wpdocs-dev` 三页已点）  
 - [x] CHANGELOG 记录相对 `cocobook-docs` 的破坏性/兼容项（G2–G4 条目）  
 
 ---

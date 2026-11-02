@@ -130,9 +130,38 @@ final class Controller {
 		);
 	}
 
+	/**
+	 * JSON body preferred; form / query params fill gaps (admin + wp eval).
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function request_payload( WP_REST_Request $req ): array {
+		$json = $req->get_json_params();
+		$out  = is_array( $json ) ? $json : array();
+		foreach ( (array) $req->get_body_params() as $k => $v ) {
+			if ( ! array_key_exists( $k, $out ) ) {
+				$out[ $k ] = $v;
+			}
+		}
+		foreach ( (array) $req->get_query_params() as $k => $v ) {
+			if ( ! array_key_exists( $k, $out ) ) {
+				$out[ $k ] = $v;
+			}
+		}
+		return $out;
+	}
+
 	public static function upsert_binding( WP_REST_Request $req ): WP_REST_Response {
-		$id = BindRepo::upsert( (array) $req->get_json_params() );
-		return new WP_REST_Response( array( 'id' => $id, 'row' => BindRepo::find_by_post( (int) $req['wp_post_id'] ) ), $id ? 200 : 400 );
+		$data = self::request_payload( $req );
+		$id   = BindRepo::upsert( $data );
+		$post = (int) ( $data['wp_post_id'] ?? 0 );
+		return new WP_REST_Response(
+			array(
+				'id'  => $id,
+				'row' => $post ? BindRepo::find_by_post( $post ) : null,
+			),
+			$id ? 200 : 400
+		);
 	}
 
 	public static function resolve_binding( WP_REST_Request $req ): WP_REST_Response {
@@ -150,8 +179,7 @@ final class Controller {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public static function resolve_batch( WP_REST_Request $req ) {
-		$params  = $req->get_json_params();
-		$payload = is_array( $params ) ? $params : array();
+		$payload = self::request_payload( $req );
 		if ( isset( $payload['posts'] ) && ! is_array( $payload['posts'] ) ) {
 			return new WP_Error( 'wpdocs_bad_batch', 'posts must be an array', array( 'status' => 400 ) );
 		}
@@ -262,7 +290,7 @@ final class Controller {
 	}
 
 	public static function upsert_redirect( WP_REST_Request $req ): WP_REST_Response {
-		$id = RedirectRepo::upsert( (array) $req->get_json_params() );
+		$id = RedirectRepo::upsert( self::request_payload( $req ) );
 		return new WP_REST_Response( array( 'id' => $id ), $id ? 200 : 400 );
 	}
 

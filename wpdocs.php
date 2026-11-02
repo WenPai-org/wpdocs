@@ -31,6 +31,11 @@ define( 'WPDOCS_URL', plugin_dir_url( __FILE__ ) );
  * Legacy aliases COCOBOOK_DOCS_* still accepted via Compat\Legacy.
  */
 
+$wpdocs_kit = WPDOCS_DIR . 'lib/wenpai-admin-ui/php/load.php';
+if ( is_readable( $wpdocs_kit ) ) {
+	require_once $wpdocs_kit;
+}
+
 spl_autoload_register(
 	static function ( string $class ): void {
 		$prefix = 'Wpdocs\\';
@@ -49,7 +54,8 @@ add_action(
 	'plugins_loaded',
 	static function (): void {
 		\Wpdocs\Plugin::boot();
-	}
+	},
+	5
 );
 
 register_activation_hook(

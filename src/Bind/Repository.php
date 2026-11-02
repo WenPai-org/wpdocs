@@ -132,20 +132,24 @@ final class Repository {
 	 */
 	public static function upsert( array $data ): int {
 		global $wpdb;
-		$now  = current_time( 'mysql' );
-		$row  = array(
-			'wp_post_id'      => (int) ( $data['wp_post_id'] ?? 0 ),
-			'wp_post_type'    => sanitize_key( (string) ( $data['wp_post_type'] ?? 'post' ) ),
-			'docs_page_id'    => (int) ( $data['docs_page_id'] ?? 0 ),
-			'docs_book_slug'  => sanitize_title( (string) ( $data['docs_book_slug'] ?? '' ) ),
-			'docs_page_slug'  => sanitize_title( (string) ( $data['docs_page_slug'] ?? '' ) ),
-			'external_id'     => sanitize_text_field( (string) ( $data['external_id'] ?? '' ) ),
-			'source'          => sanitize_key( (string) ( $data['source'] ?? 'manual' ) ),
-			'status'          => sanitize_key( (string) ( $data['status'] ?? 'active' ) ),
-			'notes'           => sanitize_textarea_field( (string) ( $data['notes'] ?? '' ) ),
-			'updated_at'      => $now,
+		$post_id = (int) ( $data['wp_post_id'] ?? 0 );
+		if ( $post_id <= 0 ) {
+			return 0;
+		}
+		$now = current_time( 'mysql' );
+		$row = array(
+			'wp_post_id'     => $post_id,
+			'wp_post_type'   => sanitize_key( (string) ( $data['wp_post_type'] ?? 'post' ) ),
+			'docs_page_id'   => (int) ( $data['docs_page_id'] ?? 0 ),
+			'docs_book_slug' => sanitize_title( (string) ( $data['docs_book_slug'] ?? '' ) ),
+			'docs_page_slug' => sanitize_title( (string) ( $data['docs_page_slug'] ?? '' ) ),
+			'external_id'    => sanitize_text_field( (string) ( $data['external_id'] ?? '' ) ),
+			'source'         => sanitize_key( (string) ( $data['source'] ?? 'manual' ) ),
+			'status'         => sanitize_key( (string) ( $data['status'] ?? 'active' ) ),
+			'notes'          => sanitize_textarea_field( (string) ( $data['notes'] ?? '' ) ),
+			'updated_at'     => $now,
 		);
-		$existing = $row['wp_post_id'] ? self::find_by_post( $row['wp_post_id'] ) : null;
+		$existing = self::find_by_post( $row['wp_post_id'] );
 		if ( $existing ) {
 			$wpdb->update( self::table(), $row, array( 'id' => (int) $existing->id ) );
 			return (int) $existing->id;

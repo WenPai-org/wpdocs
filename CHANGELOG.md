@@ -2,6 +2,9 @@
 
 ## 0.3.0-dev — 2026-11-02
 
+- Admin：vendor wenpai-admin-ui **0.2.3**，三页换 `.wenpai-app` 壳（需 `prototypes/wpdocs/APPROVAL.md`）。
+- REST upsert 同时接受 JSON 与表单参数；`wp_post_id<=0` 拒绝写入。
+- Studio 联测站：`~/Studio/wpdocs-dev`（sandbox · http://localhost:8899），插件软链 `wp-content/plugins/wpdocs` → `~/Projects/wpdocs`。
 - 产品名「文派文档」，技术 id `wpdocs`（FeiCode `WenPai-org/wpdocs`）。
 - 契约见 `docs/contracts/wpdocs-v1.md`；完整计划见 `docs/plans/2026-11-02-wpdocs-full-plan.md`。
 - 新表 `{$wpdb->prefix}wpdocs_bindings` / `wpdocs_redirects`；旧 `cocobook_*` 经 `Compat\Legacy` 只读别名。

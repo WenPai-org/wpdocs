@@ -1,6 +1,6 @@
 <?php
 /**
- * Admin menus (wenpai-admin-ui shaped).
+ * Admin menus — wenpai-admin-ui 档 A.
  *
  * @package Wpdocs
  */
@@ -44,8 +44,85 @@ final class Menu {
 		if ( ! str_contains( $hook, 'wpdocs' ) ) {
 			return;
 		}
-		wp_enqueue_style( 'wpdocs-admin', WPDOCS_URL . 'assets/admin/admin.css', array(), WPDOCS_VERSION );
-		wp_enqueue_script( 'wpdocs-admin', WPDOCS_URL . 'assets/admin/admin.js', array(), WPDOCS_VERSION, true );
+		if ( class_exists( 'Wenpai_Admin_Loader', false ) ) {
+			\Wenpai_Admin_Loader::enqueue( array( 'full' => true ) );
+		}
+		wp_enqueue_style(
+			'wpdocs-admin',
+			WPDOCS_URL . 'assets/admin/admin.css',
+			array( 'wenpai-admin-ui' ),
+			WPDOCS_VERSION
+		);
+		wp_enqueue_script(
+			'wpdocs-admin',
+			WPDOCS_URL . 'assets/admin/admin.js',
+			array( 'wenpai-admin-ui' ),
+			WPDOCS_VERSION,
+			true
+		);
+	}
+
+	/** @return array<string,mixed> */
+	private static function shell_args( string $current ): array {
+		$icon = static function ( string $name ): string {
+			return class_exists( 'Wenpai_Admin_Icons', false ) ? \Wenpai_Admin_Icons::svg( $name ) : '';
+		};
+		$mark = '<svg class="wenpai-ico" viewBox="0 0 28 28" aria-hidden="true"><path fill="currentColor" d="M8 3.5h7.4L21.5 9.6V23a1.5 1.5 0 0 1-1.5 1.5H8A1.5 1.5 0 0 1 6.5 23V5A1.5 1.5 0 0 1 8 3.5zm7.2 1.3v5.1h5.1z"/></svg>';
+
+		return array(
+			'slug'               => 'wpdocs',
+			'name'               => __( '文派文档', 'wpdocs' ),
+			'mark_html'          => $mark,
+			'home_url'           => admin_url( 'admin.php?page=wpdocs' ),
+			'current'            => $current,
+			'tabs'               => array(
+				array(
+					'id'        => 'status',
+					'label'     => __( '状态', 'wpdocs' ),
+					'url'       => admin_url( 'admin.php?page=wpdocs' ),
+					'icon_html' => $icon( 'home' ),
+				),
+				array(
+					'id'        => 'bindings',
+					'label'     => __( '绑定', 'wpdocs' ),
+					'url'       => admin_url( 'admin.php?page=wpdocs-bindings' ),
+					'icon_html' => $icon( 'map' ),
+				),
+				array(
+					'id'        => 'redirects',
+					'label'     => __( '跳转', 'wpdocs' ),
+					'url'       => admin_url( 'admin.php?page=wpdocs-redirects' ),
+					'icon_html' => $icon( 'external' ),
+				),
+			),
+			'help_url'           => 'https://wpcy.com/',
+			'help_label'         => __( '帮助', 'wpdocs' ),
+			'help_icon_html'     => $icon( 'help' ),
+			'feedback_url'       => 'https://cyberforums.com/',
+			'feedback_label'     => __( '反馈', 'wpdocs' ),
+			'feedback_icon_html' => $icon( 'feedback' ),
+			'version'            => 'wpdocs ' . WPDOCS_VERSION,
+			'doc_url'            => 'https://feicode.com/WenPai-org/wpdocs',
+			'doc_label'          => __( '源码', 'wpdocs' ),
+		);
+	}
+
+	private static function open_shell( string $current ): void {
+		$args = self::shell_args( $current );
+		if ( class_exists( 'Wenpai_Admin_Shell', false ) ) {
+			\Wenpai_Admin_Shell::open( $args );
+			return;
+		}
+		echo '<div class="wrap wpdocs-admin-fallback"><h1>' . esc_html__( '文派文档', 'wpdocs' ) . '</h1>';
+	}
+
+	private static function close_shell(): void {
+		$args = self::shell_args( 'status' );
+		if ( class_exists( 'Wenpai_Admin_Shell', false ) ) {
+			\Wenpai_Admin_Shell::close( $args );
+			return;
+		}
+		echo '</div>';
 	}
 
 	public static function handle_post(): void {
@@ -71,14 +148,27 @@ final class Menu {
 		if ( isset( $_POST['wpdocs_redirect_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_redirect_nonce'] ) ), 'wpdocs_redirect' ) ) {
 			RedirectRepo::upsert(
 				array(
-					'wp_path'    => (string) ( $_POST['wp_path'] ?? '' ),
-					'page_id'    => (int) ( $_POST['page_id'] ?? 0 ),
-					'status'     => sanitize_key( (string) ( $_POST['status'] ?? 'matched' ) ),
-					'source'     => 'manual',
-					'wp_title'   => sanitize_text_field( (string) ( $_POST['wp_title'] ?? '' ) ),
+					'wp_path'  => (string) ( $_POST['wp_path'] ?? '' ),
+					'page_id'  => (int) ( $_POST['page_id'] ?? 0 ),
+					'status'   => sanitize_key( (string) ( $_POST['status'] ?? 'matched' ) ),
+					'source'   => 'manual',
+					'wp_title' => sanitize_text_field( (string) ( $_POST['wp_title'] ?? '' ) ),
 				)
 			);
 			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-redirects&updated=1' ) );
+			exit;
+		}
+		if ( isset( $_POST['wpdocs_settings_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_settings_nonce'] ) ), 'wpdocs_settings' ) ) {
+			$base = esc_url_raw( (string) ( $_POST['base_url'] ?? '' ) );
+			$tree = esc_url_raw( (string) ( $_POST['tree_url'] ?? '' ) );
+			$opt  = get_option( 'wpdocs_settings', array() );
+			if ( ! is_array( $opt ) ) {
+				$opt = array();
+			}
+			$opt['base_url'] = $base;
+			$opt['tree_url'] = $tree;
+			update_option( 'wpdocs_settings', $opt, false );
+			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs&updated=1' ) );
 			exit;
 		}
 	}
@@ -88,7 +178,9 @@ final class Menu {
 			return;
 		}
 		$st = HttpSource::status();
+		self::open_shell( 'status' );
 		include WPDOCS_DIR . 'src/Admin/views/status.php';
+		self::close_shell();
 	}
 
 	public static function render_bindings(): void {
@@ -96,7 +188,9 @@ final class Menu {
 			return;
 		}
 		$items = BindRepo::list( 100 );
+		self::open_shell( 'bindings' );
 		include WPDOCS_DIR . 'src/Admin/views/bindings.php';
+		self::close_shell();
 	}
 
 	public static function render_redirects(): void {
@@ -104,7 +198,9 @@ final class Menu {
 			return;
 		}
 		$items = RedirectRepo::list( '', 100 );
+		self::open_shell( 'redirects' );
 		include WPDOCS_DIR . 'src/Admin/views/redirects.php';
+		self::close_shell();
 	}
 
 	/** @param array<string,string> $cols */
