@@ -10,13 +10,13 @@ body.wenpai-ui-page .wenpai-app .wenpai-mark svg {
 /* —— fields: stacked (label → control → hint) —— */
 body.wenpai-ui-page .wenpai-app .field {
   grid-template-columns: minmax(0, 1fr);
-  gap: 6px;
+  gap: 4px;
   align-items: stretch;
-  padding: 14px 0;
+  padding: 10px 0;
 }
 
 body.wenpai-ui-page .wenpai-app .field:first-of-type {
-  padding-top: 8px;
+  padding-top: 4px;
 }
 
 body.wenpai-ui-page .wenpai-app .field[hidden] {
@@ -217,6 +217,11 @@ body.wenpai-ui-page .wenpai-app .field.is-note > .d {
   line-height: 18px;
   color: var(--wenpai-ink-3);
   font-weight: 400;
+}
+
+/* delete confirm gate sits above the list table */
+body.wenpai-ui-page .wenpai-app .card > .wenpai-gate {
+  margin: 8px 0 12px;
 }
 
 /* list head + row actions */

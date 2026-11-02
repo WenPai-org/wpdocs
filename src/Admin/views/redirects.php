@@ -16,7 +16,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$adv = View::is_advanced();
+$adv    = View::is_advanced();
+$filter = isset( $filter ) ? (string) $filter : '';
 ob_start();
 View::mode_toggle( 'wpdocs-redirects' );
 $mode_html = ob_get_clean();
@@ -43,7 +44,7 @@ View::error_notice();
 			array(
 				'for'     => 'wp_path',
 				'label'   => __( '旧路径', 'wpdocs' ),
-				'bad'     => __( '请填写旧路径。', 'wpdocs' ),
+				'bad'     => __( '请填写以 / 开头的旧路径。', 'wpdocs' ),
 				'help'    => __( '站内路径，例如 /2020/01/hello/。不要带域名。', 'wpdocs' ),
 				'control' => '<input id="wp_path" type="text" name="wp_path" required placeholder="/old-post/" autocomplete="off" />',
 			)
@@ -52,8 +53,8 @@ View::error_notice();
 			array(
 				'for'     => 'docs_page_id',
 				'label'   => __( '文档页 ID', 'wpdocs' ),
-				'bad'     => __( '请填写文档页 ID。', 'wpdocs' ),
-				'control' => '<input id="docs_page_id" type="number" name="docs_page_id" required min="1" />',
+				'bad'     => __( '已匹配时请填写文档页 ID。', 'wpdocs' ),
+				'control' => '<input id="docs_page_id" type="number" name="docs_page_id" min="0" value="0" />',
 			)
 		);
 		View::field(
@@ -100,7 +101,7 @@ View::error_notice();
 	<div class="wpdocs-list-head">
 		<div>
 			<h2 class="section-title"><?php esc_html_e( '已有映射', 'wpdocs' ); ?></h2>
-			<p class="section-desc"><?php esc_html_e( '点「编辑」回填上方表单。可按状态筛选。', 'wpdocs' ); ?></p>
+			<p class="section-desc"><?php esc_html_e( '点「编辑」回填上方表单。删除前先勾确认门。', 'wpdocs' ); ?></p>
 		</div>
 		<form method="get" class="wpdocs-filter">
 			<input type="hidden" name="page" value="wpdocs-redirects" />
@@ -120,11 +121,19 @@ View::error_notice();
 	<?php if ( array() === $items ) : ?>
 		<p class="empty"><?php esc_html_e( '还没有路径映射。保存上方表单后会出现在这里。', 'wpdocs' ); ?></p>
 	<?php else : ?>
+		<div class="wenpai-gate">
+			<label>
+				<input type="checkbox" />
+				<span><?php esc_html_e( '我确认要删除下方映射行。', 'wpdocs' ); ?></span>
+			</label>
+		</div>
 		<table class="tbl">
 			<thead>
 				<tr>
 					<th><?php esc_html_e( '旧路径', 'wpdocs' ); ?></th>
-					<th><?php esc_html_e( '原标题', 'wpdocs' ); ?></th>
+					<?php if ( $adv ) : ?>
+						<th><?php esc_html_e( '原标题', 'wpdocs' ); ?></th>
+					<?php endif; ?>
 					<th><?php esc_html_e( '文档页', 'wpdocs' ); ?></th>
 					<th><?php esc_html_e( '状态', 'wpdocs' ); ?></th>
 					<th><?php esc_html_e( '操作', 'wpdocs' ); ?></th>
@@ -133,32 +142,55 @@ View::error_notice();
 			<tbody>
 			<?php foreach ( $items as $row ) : ?>
 				<?php
-				$pill = View::redir_status_pill( (string) ( $row->status ?? 'pending' ) );
+				$pill  = View::redir_status_pill( (string) ( $row->status ?? 'pending' ) );
 				$title = (string) ( $row->wp_title ?? '' );
+				$page  = (int) ( $row->page_id ?? 0 );
+				$st    = (string) ( $row->status ?? 'matched' );
 				$fill  = wp_json_encode(
 					array(
 						'wp_path'      => (string) $row->wp_path,
 						'wp_title'     => $title,
-						'docs_page_id' => (int) $row->docs_page_id,
-						'status'       => (string) ( $row->status ?? 'matched' ),
+						'docs_page_id' => $page,
+						'status'       => $st,
 					)
 				);
 				$row_id = (int) $row->id;
 				?>
 				<tr>
 					<td><code><?php echo esc_html( (string) $row->wp_path ); ?></code></td>
-					<td><?php echo '' !== $title ? esc_html( $title ) : '—'; ?></td>
-					<td><?php echo (int) $row->docs_page_id > 0 ? '#' . (int) $row->docs_page_id : '—'; ?></td>
+					<?php if ( $adv ) : ?>
+						<td><?php echo '' !== $title ? esc_html( $title ) : '—'; ?></td>
+					<?php endif; ?>
+					<td><?php echo $page > 0 ? '#' . $page : '—'; ?></td>
 					<td><span class="pill <?php echo esc_attr( $pill['class'] ); ?>"><?php echo esc_html( $pill['label'] ); ?></span></td>
 					<td class="wpdocs-row-actions">
 						<button type="button" class="btn btn-ghost" data-wpdocs-fill="<?php echo esc_attr( (string) $fill ); ?>"><?php esc_html_e( '编辑', 'wpdocs' ); ?></button>
-						<form method="post" class="wpdocs-inline-form" onsubmit="return confirm('<?php echo esc_js( __( '确定删除这条映射？', 'wpdocs' ) ); ?>');">
+						<?php if ( 'matched' !== $st ) : ?>
+							<form method="post" class="wpdocs-inline-form">
+								<?php wp_nonce_field( 'wpdocs_redir_row', 'wpdocs_redir_row_nonce' ); ?>
+								<input type="hidden" name="wpdocs_redir_row_id" value="<?php echo $row_id; ?>" />
+								<input type="hidden" name="wpdocs_redir_row_action" value="matched" />
+								<?php if ( $adv ) : ?><input type="hidden" name="wpdocs_mode" value="advanced" /><?php endif; ?>
+								<?php if ( '' !== $filter ) : ?><input type="hidden" name="wpdocs_redir_filter" value="<?php echo esc_attr( $filter ); ?>" /><?php endif; ?>
+								<button type="submit" class="btn btn-ghost"><?php esc_html_e( '启用', 'wpdocs' ); ?></button>
+							</form>
+						<?php else : ?>
+							<form method="post" class="wpdocs-inline-form">
+								<?php wp_nonce_field( 'wpdocs_redir_row', 'wpdocs_redir_row_nonce' ); ?>
+								<input type="hidden" name="wpdocs_redir_row_id" value="<?php echo $row_id; ?>" />
+								<input type="hidden" name="wpdocs_redir_row_action" value="gone" />
+								<?php if ( $adv ) : ?><input type="hidden" name="wpdocs_mode" value="advanced" /><?php endif; ?>
+								<?php if ( '' !== $filter ) : ?><input type="hidden" name="wpdocs_redir_filter" value="<?php echo esc_attr( $filter ); ?>" /><?php endif; ?>
+								<button type="submit" class="btn btn-ghost"><?php esc_html_e( '下线', 'wpdocs' ); ?></button>
+							</form>
+						<?php endif; ?>
+						<form method="post" class="wpdocs-inline-form">
 							<?php wp_nonce_field( 'wpdocs_redir_row', 'wpdocs_redir_row_nonce' ); ?>
 							<input type="hidden" name="wpdocs_redir_row_id" value="<?php echo $row_id; ?>" />
 							<input type="hidden" name="wpdocs_redir_row_action" value="delete" />
 							<?php if ( $adv ) : ?><input type="hidden" name="wpdocs_mode" value="advanced" /><?php endif; ?>
 							<?php if ( '' !== $filter ) : ?><input type="hidden" name="wpdocs_redir_filter" value="<?php echo esc_attr( $filter ); ?>" /><?php endif; ?>
-							<button type="submit" class="btn btn-ghost"><?php esc_html_e( '删除', 'wpdocs' ); ?></button>
+							<button type="submit" class="btn btn-ghost" data-wenpai-need-apply disabled><?php esc_html_e( '删除', 'wpdocs' ); ?></button>
 						</form>
 					</td>
 				</tr>

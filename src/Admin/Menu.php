@@ -177,16 +177,29 @@ final class Menu {
 			exit;
 		}
 
-		if ( isset( $_POST['wpdocs_redirect_row_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_redirect_row_nonce'] ) ), 'wpdocs_redirect_row' ) ) {
-			$row_id = (int) ( $_POST['wpdocs_redirect_row_id'] ?? 0 );
-			$action = sanitize_key( (string) ( $_POST['wpdocs_redirect_row_action'] ?? '' ) );
+		if ( isset( $_POST['wpdocs_redir_row_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_redir_row_nonce'] ) ), 'wpdocs_redir_row' ) ) {
+			$row_id = (int) ( $_POST['wpdocs_redir_row_id'] ?? 0 );
+			$action = sanitize_key( (string) ( $_POST['wpdocs_redir_row_action'] ?? '' ) );
 			$ok     = false;
 			if ( 'delete' === $action ) {
 				$ok = RedirectRepo::delete( $row_id );
+			} elseif ( in_array( $action, RedirectRepo::statuses(), true ) ) {
+				$row = RedirectRepo::find_by_id( $row_id );
+				if ( $row ) {
+					$ok = (bool) RedirectRepo::upsert(
+						array(
+							'wp_path'  => (string) $row->wp_path,
+							'page_id'  => (int) $row->page_id,
+							'status'   => $action,
+							'source'   => (string) ( $row->source ?? 'manual' ),
+							'wp_title' => (string) ( $row->wp_title ?? '' ),
+						)
+					);
+				}
 			}
 			$q    = $ok ? 'updated=1' : 'error=1';
 			$mode = isset( $_POST['wpdocs_mode'] ) && 'advanced' === sanitize_key( (string) wp_unslash( $_POST['wpdocs_mode'] ) ) ? '&mode=advanced' : '';
-			$filt = sanitize_key( (string) ( $_POST['wpdocs_redirect_filter'] ?? '' ) );
+			$filt = sanitize_key( (string) ( $_POST['wpdocs_redir_filter'] ?? '' ) );
 			if ( $filt && in_array( $filt, RedirectRepo::statuses(), true ) ) {
 				$q .= '&status=' . rawurlencode( $filt );
 			}
@@ -220,11 +233,12 @@ final class Menu {
 			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-bindings&' . $q . $mode ) );
 			exit;
 		}
-		if ( isset( $_POST['wpdocs_redirect_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_redirect_nonce'] ) ), 'wpdocs_redirect' ) ) {
-			$id = RedirectRepo::upsert(
+		if ( isset( $_POST['wpdocs_redir_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_redir_nonce'] ) ), 'wpdocs_redir' ) ) {
+			$page_id = (int) ( $_POST['docs_page_id'] ?? $_POST['page_id'] ?? 0 );
+			$id      = RedirectRepo::upsert(
 				array(
 					'wp_path'  => (string) ( $_POST['wp_path'] ?? '' ),
-					'page_id'  => (int) ( $_POST['page_id'] ?? 0 ),
+					'page_id'  => $page_id,
 					'status'   => sanitize_key( (string) ( $_POST['status'] ?? 'matched' ) ),
 					'source'   => 'manual',
 					'wp_title' => sanitize_text_field( (string) ( $_POST['wp_title'] ?? '' ) ),
@@ -278,7 +292,12 @@ final class Menu {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
-		$items = RedirectRepo::list( '', 100 );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$filter = isset( $_GET['status'] ) ? sanitize_key( (string) wp_unslash( $_GET['status'] ) ) : '';
+		if ( $filter && ! in_array( $filter, RedirectRepo::statuses(), true ) ) {
+			$filter = '';
+		}
+		$items = RedirectRepo::list( $filter, 100 );
 		self::open_shell( 'redirects' );
 		include WPDOCS_DIR . 'src/Admin/views/redirects.php';
 		self::close_shell( 'redirects' );

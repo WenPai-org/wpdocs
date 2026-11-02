@@ -140,17 +140,25 @@ View::error_notice();
 
 <section class="card">
 	<h2 class="section-title"><?php esc_html_e( '已有绑定', 'wpdocs' ); ?></h2>
-	<p class="section-desc"><?php esc_html_e( '点「编辑」回填上方表单。长列表截断显示，不另做分页。', 'wpdocs' ); ?></p>
+	<p class="section-desc"><?php esc_html_e( '点「编辑」回填上方表单。删除前先勾确认门。', 'wpdocs' ); ?></p>
 	<?php if ( array() === $items ) : ?>
 		<p class="empty"><?php esc_html_e( '还没有文章绑定到文档页。保存上方表单后会出现在这里。', 'wpdocs' ); ?></p>
 	<?php else : ?>
+		<div class="wenpai-gate">
+			<label>
+				<input type="checkbox" />
+				<span><?php esc_html_e( '我确认要删除下方绑定行。', 'wpdocs' ); ?></span>
+			</label>
+		</div>
 		<table class="tbl">
 			<thead>
 				<tr>
 					<th><?php esc_html_e( '文章', 'wpdocs' ); ?></th>
 					<th><?php esc_html_e( '文档页', 'wpdocs' ); ?></th>
-					<th><?php esc_html_e( '外部 ID', 'wpdocs' ); ?></th>
-					<th><?php esc_html_e( '来源', 'wpdocs' ); ?></th>
+					<?php if ( $adv ) : ?>
+						<th><?php esc_html_e( '外部 ID', 'wpdocs' ); ?></th>
+						<th><?php esc_html_e( '来源', 'wpdocs' ); ?></th>
+					<?php endif; ?>
 					<th><?php esc_html_e( '状态', 'wpdocs' ); ?></th>
 					<th><?php esc_html_e( '操作', 'wpdocs' ); ?></th>
 				</tr>
@@ -175,16 +183,19 @@ View::error_notice();
 					)
 				);
 				$row_id = (int) $row->id;
-				$act_q  = $adv ? '&mode=advanced' : '';
 				?>
 				<tr>
 					<td><?php echo (int) $row->wp_post_id; ?> <code><?php echo esc_html( $type_label ); ?></code></td>
 					<td>
 						<?php echo esc_html( $row->docs_book_slug . '/' . $row->docs_page_slug ); ?>
-						<code>#<?php echo (int) $row->docs_page_id; ?></code>
+						<?php if ( $adv ) : ?>
+							<code>#<?php echo (int) $row->docs_page_id; ?></code>
+						<?php endif; ?>
 					</td>
-					<td><?php echo '' !== $ext ? '<code>' . esc_html( $ext ) . '</code>' : '—'; ?></td>
-					<td><?php echo esc_html( View::bind_source_label( (string) $row->source ) ); ?></td>
+					<?php if ( $adv ) : ?>
+						<td><?php echo '' !== $ext ? '<code>' . esc_html( $ext ) . '</code>' : '—'; ?></td>
+						<td><?php echo esc_html( View::bind_source_label( (string) $row->source ) ); ?></td>
+					<?php endif; ?>
 					<td><span class="pill <?php echo esc_attr( $pill['class'] ); ?>"><?php echo esc_html( $pill['label'] ); ?></span></td>
 					<td class="wpdocs-row-actions">
 						<button type="button" class="btn btn-ghost" data-wpdocs-fill="<?php echo esc_attr( (string) $fill ); ?>"><?php esc_html_e( '编辑', 'wpdocs' ); ?></button>
@@ -205,12 +216,12 @@ View::error_notice();
 								<button type="submit" class="btn btn-ghost"><?php esc_html_e( '停用', 'wpdocs' ); ?></button>
 							</form>
 						<?php endif; ?>
-						<form method="post" class="wpdocs-inline-form" onsubmit="return confirm('<?php echo esc_js( __( '确定删除这条绑定？', 'wpdocs' ) ); ?>');">
+						<form method="post" class="wpdocs-inline-form">
 							<?php wp_nonce_field( 'wpdocs_bind_row', 'wpdocs_bind_row_nonce' ); ?>
 							<input type="hidden" name="wpdocs_bind_row_id" value="<?php echo $row_id; ?>" />
 							<input type="hidden" name="wpdocs_bind_row_action" value="delete" />
 							<?php if ( $adv ) : ?><input type="hidden" name="wpdocs_mode" value="advanced" /><?php endif; ?>
-							<button type="submit" class="btn btn-ghost"><?php esc_html_e( '删除', 'wpdocs' ); ?></button>
+							<button type="submit" class="btn btn-ghost" data-wenpai-need-apply disabled><?php esc_html_e( '删除', 'wpdocs' ); ?></button>
 						</form>
 					</td>
 				</tr>

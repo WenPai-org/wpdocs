@@ -144,7 +144,7 @@ final class View {
 				'class' => 'ok',
 			),
 			'gone'      => array(
-				'label' => __( '已失效 · 410', 'wpdocs' ),
+				'label' => __( '已下线 · 410', 'wpdocs' ),
 				'class' => 'bad',
 			),
 			'pending'   => array(
@@ -160,6 +160,11 @@ final class View {
 			'label' => $status,
 			'class' => 'warn',
 		);
+	}
+
+	/** @return array{label:string,class:string} */
+	public static function redir_status_pill( string $status ): array {
+		return self::redirect_status_pill( $status );
 	}
 
 	/** @return array{label:string,class:string} */

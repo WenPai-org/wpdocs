@@ -80,8 +80,15 @@
 
       if (Object.prototype.hasOwnProperty.call(data, "wp_path")) {
         setInputValue("wp_path", data.wp_path || "");
-        setInputValue("page_id", data.page_id != null ? data.page_id : 0);
-        setInputValue("status", data.status || "matched");
+        setInputValue(
+          "docs_page_id",
+          data.docs_page_id != null
+            ? data.docs_page_id
+            : data.page_id != null
+              ? data.page_id
+              : 0
+        );
+        setInputValue("redir_status", data.status || "matched");
         setInputValue("wp_title", data.wp_title || "");
       }
 
@@ -171,8 +178,8 @@
 
   function bindDryRun() {
     var btn = document.querySelector("[data-wpdocs-dry-run]");
-    var input = document.getElementById("dry-path");
-    var out = document.querySelector("[data-dry-out]");
+    var input = document.getElementById("dry-run-path");
+    var out = document.querySelector("[data-dry-run-out]");
     if (!btn || !input) return;
 
     function run() {
@@ -197,8 +204,9 @@
           });
         })
         .then(function (res) {
-          var action = (res.data && res.data.action) || "none";
-          if (action === "matched") {
+          // Decision::preview uses HTTP codes: 301 / 410 / reserved / none / skip.
+          var action = String((res.data && res.data.action) || "none");
+          if (action === "301" || action === "matched") {
             showPreview(
               out,
               "已匹配 · 301 → 文档页 #" +
@@ -206,10 +214,12 @@
                 "（不写命中）",
               "ok"
             );
-          } else if (action === "gone") {
-            showPreview(out, "已失效 · 410（不写命中）", "ok");
+          } else if (action === "410" || action === "gone") {
+            showPreview(out, "已下线 · 410（不写命中）", "ok");
           } else if (action === "reserved") {
             showPreview(out, "保留路径 · 不跳转", "bad");
+          } else if (action === "skip") {
+            showPreview(out, "待处理 / 未启用 · 不跳转", "bad");
           } else {
             showPreview(out, "未匹配 · 不写命中", "bad");
           }
@@ -244,6 +254,8 @@
         form.addEventListener("submit", function (e) {
           var postId = form.querySelector("#wp_post_id");
           var path = form.querySelector("#wp_path");
+          var pageId = form.querySelector("#docs_page_id");
+          var status = form.querySelector("#redir_status");
           var bad = false;
 
           if (postId) {
@@ -268,6 +280,20 @@
             }
           }
 
+          if (path && pageId && status) {
+            var st = String(status.value || "");
+            var pid = Number(String(pageId.value || "0").trim() || "0");
+            if (st === "matched" && pid < 1) {
+              setFieldBad(pageId, true);
+              bad = true;
+              if (!path || path.classList.contains("is-invalid") === false) {
+                pageId.focus();
+              }
+            } else {
+              setFieldBad(pageId, false);
+            }
+          }
+
           if (bad) {
             e.preventDefault();
             return;
@@ -280,9 +306,12 @@
           }
         });
 
-        var watched = form.querySelectorAll("#wp_post_id, #wp_path");
+        var watched = form.querySelectorAll("#wp_post_id, #wp_path, #docs_page_id, #redir_status");
         for (var w = 0; w < watched.length; w++) {
           watched[w].addEventListener("input", function () {
+            setFieldBad(this, false);
+          });
+          watched[w].addEventListener("change", function () {
             setFieldBad(this, false);
           });
         }
