@@ -23,8 +23,8 @@ $base_show = Settings::base_url();
 $content   = Settings::content_mode();
 $content_lab = array(
 	Settings::CONTENT_KEEP     => __( '保留', 'wpdocs' ),
-	Settings::CONTENT_COCOBOOK => __( 'CocoBook 读取', 'wpdocs' ),
-	Settings::CONTENT_GIT      => __( 'Git 导入', 'wpdocs' ),
+	Settings::CONTENT_COCOBOOK => __( '文档站', 'wpdocs' ),
+	Settings::CONTENT_GIT      => __( 'Git', 'wpdocs' ),
 );
 $mode      = Settings::mode();
 $mode_lab  = array(

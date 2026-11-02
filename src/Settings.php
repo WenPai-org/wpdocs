@@ -368,6 +368,38 @@ final class Settings {
 		}
 		if ( isset( $input['git_repositories'] ) && is_array( $input['git_repositories'] ) ) {
 			$out['git_repositories'] = self::sanitize_git_repos( $input['git_repositories'] );
+		} elseif ( array_key_exists( 'git_repo_slug', $input ) ) {
+			// Simple settings form: one primary repo as owner/name.
+			$slug   = trim( (string) $input['git_repo_slug'] );
+			$folder = sanitize_text_field( (string) ( $input['git_repo_folder'] ?? '' ) );
+			$branch = sanitize_text_field( (string) ( $input['git_repo_branch'] ?? 'main' ) ) ?: 'main';
+			$user   = '';
+			$repo   = '';
+			if ( '' !== $slug && false !== strpos( $slug, '/' ) ) {
+				$parts = explode( '/', $slug, 2 );
+				$user  = sanitize_text_field( $parts[0] );
+				$repo  = sanitize_text_field( $parts[1] );
+			}
+			if ( '' === $user && '' === $repo ) {
+				$out['git_repositories'] = array();
+			} else {
+				$out['git_repositories'] = array(
+					1 => array(
+						'username'         => $user,
+						'repository'       => $repo,
+						'folder'           => $folder,
+						'branch'           => $branch,
+						'post_type'        => sanitize_key( (string) ( $input['git_repo_post_type'] ?? $out['git_default_post_type'] ?? 'post' ) ) ?: 'post',
+						'post_author'      => max( 1, (int) ( $input['git_repo_post_author'] ?? $out['git_default_post_author'] ?? 1 ) ),
+						'content_template' => '%%content%%',
+						'last_publish'     => (int) ( $input['git_repo_last_publish'] ?? 0 ),
+					),
+				);
+			}
+		}
+		// CocoBook rollout: UI only offers pilot|all; coerce off → pilot when in cocobook.
+		if ( self::CONTENT_COCOBOOK === ( $out['content_mode'] ?? '' ) && self::MODE_OFF === ( $out['mode'] ?? '' ) ) {
+			$out['mode'] = self::MODE_PILOT;
 		}
 
 		if ( '' === (string) $out['refresh_secret'] ) {

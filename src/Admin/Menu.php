@@ -230,13 +230,13 @@ final class Menu {
 					$ok = false;
 				}
 			}
-			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-tools&section=git&msg=' . ( $ok ? 'git_ok' : 'git_error' ) ) );
+			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-tools&section=sync&msg=' . ( $ok ? 'git_ok' : 'git_error' ) ) );
 			exit;
 		}
 		if ( isset( $_POST['wpdocs_git_sync_local_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_git_sync_local_nonce'] ) ), 'wpdocs_git_sync_local' ) ) {
 			$res = GitEngine::sync_local( ! empty( $_POST['wpdocs_git_force'] ) );
 			$ok  = ! is_wp_error( $res );
-			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-tools&section=git&msg=' . ( $ok ? 'git_local' : 'git_error' ) ) );
+			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-tools&section=sync&msg=' . ( $ok ? 'git_local' : 'git_error' ) ) );
 			exit;
 		}
 
@@ -374,11 +374,15 @@ final class Menu {
 
 
 
-	/** @return string bindings|redirects|sync|git */
+	/** @return string bindings|redirects|sync */
 	private static function tools_section(): string {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$s = isset( $_GET['section'] ) ? sanitize_key( (string) wp_unslash( $_GET['section'] ) ) : '';
-		if ( in_array( $s, array( 'bindings', 'redirects', 'sync', 'git' ), true ) ) {
+		// Legacy ?section=git → sync (Git actions live on sync now).
+		if ( 'git' === $s ) {
+			return 'sync';
+		}
+		if ( in_array( $s, array( 'bindings', 'redirects', 'sync' ), true ) ) {
 			return $s;
 		}
 		return 'bindings';
@@ -441,20 +445,14 @@ final class Menu {
 					'label' => __( '同步', 'wpdocs' ),
 					'url'   => admin_url( 'admin.php?page=wpdocs-tools&section=sync' ),
 				),
-				array(
-					'id'    => 'git',
-					'label' => __( 'Git', 'wpdocs' ),
-					'url'   => admin_url( 'admin.php?page=wpdocs-tools&section=git' ),
-				),
 			)
 		);
 		$sub = ob_get_clean();
 
 		$titles = array(
-			'bindings'  => array( __( '绑定', 'wpdocs' ), __( '把 WordPress 文章对到文档站的一页。危险或批量动作放在工具。', 'wpdocs' ) ),
-			'redirects' => array( __( '跳转', 'wpdocs' ), __( '旧文章地址转到文档站。没对上就回原文章，不拦截。', 'wpdocs' ) ),
-			'sync'      => array( __( '同步', 'wpdocs' ), __( '测试连接、重建书目索引；可将 CocoBook 正文导入进文章。', 'wpdocs' ) ),
-			'git'       => array( __( 'Git', 'wpdocs' ), __( '从 Forgejo / 本地仓拉取 Markdown 写入文章（Git it Write）。', 'wpdocs' ) ),
+			'bindings'  => array( __( '绑定', 'wpdocs' ), __( '文章对到文档页。', 'wpdocs' ) ),
+			'redirects' => array( __( '跳转', 'wpdocs' ), __( '旧路径 301 / 410。', 'wpdocs' ) ),
+			'sync'      => array( __( '同步', 'wpdocs' ), __( '按当前模式更新索引、导入或拉取 Git。', 'wpdocs' ) ),
 		);
 		$title = $titles[ $section ][0] ?? __( '工具', 'wpdocs' );
 		$lede  = $titles[ $section ][1] ?? '';
@@ -469,8 +467,6 @@ final class Menu {
 			include WPDOCS_DIR . 'src/Admin/views/bindings.php';
 		} elseif ( 'redirects' === $section ) {
 			include WPDOCS_DIR . 'src/Admin/views/redirects.php';
-		} elseif ( 'git' === $section ) {
-			include WPDOCS_DIR . 'src/Admin/views/git.php';
 		} else {
 			include WPDOCS_DIR . 'src/Admin/views/sync.php';
 		}

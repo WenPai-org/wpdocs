@@ -1,6 +1,6 @@
 <?php
 /**
- * Settings — 档 A：三种内容模式 + 条件连接。
+ * Settings — 三卡：模式 → 连接 → 其它。
  *
  * @package Wpdocs
  *
@@ -23,21 +23,17 @@ $mode_html = ob_get_clean();
 
 View::page_head(
 	__( '设置', 'wpdocs' ),
-	__( '三种模式：保留正文、CocoBook 读取、或从 Git 导入（整合 Git it Write）。', 'wpdocs' ),
+	__( '先选内容从哪来，再填对应连接。', 'wpdocs' ),
 	$mode_html
 );
 View::saved_notice();
 View::error_notice();
 
 $content_mode = Settings::content_mode();
-// For CocoBook rollout UI, read stored mode even when content_mode temporarily not cocobook.
 $rollout_raw  = (string) ( $s['mode'] ?? Settings::MODE_PILOT );
-$rollout      = in_array( $rollout_raw, array( Settings::MODE_OFF, Settings::MODE_PILOT, Settings::MODE_ALL ), true )
+$rollout      = in_array( $rollout_raw, array( Settings::MODE_PILOT, Settings::MODE_ALL ), true )
 	? $rollout_raw
 	: Settings::MODE_PILOT;
-if ( Settings::CONTENT_KEEP === $content_mode ) {
-	$rollout = Settings::MODE_OFF;
-}
 
 $content_ctl = View::choice_cards(
 	'wpdocs[content_mode]',
@@ -45,17 +41,17 @@ $content_ctl = View::choice_cards(
 	array(
 		Settings::CONTENT_KEEP => array(
 			'label' => __( '保留', 'wpdocs' ),
-			'desc'  => __( '不改正文。可在工具里一次性从 CocoBook 导入进文章。', 'wpdocs' ),
+			'desc'  => __( '品牌站正文不动。', 'wpdocs' ),
 			'icon'  => 'info',
 		),
 		Settings::CONTENT_COCOBOOK => array(
-			'label' => __( 'CocoBook 读取', 'wpdocs' ),
-			'desc'  => __( '运行时用文档站正文替换品牌站文章（可试点）。', 'wpdocs' ),
+			'label' => __( '文档站', 'wpdocs' ),
+			'desc'  => __( '打开文章时读 CocoBook。', 'wpdocs' ),
 			'icon'  => 'link',
 		),
 		Settings::CONTENT_GIT => array(
-			'label' => __( 'Git 导入', 'wpdocs' ),
-			'desc'  => __( '从 Forgejo / 本地仓把 Markdown 写入文章（Git it Write）。', 'wpdocs' ),
+			'label' => __( 'Git', 'wpdocs' ),
+			'desc'  => __( '把仓库 Markdown 写入文章。', 'wpdocs' ),
 			'icon'  => 'flash',
 		),
 	)
@@ -65,19 +61,14 @@ $rollout_ctl = View::choice_cards(
 	'wpdocs[mode]',
 	$rollout,
 	array(
-		Settings::MODE_OFF   => array(
-			'label' => __( '关闭读取', 'wpdocs' ),
-			'desc'  => __( '已选 CocoBook，但暂不换正文。', 'wpdocs' ),
-			'icon'  => 'info',
-		),
 		Settings::MODE_PILOT => array(
 			'label' => __( '试点', 'wpdocs' ),
-			'desc'  => __( '只接管下方填写的文章 ID。', 'wpdocs' ),
+			'desc'  => __( '只换指定文章。', 'wpdocs' ),
 			'icon'  => 'flash',
 		),
 		Settings::MODE_ALL   => array(
 			'label' => __( '全部', 'wpdocs' ),
-			'desc'  => __( '接管所有能对应到文档页的文章。', 'wpdocs' ),
+			'desc'  => __( '凡能对应到文档页的都换。', 'wpdocs' ),
 			'icon'  => 'link',
 		),
 	)
@@ -85,14 +76,13 @@ $rollout_ctl = View::choice_cards(
 
 $token_locked = Settings::is_locked( 'token_secret' );
 $token_saved  = '' !== (string) ( $s['token_secret'] ?? '' );
-$secret_ctl   = '';
 if ( $token_locked ) {
 	$secret_ctl = '<code>' . esc_html__( '已由 wp-config.php 常量设置', 'wpdocs' ) . '</code>';
 } else {
-	$ph = $token_saved ? esc_attr__( '已保存（留空则不修改）', 'wpdocs' ) : '';
+	$ph         = $token_saved ? esc_attr__( '已保存（留空不改）', 'wpdocs' ) : '';
 	$secret_ctl = '<input id="wpdocs-token-secret" type="password" name="wpdocs[token_secret]" value="" autocomplete="new-password" placeholder="' . $ph . '" />';
 	if ( $token_saved ) {
-		$secret_ctl .= '<label class="chk" style="display:block;margin-top:8px"><input type="checkbox" name="wpdocs[token_secret_clear]" value="1" /> ' . esc_html__( '清除已保存的 Secret', 'wpdocs' ) . '</label>';
+		$secret_ctl .= '<label class="chk" style="display:block;margin-top:8px"><input type="checkbox" name="wpdocs[token_secret_clear]" value="1" /> ' . esc_html__( '清除 Secret', 'wpdocs' ) . '</label>';
 	}
 }
 
@@ -104,7 +94,6 @@ $base_ctl = Settings::is_locked( 'base_url' )
 	? '<code>' . esc_html( Settings::base_url() ) . '</code>'
 	: '<input id="wpdocs-base-url" type="url" name="wpdocs[base_url]" value="' . esc_attr( (string) ( $s['base_url'] ?? '' ) ) . '" placeholder="https://docs.example.test" />';
 
-$tree_in   = (string) ( $s['tree_url'] ?? '' );
 $books_ctl = '';
 if ( is_array( $books ) && ! is_wp_error( $books ) && ! empty( $books['data'] ) ) {
 	$books_ctl .= '<div class="chk-grid wpdocs-books">';
@@ -120,66 +109,42 @@ if ( is_array( $books ) && ! is_wp_error( $books ) && ! empty( $books['data'] ) 
 	}
 	$books_ctl .= '</div>';
 } else {
-	$books_ctl = '<p class="hint">' . esc_html__( '保存连接后，这里会列出可选的书。也可只填站点标签自动选书。', 'wpdocs' ) . '</p>';
+	$books_ctl = '<p class="hint">' . esc_html__( '保存连接后列出可选书；也可只填站点标签。', 'wpdocs' ) . '</p>';
 	foreach ( Settings::books() as $bid ) {
 		$books_ctl .= '<input type="hidden" name="wpdocs[books][]" value="' . esc_attr( (string) $bid ) . '" />';
 	}
 }
 
-$git_token_saved = '' !== (string) ( $s['git_forgejo_token'] ?? '' );
-$git_token_ctl   = '<input id="wpdocs-git-token" type="password" name="wpdocs[git_forgejo_token]" value="" autocomplete="new-password" placeholder="'
-	. ( $git_token_saved ? esc_attr__( '已保存（留空则不修改）', 'wpdocs' ) : '' ) . '" />';
-if ( $git_token_saved ) {
-	$git_token_ctl .= '<label class="chk" style="display:block;margin-top:8px"><input type="checkbox" name="wpdocs[git_forgejo_token_clear]" value="1" /> '
-		. esc_html__( '清除已保存的 Token', 'wpdocs' ) . '</label>';
+$repos   = Settings::git_repositories();
+$primary = array();
+foreach ( $repos as $row ) {
+	if ( is_array( $row ) && ( '' !== (string) ( $row['username'] ?? '' ) || '' !== (string) ( $row['repository'] ?? '' ) ) ) {
+		$primary = $row;
+		break;
+	}
 }
-
-$repos     = Settings::git_repositories();
-$repos_html = '<div class="wpdocs-git-repos">';
-$repos_html .= '<input type="hidden" name="wpdocs[git_repositories][0][username]" value="" />';
-$rows = $repos;
-if ( empty( $rows ) ) {
-	$rows = array(
-		1 => array(
-			'username'   => '',
-			'repository' => '',
-			'folder'     => '',
-			'branch'     => 'main',
-			'post_type'  => 'post',
-			'post_author'=> get_current_user_id() ?: 1,
-		),
+if ( empty( $primary ) ) {
+	$primary = array(
+		'username'    => '',
+		'repository'  => '',
+		'folder'      => '',
+		'branch'      => 'main',
+		'post_type'   => 'post',
+		'post_author' => get_current_user_id() ?: 1,
 	);
 }
-foreach ( $rows as $rid => $repo ) {
-	if ( ! is_array( $repo ) ) {
-		continue;
-	}
-	$rid = (int) $rid;
-	if ( $rid < 1 ) {
-		$rid = 1;
-	}
-	$repos_html .= '<div class="wpdocs-git-repo card" style="margin:12px 0;padding:12px">';
-	$repos_html .= '<p class="hint">' . esc_html( sprintf( __( '仓库 #%d', 'wpdocs' ), $rid ) ) . '</p>';
-	$repos_html .= '<div class="field"><label class="field-label">' . esc_html__( '用户 / 组织', 'wpdocs' ) . '</label><div class="field-ctl">'
-		. '<input type="text" name="wpdocs[git_repositories][' . $rid . '][username]" value="' . esc_attr( (string) ( $repo['username'] ?? '' ) ) . '" /></div></div>';
-	$repos_html .= '<div class="field"><label class="field-label">' . esc_html__( '仓库名', 'wpdocs' ) . '</label><div class="field-ctl">'
-		. '<input type="text" name="wpdocs[git_repositories][' . $rid . '][repository]" value="' . esc_attr( (string) ( $repo['repository'] ?? '' ) ) . '" /></div></div>';
-	$repos_html .= '<div class="field"><label class="field-label">' . esc_html__( '子目录', 'wpdocs' ) . '</label><div class="field-ctl">'
-		. '<input type="text" name="wpdocs[git_repositories][' . $rid . '][folder]" value="' . esc_attr( (string) ( $repo['folder'] ?? '' ) ) . '" placeholder="docs" /></div></div>';
-	$repos_html .= '<div class="field"><label class="field-label">' . esc_html__( '分支', 'wpdocs' ) . '</label><div class="field-ctl">'
-		. '<input type="text" name="wpdocs[git_repositories][' . $rid . '][branch]" value="' . esc_attr( (string) ( $repo['branch'] ?? 'main' ) ) . '" /></div></div>';
-	$repos_html .= '<div class="field"><label class="field-label">' . esc_html__( '文章类型', 'wpdocs' ) . '</label><div class="field-ctl">'
-		. '<input type="text" name="wpdocs[git_repositories][' . $rid . '][post_type]" value="' . esc_attr( (string) ( $repo['post_type'] ?? 'post' ) ) . '" /></div></div>';
-	$repos_html .= '<input type="hidden" name="wpdocs[git_repositories][' . $rid . '][post_author]" value="' . esc_attr( (string) (int) ( $repo['post_author'] ?? 1 ) ) . '" />';
-	$repos_html .= '<input type="hidden" name="wpdocs[git_repositories][' . $rid . '][content_template]" value="' . esc_attr( (string) ( $repo['content_template'] ?? '%%content%%' ) ) . '" />';
-	$repos_html .= '<input type="hidden" name="wpdocs[git_repositories][' . $rid . '][last_publish]" value="' . esc_attr( (string) (int) ( $repo['last_publish'] ?? 0 ) ) . '" />';
-	$repos_html .= '</div>';
-}
-$repos_html .= '<p class="hint">' . esc_html__( '清空用户与仓库名可删除该行。需要多个仓库时，保存后再回来会保留；暂请在选项里追加序号键，或用工具页拉取。', 'wpdocs' ) . '</p>';
-$repos_html .= '</div>';
+$git_slug = trim( (string) ( $primary['username'] ?? '' ) . '/' . (string) ( $primary['repository'] ?? '' ), '/' );
 
-$comments_on  = ! empty( $s['comments'] );
-$redirects_on = ! empty( $s['redirects'] );
+$git_token_saved = '' !== (string) ( $s['git_forgejo_token'] ?? '' );
+$git_token_ctl   = '<input id="wpdocs-git-token" type="password" name="wpdocs[git_forgejo_token]" value="" autocomplete="new-password" placeholder="'
+	. ( $git_token_saved ? esc_attr__( '已保存（留空不改）', 'wpdocs' ) : '' ) . '" />';
+if ( $git_token_saved ) {
+	$git_token_ctl .= '<label class="chk" style="display:block;margin-top:8px"><input type="checkbox" name="wpdocs[git_forgejo_token_clear]" value="1" /> '
+		. esc_html__( '清除 Token', 'wpdocs' ) . '</label>';
+}
+
+$comments_on    = ! empty( $s['comments'] );
+$redirects_on   = ! empty( $s['redirects'] );
 $giw_standalone = GitBoot::standalone_active();
 ?>
 <form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-settings' ) ); ?>" class="wpdocs-settings-form" id="wpdocs-settings-form">
@@ -189,45 +154,71 @@ $giw_standalone = GitBoot::standalone_active();
 	<?php endif; ?>
 
 	<section class="card">
-		<h2 class="section-title"><?php esc_html_e( '上线方式', 'wpdocs' ); ?></h2>
-		<p class="section-desc"><?php esc_html_e( '保留 = 不动正文；CocoBook 读取 = 运行时换正文；Git 导入 = 把 Markdown 写入文章。', 'wpdocs' ); ?></p>
+		<h2 class="section-title"><?php esc_html_e( '内容从哪来', 'wpdocs' ); ?></h2>
 		<?php
 		View::field(
 			array(
-				'label'   => __( '内容模式', 'wpdocs' ),
-				'help'    => __( '三种互斥。切换后请保存，再配置对应连接。', 'wpdocs' ),
+				'label'   => __( '模式', 'wpdocs' ),
 				'control' => $content_ctl,
 			)
 		);
 		?>
 	</section>
 
-	<section class="card" data-wpdocs-when-content="cocobook,keep"<?php echo in_array( $content_mode, array( Settings::CONTENT_COCOBOOK, Settings::CONTENT_KEEP ), true ) ? '' : ' hidden'; ?>>
-		<h2 class="section-title"><?php esc_html_e( 'CocoBook 连接与书目', 'wpdocs' ); ?></h2>
-		<p class="section-desc"><?php esc_html_e( '读取模式与「导入到文章」工具都需要 Token。保留模式下可不填。', 'wpdocs' ); ?></p>
+	<section class="card" data-wpdocs-when-content="keep"<?php echo Settings::CONTENT_KEEP === $content_mode ? '' : ' hidden'; ?>>
+		<h2 class="section-title"><?php esc_html_e( '保留正文', 'wpdocs' ); ?></h2>
+		<p class="section-desc"><?php esc_html_e( '前台不换正文。导入请到工具 → 同步。', 'wpdocs' ); ?></p>
+		<p><a class="btn btn-ghost" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=sync' ) ); ?>"><?php esc_html_e( '打开同步', 'wpdocs' ); ?></a></p>
 		<?php
+		// Import still needs Token; keep fields in advanced only.
 		View::field(
 			array(
-				'for'     => 'wpdocs-base-url',
-				'label'   => __( '文档站地址', 'wpdocs' ),
-				'help'    => __( 'BookStack / CocoBook 根地址，不要尾斜杠。', 'wpdocs' ),
-				'control' => $base_ctl,
+				'for'      => 'wpdocs-base-url-keep',
+				'label'    => __( '文档站地址', 'wpdocs' ),
+				'help'     => __( '仅导入时需要。', 'wpdocs' ),
+				'advanced' => true,
+				'control'  => Settings::is_locked( 'base_url' )
+					? '<code>' . esc_html( Settings::base_url() ) . '</code>'
+					: '<input id="wpdocs-base-url-keep" type="url" name="wpdocs[base_url]" value="' . esc_attr( (string) ( $s['base_url'] ?? '' ) ) . '" />',
 			)
 		);
 		View::field(
 			array(
-				'for'      => 'wpdocs-tree-url',
-				'label'    => __( '发布树地址', 'wpdocs' ),
-				'help'     => __( '留空则用「文档站/books」；保存为空字符串则跳过发布树探测。', 'wpdocs' ),
+				'for'      => 'wpdocs-token-id-keep',
+				'label'    => __( 'Token ID', 'wpdocs' ),
 				'advanced' => true,
-				'control'  => '<input id="wpdocs-tree-url" type="url" name="wpdocs[tree_url]" value="' . esc_attr( $tree_in ) . '" />',
+				'control'  => Settings::is_locked( 'token_id' )
+					? '<code>' . esc_html( (string) Settings::get( 'token_id' ) ) . '</code>'
+					: '<input id="wpdocs-token-id-keep" type="text" name="wpdocs[token_id]" value="' . esc_attr( (string) ( $s['token_id'] ?? '' ) ) . '" autocomplete="off" />',
+			)
+		);
+		View::field(
+			array(
+				'for'      => 'wpdocs-token-secret-keep',
+				'label'    => __( 'Token Secret', 'wpdocs' ),
+				'advanced' => true,
+				'control'  => $secret_ctl,
+			)
+		);
+		?>
+	</section>
+
+	<section class="card" data-wpdocs-when-content="cocobook"<?php echo Settings::CONTENT_COCOBOOK === $content_mode ? '' : ' hidden'; ?>>
+		<h2 class="section-title"><?php esc_html_e( '文档站连接', 'wpdocs' ); ?></h2>
+		<p class="section-desc"><?php esc_html_e( '填地址与 Token，再选读哪些文章。', 'wpdocs' ); ?></p>
+		<?php
+		View::field(
+			array(
+				'for'     => 'wpdocs-base-url',
+				'label'   => __( '地址', 'wpdocs' ),
+				'help'    => __( 'CocoBook / BookStack 根地址。', 'wpdocs' ),
+				'control' => $base_ctl,
 			)
 		);
 		View::field(
 			array(
 				'for'     => 'wpdocs-token-id',
 				'label'   => __( 'Token ID', 'wpdocs' ),
-				'help'    => __( '文档站 API 只读 Token。也可在 wp-config.php 定义常量。', 'wpdocs' ),
 				'control' => $tid_ctl,
 			)
 		);
@@ -235,7 +226,7 @@ $giw_standalone = GitBoot::standalone_active();
 			array(
 				'for'     => 'wpdocs-token-secret',
 				'label'   => __( 'Token Secret', 'wpdocs' ),
-				'help'    => __( '密钥不回显；留空表示不修改。', 'wpdocs' ),
+				'help'    => __( '不回显；留空表示不修改。', 'wpdocs' ),
 				'control' => $secret_ctl,
 			)
 		);
@@ -243,50 +234,16 @@ $giw_standalone = GitBoot::standalone_active();
 			array(
 				'for'     => 'wpdocs-site-tag',
 				'label'   => __( '站点标签', 'wpdocs' ),
-				'help'    => __( '未勾选具体书目时，自动使用带此 site 标签的书。', 'wpdocs' ),
+				'help'    => __( '未勾选书目时，自动用带此标签的书。', 'wpdocs' ),
 				'control' => '<input id="wpdocs-site-tag" type="text" name="wpdocs[site_tag]" value="' . esc_attr( (string) ( $s['site_tag'] ?? '' ) ) . '" />',
 			)
 		);
 		View::field(
 			array(
-				'label'   => __( '同步的书', 'wpdocs' ),
+				'label'   => __( '书目', 'wpdocs' ),
 				'control' => $books_ctl,
 			)
 		);
-		View::field(
-			array(
-				'for'      => 'wpdocs-post-types',
-				'label'    => __( '文章类型', 'wpdocs' ),
-				'help'     => __( '逗号分隔，默认 post。', 'wpdocs' ),
-				'advanced' => true,
-				'control'  => '<input id="wpdocs-post-types" type="text" name="wpdocs[post_types]" value="' . esc_attr( implode( ',', (array) ( $s['post_types'] ?? array( 'post' ) ) ) ) . '" />',
-			)
-		);
-		View::field(
-			array(
-				'for'      => 'wpdocs-ttl',
-				'label'    => __( '缓存过期秒数', 'wpdocs' ),
-				'help'     => __( '填 0 表示不过期（推荐）。正文缓存在文件，不进选项表。', 'wpdocs' ),
-				'advanced' => true,
-				'control'  => '<input id="wpdocs-ttl" type="number" min="0" name="wpdocs[page_ttl]" value="' . esc_attr( (string) ( $s['page_ttl'] ?? 0 ) ) . '" />',
-			)
-		);
-		View::field(
-			array(
-				'for'      => 'wpdocs-minc',
-				'label'    => __( '旧评论迁移阈值', 'wpdocs' ),
-				'help'     => __( '迁移旧评论时，只迁移不少于这么多字的评论。', 'wpdocs' ),
-				'advanced' => true,
-				'control'  => '<input id="wpdocs-minc" type="number" min="1" max="1000" name="wpdocs[comment_min_chars]" value="' . esc_attr( (string) ( $s['comment_min_chars'] ?? 30 ) ) . '" />',
-			)
-		);
-		?>
-	</section>
-
-	<section class="card" data-wpdocs-when-content="cocobook"<?php echo Settings::CONTENT_COCOBOOK === $content_mode ? '' : ' hidden'; ?>>
-		<h2 class="section-title"><?php esc_html_e( 'CocoBook 读取范围', 'wpdocs' ); ?></h2>
-		<p class="section-desc"><?php esc_html_e( '试点适合先验证几篇；确认无误再开全部。', 'wpdocs' ); ?></p>
-		<?php
 		View::field(
 			array(
 				'label'   => __( '读取范围', 'wpdocs' ),
@@ -298,122 +255,149 @@ $giw_standalone = GitBoot::standalone_active();
 			<label class="field-label" for="wpdocs-pilot"><?php esc_html_e( '试点文章 ID', 'wpdocs' ); ?></label>
 			<div class="field-ctl">
 				<input id="wpdocs-pilot" type="text" name="wpdocs[pilot_post_ids]" value="<?php echo esc_attr( implode( ', ', Settings::pilot_post_ids() ) ); ?>" />
-				<p class="hint"><?php esc_html_e( '逗号分隔的 WordPress 文章 ID。', 'wpdocs' ); ?></p>
+				<p class="hint"><?php esc_html_e( '逗号分隔。', 'wpdocs' ); ?></p>
 			</div>
 		</div>
+		<?php
+		View::field(
+			array(
+				'for'      => 'wpdocs-tree-url',
+				'label'    => __( '发布树地址', 'wpdocs' ),
+				'help'     => __( '留空用「文档站/books」。', 'wpdocs' ),
+				'advanced' => true,
+				'control'  => '<input id="wpdocs-tree-url" type="url" name="wpdocs[tree_url]" value="' . esc_attr( (string) ( $s['tree_url'] ?? '' ) ) . '" />',
+			)
+		);
+		View::field(
+			array(
+				'for'      => 'wpdocs-post-types',
+				'label'    => __( '文章类型', 'wpdocs' ),
+				'advanced' => true,
+				'control'  => '<input id="wpdocs-post-types" type="text" name="wpdocs[post_types]" value="' . esc_attr( implode( ',', (array) ( $s['post_types'] ?? array( 'post' ) ) ) ) . '" />',
+			)
+		);
+		View::field(
+			array(
+				'for'      => 'wpdocs-ttl',
+				'label'    => __( '缓存秒数', 'wpdocs' ),
+				'help'     => __( '0 = 不过期。', 'wpdocs' ),
+				'advanced' => true,
+				'control'  => '<input id="wpdocs-ttl" type="number" min="0" name="wpdocs[page_ttl]" value="' . esc_attr( (string) ( $s['page_ttl'] ?? 0 ) ) . '" />',
+			)
+		);
+		?>
 	</section>
 
 	<section class="card" data-wpdocs-when-content="git"<?php echo Settings::CONTENT_GIT === $content_mode ? '' : ' hidden'; ?>>
-		<h2 class="section-title"><?php esc_html_e( 'Git 导入（Git it Write）', 'wpdocs' ); ?></h2>
-		<p class="section-desc"><?php esc_html_e( '从 Forgejo 远程仓或本机目录拉取 Markdown，写入 WordPress 文章。Webhook 与立即拉取在工具页。', 'wpdocs' ); ?></p>
+		<h2 class="section-title"><?php esc_html_e( 'Git 连接', 'wpdocs' ); ?></h2>
+		<p class="section-desc"><?php esc_html_e( '填 Forgejo 与一个仓库。拉取在工具 → 同步。', 'wpdocs' ); ?></p>
 		<?php if ( $giw_standalone ) : ?>
-			<div class="notice warn"><span><?php esc_html_e( '检测到独立「Git it Write」插件。请停用它，或继续用该插件管理仓库；文派文档不会再加载内置副本。', 'wpdocs' ); ?></span></div>
+			<div class="notice warn"><span><?php esc_html_e( '已装独立 Git it Write。请停用后再用本页，或继续用那个插件。', 'wpdocs' ); ?></span></div>
 		<?php endif; ?>
 		<?php
 		View::field(
 			array(
 				'for'     => 'wpdocs-git-url',
 				'label'   => __( 'Forgejo 地址', 'wpdocs' ),
-				'help'    => __( '例如 https://feicode.com。本地目录模式可留空。', 'wpdocs' ),
-				'control' => '<input id="wpdocs-git-url" type="url" name="wpdocs[git_forgejo_url]" value="' . esc_attr( (string) ( $s['git_forgejo_url'] ?? '' ) ) . '" />',
+				'control' => '<input id="wpdocs-git-url" type="url" name="wpdocs[git_forgejo_url]" value="' . esc_attr( (string) ( $s['git_forgejo_url'] ?? '' ) ) . '" placeholder="https://feicode.com" />',
 			)
 		);
 		View::field(
 			array(
 				'for'     => 'wpdocs-git-token',
-				'label'   => __( 'Forgejo Token', 'wpdocs' ),
-				'help'    => __( '读仓库权限即可。留空不修改。', 'wpdocs' ),
+				'label'   => __( 'Token', 'wpdocs' ),
 				'control' => $git_token_ctl,
 			)
 		);
 		View::field(
 			array(
-				'for'     => 'wpdocs-git-webhook',
-				'label'   => __( 'Webhook Secret', 'wpdocs' ),
-				'help'    => __( 'Forgejo Webhook 的 HMAC 密钥；首次保存可自动生成。', 'wpdocs' ),
-				'control' => '<input id="wpdocs-git-webhook" type="text" name="wpdocs[git_webhook_secret]" value="' . esc_attr( (string) ( $s['git_webhook_secret'] ?? '' ) ) . '" autocomplete="off" />',
+				'for'     => 'wpdocs-git-slug',
+				'label'   => __( '仓库', 'wpdocs' ),
+				'help'    => __( '格式 owner/name。', 'wpdocs' ),
+				'control' => '<input id="wpdocs-git-slug" type="text" name="wpdocs[git_repo_slug]" value="' . esc_attr( $git_slug ) . '" placeholder="WenPai-org/docs" />',
+			)
+		);
+		View::field(
+			array(
+				'for'     => 'wpdocs-git-folder',
+				'label'   => __( '子目录', 'wpdocs' ),
+				'control' => '<input id="wpdocs-git-folder" type="text" name="wpdocs[git_repo_folder]" value="' . esc_attr( (string) ( $primary['folder'] ?? '' ) ) . '" placeholder="docs" />',
+			)
+		);
+		View::field(
+			array(
+				'for'     => 'wpdocs-git-branch',
+				'label'   => __( '分支', 'wpdocs' ),
+				'control' => '<input id="wpdocs-git-branch" type="text" name="wpdocs[git_repo_branch]" value="' . esc_attr( (string) ( $primary['branch'] ?? 'main' ) ) . '" />',
+			)
+		);
+		View::field(
+			array(
+				'for'      => 'wpdocs-git-webhook',
+				'label'    => __( 'Webhook Secret', 'wpdocs' ),
+				'advanced' => true,
+				'control'  => '<input id="wpdocs-git-webhook" type="text" name="wpdocs[git_webhook_secret]" value="' . esc_attr( (string) ( $s['git_webhook_secret'] ?? '' ) ) . '" autocomplete="off" />',
 			)
 		);
 		View::field(
 			array(
 				'for'      => 'wpdocs-git-base',
 				'label'    => __( '本地目录', 'wpdocs' ),
-				'help'     => __( '填绝对路径则走本地模式（扫描子目录 + .giw.yml），忽略远程仓列表。', 'wpdocs' ),
+				'help'     => __( '填了则走本地扫描，忽略上方远程仓库。', 'wpdocs' ),
 				'advanced' => true,
-				'control'  => '<input id="wpdocs-git-base" type="text" name="wpdocs[git_base_directory]" value="' . esc_attr( (string) ( $s['git_base_directory'] ?? '' ) ) . '" placeholder="/var/www/docs-repos" />',
+				'control'  => '<input id="wpdocs-git-base" type="text" name="wpdocs[git_base_directory]" value="' . esc_attr( (string) ( $s['git_base_directory'] ?? '' ) ) . '" />',
 			)
 		);
 		View::field(
 			array(
 				'for'      => 'wpdocs-git-ptype',
-				'label'    => __( '默认文章类型', 'wpdocs' ),
+				'label'    => __( '文章类型', 'wpdocs' ),
 				'advanced' => true,
 				'control'  => '<input id="wpdocs-git-ptype" type="text" name="wpdocs[git_default_post_type]" value="' . esc_attr( (string) ( $s['git_default_post_type'] ?? 'post' ) ) . '" />',
 			)
 		);
-		View::field(
-			array(
-				'for'      => 'wpdocs-git-author',
-				'label'    => __( '默认作者 ID', 'wpdocs' ),
-				'advanced' => true,
-				'control'  => '<input id="wpdocs-git-author" type="number" min="1" name="wpdocs[git_default_post_author]" value="' . esc_attr( (string) (int) ( $s['git_default_post_author'] ?? 1 ) ) . '" />',
-			)
-		);
-		View::field(
-			array(
-				'for'      => 'wpdocs-git-interval',
-				'label'    => __( '本地同步间隔', 'wpdocs' ),
-				'advanced' => true,
-				'control'  => '<select id="wpdocs-git-interval" name="wpdocs[git_sync_interval]">'
-					. '<option value="every_30_minutes"' . selected( (string) ( $s['git_sync_interval'] ?? '' ), 'every_30_minutes', false ) . '>' . esc_html__( '每 30 分钟', 'wpdocs' ) . '</option>'
-					. '<option value="hourly"' . selected( (string) ( $s['git_sync_interval'] ?? 'hourly' ), 'hourly', false ) . '>' . esc_html__( '每小时', 'wpdocs' ) . '</option>'
-					. '<option value="every_6_hours"' . selected( (string) ( $s['git_sync_interval'] ?? '' ), 'every_6_hours', false ) . '>' . esc_html__( '每 6 小时', 'wpdocs' ) . '</option>'
-					. '<option value="every_12_hours"' . selected( (string) ( $s['git_sync_interval'] ?? '' ), 'every_12_hours', false ) . '>' . esc_html__( '每 12 小时', 'wpdocs' ) . '</option>'
-					. '<option value="daily"' . selected( (string) ( $s['git_sync_interval'] ?? '' ), 'daily', false ) . '>' . esc_html__( '每天', 'wpdocs' ) . '</option>'
-					. '</select>',
-			)
-		);
-		View::field(
-			array(
-				'label'   => __( '远程仓库', 'wpdocs' ),
-				'help'    => __( '本地目录为空时使用。', 'wpdocs' ),
-				'control' => $repos_html,
-			)
-		);
 		?>
-		<p class="hint"><a href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=git' ) ); ?>"><?php esc_html_e( '去工具 · Git 拉取', 'wpdocs' ); ?></a></p>
+		<input type="hidden" name="wpdocs[git_repo_post_type]" value="<?php echo esc_attr( (string) ( $primary['post_type'] ?? 'post' ) ); ?>" />
+		<input type="hidden" name="wpdocs[git_repo_post_author]" value="<?php echo esc_attr( (string) (int) ( $primary['post_author'] ?? 1 ) ); ?>" />
+		<input type="hidden" name="wpdocs[git_repo_last_publish]" value="<?php echo esc_attr( (string) (int) ( $primary['last_publish'] ?? 0 ) ); ?>" />
 	</section>
 
 	<section class="card">
-		<h2 class="section-title"><?php esc_html_e( '评论与跳转', 'wpdocs' ); ?></h2>
+		<h2 class="section-title"><?php esc_html_e( '其它', 'wpdocs' ); ?></h2>
 		<div class="simple-row is-action">
 			<div class="tile"><?php echo View::icon( 'feedback' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
 			<div>
 				<div class="t"><?php esc_html_e( '统一评论', 'wpdocs' ); ?></div>
-				<div class="d"><?php esc_html_e( '评论挂到 cocobook:page:{id}，与文档站、论坛同一帖。', 'wpdocs' ); ?></div>
+				<div class="d"><?php esc_html_e( '与文档站同一帖。', 'wpdocs' ); ?></div>
 			</div>
 			<div class="r"><?php echo View::toggle_input( 'wpdocs[comments]', $comments_on ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
 		</div>
 		<div class="field" data-wpdocs-when-on="comments"<?php echo $comments_on ? '' : ' hidden'; ?>>
-			<label class="field-label" for="wpdocs-bff"><?php esc_html_e( '评论服务地址', 'wpdocs' ); ?></label>
+			<label class="field-label" for="wpdocs-bff"><?php esc_html_e( '评论服务', 'wpdocs' ); ?></label>
 			<div class="field-ctl">
 				<input id="wpdocs-bff" type="url" name="wpdocs[bff_url]" value="<?php echo esc_attr( (string) ( $s['bff_url'] ?? '' ) ); ?>" />
-				<p class="hint"><?php esc_html_e( '评论 BFF 根地址。关掉「统一评论」时仍会保存。', 'wpdocs' ); ?></p>
 			</div>
 		</div>
 		<div class="simple-row is-action">
 			<div class="tile"><?php echo View::icon( 'share' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
 			<div>
 				<div class="t"><?php esc_html_e( '旧链接跳转', 'wpdocs' ); ?></div>
-				<div class="d"><?php esc_html_e( '映射表已匹配则 301；已下线则 410。', 'wpdocs' ); ?>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=redirects' ) ); ?>"><?php esc_html_e( '管理映射', 'wpdocs' ); ?></a>
-				</div>
+				<div class="d"><a href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=redirects' ) ); ?>"><?php esc_html_e( '管理映射', 'wpdocs' ); ?></a></div>
 			</div>
 			<div class="r"><?php echo View::toggle_input( 'wpdocs[redirects]', $redirects_on ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
 		</div>
+		<?php
+		View::field(
+			array(
+				'for'      => 'wpdocs-minc',
+				'label'    => __( '旧评论迁移阈值', 'wpdocs' ),
+				'advanced' => true,
+				'control'  => '<input id="wpdocs-minc" type="number" min="1" max="1000" name="wpdocs[comment_min_chars]" value="' . esc_attr( (string) ( $s['comment_min_chars'] ?? 30 ) ) . '" />',
+			)
+		);
+		?>
 		<div class="wenpai-actions">
-			<button type="submit" class="btn btn-primary"><?php esc_html_e( '保存设置', 'wpdocs' ); ?></button>
-			<a class="btn btn-ghost" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=sync' ) ); ?>"><?php esc_html_e( '去同步工具', 'wpdocs' ); ?></a>
+			<button type="submit" class="btn btn-primary"><?php esc_html_e( '保存', 'wpdocs' ); ?></button>
 		</div>
 	</section>
 </form>

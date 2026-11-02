@@ -1,6 +1,6 @@
 <?php
 /**
- * Tools · sync — 连接、CocoBook 导入、日志。
+ * Tools · sync — 按当前内容模式只露相关动作。
  *
  * @package Wpdocs
  *
@@ -10,110 +10,185 @@
 
 use Wpdocs\Admin\View;
 use Wpdocs\Core;
+use Wpdocs\Git\Bootstrap;
+use Wpdocs\Git\Engine;
 use Wpdocs\Settings;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+$content = Settings::content_mode();
 $refresh = rest_url( 'wpdocs/v1/refresh/' ) . ( '' !== (string) Settings::get( 'refresh_secret' ) ? '{secret}' : '' );
 $state   = Core::state();
 
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-$msg = isset( $_GET['msg'] ) ? sanitize_key( (string) wp_unslash( $_GET['msg'] ) ) : '';
+$msg     = isset( $_GET['msg'] ) ? sanitize_key( (string) wp_unslash( $_GET['msg'] ) ) : '';
 $notices = array(
 	'test_ok'          => array( 'ok', __( '连接正常。', 'wpdocs' ) ),
-	'test_error'       => array( 'bad', __( '暂时无法连接文档站，请检查 Token 后重试。', 'wpdocs' ) ),
-	'synced'           => array( 'ok', __( '同步完成。', 'wpdocs' ) ),
-	'sync_error'       => array( 'bad', __( '暂时无法同步，请查看下方日志。', 'wpdocs' ) ),
-	'imported'         => array( 'ok', __( '已将 CocoBook 正文写入绑定文章。', 'wpdocs' ) ),
-	'imported_partial' => array( 'ok', __( '部分文章已导入；失败项见日志。', 'wpdocs' ) ),
-	'import_error'     => array( 'bad', __( '未能导入。请确认已绑定且 Token 可用。', 'wpdocs' ) ),
+	'test_error'       => array( 'bad', __( '连不上文档站。', 'wpdocs' ) ),
+	'synced'           => array( 'ok', __( '索引已更新。', 'wpdocs' ) ),
+	'sync_error'       => array( 'bad', __( '同步失败。', 'wpdocs' ) ),
+	'imported'         => array( 'ok', __( '已写入绑定文章。', 'wpdocs' ) ),
+	'imported_partial' => array( 'ok', __( '部分写入成功，见日志。', 'wpdocs' ) ),
+	'import_error'     => array( 'bad', __( '导入失败。先绑定并检查 Token。', 'wpdocs' ) ),
+	'git_ok'           => array( 'ok', __( 'Git 拉取完成。', 'wpdocs' ) ),
+	'git_error'        => array( 'bad', __( 'Git 拉取失败。', 'wpdocs' ) ),
+	'git_local'        => array( 'ok', __( '本地同步完成。', 'wpdocs' ) ),
 );
 if ( isset( $notices[ $msg ] ) ) {
 	echo '<div class="notice ' . esc_attr( $notices[ $msg ][0] ) . '"><span>' . esc_html( $notices[ $msg ][1] ) . '</span></div>';
 }
+
+$mode_lab = array(
+	Settings::CONTENT_KEEP     => __( '保留', 'wpdocs' ),
+	Settings::CONTENT_COCOBOOK => __( '文档站', 'wpdocs' ),
+	Settings::CONTENT_GIT      => __( 'Git', 'wpdocs' ),
+);
 ?>
 <section class="card">
-	<h2 class="section-title"><?php esc_html_e( '连接与索引', 'wpdocs' ); ?></h2>
-	<p class="section-desc"><?php esc_html_e( '测试只读探测；立即同步会标记缓存过期并重建书目索引。', 'wpdocs' ); ?></p>
-	<div class="wenpai-actions">
-		<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=sync' ) ); ?>" style="display:inline">
-			<?php wp_nonce_field( 'wpdocs_test', 'wpdocs_test_nonce' ); ?>
-			<button type="submit" class="btn btn-ghost"><?php esc_html_e( '测试连接', 'wpdocs' ); ?></button>
-		</form>
-		<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=sync' ) ); ?>" style="display:inline">
-			<?php wp_nonce_field( 'wpdocs_sync', 'wpdocs_sync_nonce' ); ?>
-			<button type="submit" class="btn btn-primary"><?php esc_html_e( '立即同步', 'wpdocs' ); ?></button>
-		</form>
-	</div>
-	<?php if ( is_array( $cat ) ) : ?>
-		<p class="hint"><?php echo esc_html( sprintf(
-			__( '上次同步 %1$s：%2$d 本书，%3$d 个页面；按 wp-id 对应 %4$d，按 wp-path 对应 %5$d，按 wp-slug 对应 %6$d；冲突 %7$d。', 'wpdocs' ),
-			(string) ( $cat['built'] ?? '' ),
-			count( $cat['books'] ?? array() ),
-			count( $cat['pages'] ?? array() ),
-			count( $cat['by_wp_id'] ?? array() ),
-			count( $cat['by_wp_path'] ?? array() ),
-			count( $cat['by_wp_slug'] ?? array() ),
-			count( $cat['conflicts'] ?? array() )
-		) ); ?></p>
-		<?php if ( ! empty( $cat['conflicts'] ) ) : ?>
-			<details><summary><?php esc_html_e( '冲突明细（保留先出现的页面）', 'wpdocs' ); ?></summary><ul>
-			<?php foreach ( array_slice( (array) $cat['conflicts'], 0, 50 ) as $c ) : ?>
-				<li><code><?php echo esc_html( $c[0] . ' = ' . $c[1] ); ?></code>：<?php echo esc_html( '#' . $c[2] . ' / #' . $c[3] ); ?></li>
-			<?php endforeach; ?>
-			</ul></details>
-		<?php endif; ?>
-	<?php elseif ( is_wp_error( $cat ) ) : ?>
-		<p class="hint is-bad"><?php echo esc_html( $cat->get_error_message() ); ?></p>
-	<?php elseif ( ! Settings::is_configured() ) : ?>
-		<div class="empty">
-			<p><?php esc_html_e( '还没配置文档站 Token。先到设置页填好连接，再回来同步。', 'wpdocs' ); ?></p>
-			<p><a class="btn btn-secondary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-settings' ) ); ?>"><?php esc_html_e( '去设置', 'wpdocs' ); ?></a></p>
-		</div>
-	<?php endif; ?>
-	<?php
-	View::field(
-		array(
-			'label'   => __( 'Webhook', 'wpdocs' ),
-			'help'    => __( '文档站有改动时 POST 到此地址；另外每天检查一次。', 'wpdocs' ),
-			'control' => '<code class="wenpai-code">' . esc_html( $refresh ) . '</code><p class="hint">' . esc_html( sprintf(
-				__( '上次检查 %1$s（%2$s）。', 'wpdocs' ),
-				$state['checked'] ? wp_date( 'Y-m-d H:i', $state['checked'] ) : '—',
-				'' !== $state['result'] ? $state['result'] : '—'
-			) ) . '</p>',
-		)
-	);
-	?>
-</section>
+	<h2 class="section-title"><?php esc_html_e( '同步', 'wpdocs' ); ?></h2>
+	<p class="section-desc"><?php
+		echo esc_html(
+			sprintf(
+				/* translators: %s: content mode label */
+				__( '当前模式：%s。设置里可改。', 'wpdocs' ),
+				$mode_lab[ $content ] ?? $content
+			)
+		);
+	?></p>
 
-<section class="card">
-	<h2 class="section-title"><?php esc_html_e( '导入到文章', 'wpdocs' ); ?></h2>
-	<p class="section-desc"><?php esc_html_e( '把已绑定的 CocoBook 页正文写入 WordPress（覆盖 post_content）。适合「保留」模式：导入后由 WP 持有正文，不再运行时读取。', 'wpdocs' ); ?></p>
-	<div class="wenpai-actions">
-		<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=sync' ) ); ?>" style="display:inline" onsubmit="return confirm('<?php echo esc_js( __( '将覆盖已绑定文章的正文，确定？', 'wpdocs' ) ); ?>');">
-			<?php wp_nonce_field( 'wpdocs_import_cb', 'wpdocs_import_cb_nonce' ); ?>
-			<button type="submit" class="btn btn-ghost" <?php disabled( ! Settings::is_configured() ); ?>><?php esc_html_e( '从 CocoBook 导入', 'wpdocs' ); ?></button>
-		</form>
-		<a class="btn btn-ghost" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=git' ) ); ?>"><?php esc_html_e( '从 Git 导入…', 'wpdocs' ); ?></a>
-	</div>
-</section>
-
-<section class="card">
-	<h2 class="section-title"><?php esc_html_e( '日志', 'wpdocs' ); ?></h2>
-	<p class="section-desc"><?php esc_html_e( '最近同步与连接记录。', 'wpdocs' ); ?></p>
-	<?php if ( empty( $log ) ) : ?>
-		<div class="empty"><p><?php esc_html_e( '还没有同步记录。测试连接或立即同步后会出现在这里。', 'wpdocs' ); ?></p></div>
-	<?php else : ?>
-		<?php foreach ( array_slice( $log, 0, 20 ) as $row ) : ?>
-			<div class="simple-row is-static">
-				<div class="tile"><?php echo View::icon( 'info' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-				<div>
-					<div class="t"><?php echo esc_html( (string) ( $row['m'] ?? '' ) ); ?></div>
-					<div class="d"><?php echo esc_html( wp_date( 'Y-m-d H:i:s', (int) ( $row['t'] ?? 0 ) ) . ' · ' . (string) ( $row['l'] ?? '' ) ); ?></div>
-				</div>
+	<?php if ( Settings::CONTENT_GIT === $content ) : ?>
+		<?php
+		$loaded  = Bootstrap::load();
+		$general = Settings::git_general();
+		$repos   = Settings::git_repositories();
+		$hook    = Engine::webhook_url();
+		?>
+		<?php if ( ! $loaded ) : ?>
+			<div class="empty"><p><?php esc_html_e( 'Git 核心未加载。', 'wpdocs' ); ?></p></div>
+		<?php else : ?>
+			<div class="wenpai-actions">
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=sync' ) ); ?>" style="display:inline">
+					<?php wp_nonce_field( 'wpdocs_git_pull', 'wpdocs_git_pull_nonce' ); ?>
+					<button type="submit" class="btn btn-primary"><?php esc_html_e( '拉取仓库', 'wpdocs' ); ?></button>
+				</form>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=sync' ) ); ?>" style="display:inline">
+					<?php wp_nonce_field( 'wpdocs_git_pull', 'wpdocs_git_pull_nonce' ); ?>
+					<input type="hidden" name="wpdocs_git_force" value="1" />
+					<button type="submit" class="btn btn-ghost"><?php esc_html_e( '强制全量', 'wpdocs' ); ?></button>
+				</form>
+				<?php if ( ! empty( $general['base_directory'] ) ) : ?>
+					<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=sync' ) ); ?>" style="display:inline">
+						<?php wp_nonce_field( 'wpdocs_git_sync_local', 'wpdocs_git_sync_local_nonce' ); ?>
+						<button type="submit" class="btn btn-ghost"><?php esc_html_e( '同步本地目录', 'wpdocs' ); ?></button>
+					</form>
+				<?php endif; ?>
 			</div>
-		<?php endforeach; ?>
+			<?php
+			View::field(
+				array(
+					'label'   => __( 'Webhook', 'wpdocs' ),
+					'help'    => __( 'Forgejo push → 此地址；Secret 在设置高级里。', 'wpdocs' ),
+					'control' => '<code class="wenpai-code">' . esc_html( $hook ) . '</code>',
+				)
+			);
+			?>
+			<?php if ( ! empty( $general['base_directory'] ) ) : ?>
+				<p class="hint"><?php echo esc_html( (string) $general['base_directory'] ); ?></p>
+			<?php elseif ( empty( $repos ) ) : ?>
+				<p class="hint"><?php esc_html_e( '还没配仓库。', 'wpdocs' ); ?>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-settings' ) ); ?>"><?php esc_html_e( '去设置', 'wpdocs' ); ?></a>
+				</p>
+			<?php else : ?>
+				<ul class="wpdocs-git-repo-list">
+				<?php foreach ( $repos as $id => $repo ) : ?>
+					<?php
+					if ( ! is_array( $repo ) || empty( $repo['username'] ) || empty( $repo['repository'] ) ) {
+						continue;
+					}
+					$last = ! empty( $repo['last_publish'] ) ? wp_date( 'Y-m-d H:i', (int) $repo['last_publish'] ) : '—';
+					?>
+					<li>
+						<strong><?php echo esc_html( $repo['username'] . '/' . $repo['repository'] ); ?></strong>
+						· <?php echo esc_html( (string) ( $repo['branch'] ?? 'main' ) ); ?>
+						· <?php echo esc_html( (string) ( $repo['folder'] ?? '' ) ); ?>
+						· <?php echo esc_html( $last ); ?>
+					</li>
+				<?php endforeach; ?>
+				</ul>
+			<?php endif; ?>
+		<?php endif; ?>
+
+	<?php elseif ( Settings::CONTENT_COCOBOOK === $content ) : ?>
+		<div class="wenpai-actions">
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=sync' ) ); ?>" style="display:inline">
+				<?php wp_nonce_field( 'wpdocs_test', 'wpdocs_test_nonce' ); ?>
+				<button type="submit" class="btn btn-ghost"><?php esc_html_e( '测试连接', 'wpdocs' ); ?></button>
+			</form>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=sync' ) ); ?>" style="display:inline">
+				<?php wp_nonce_field( 'wpdocs_sync', 'wpdocs_sync_nonce' ); ?>
+				<button type="submit" class="btn btn-primary"><?php esc_html_e( '更新索引', 'wpdocs' ); ?></button>
+			</form>
+		</div>
+		<?php if ( is_array( $cat ) ) : ?>
+			<p class="hint"><?php echo esc_html( sprintf(
+				__( '上次 %1$s · %2$d 书 · %3$d 页', 'wpdocs' ),
+				(string) ( $cat['built'] ?? '' ),
+				count( $cat['books'] ?? array() ),
+				count( $cat['pages'] ?? array() )
+			) ); ?></p>
+		<?php elseif ( is_wp_error( $cat ) ) : ?>
+			<p class="hint is-bad"><?php echo esc_html( $cat->get_error_message() ); ?></p>
+		<?php elseif ( ! Settings::is_configured() ) : ?>
+			<p class="hint"><?php esc_html_e( '还没配 Token。', 'wpdocs' ); ?>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-settings' ) ); ?>"><?php esc_html_e( '去设置', 'wpdocs' ); ?></a>
+			</p>
+		<?php endif; ?>
+		<?php
+		View::field(
+			array(
+				'label'   => __( '文档站 Webhook', 'wpdocs' ),
+				'control' => '<code class="wenpai-code">' . esc_html( $refresh ) . '</code><p class="hint">' . esc_html( sprintf(
+					__( '上次检查 %1$s（%2$s）', 'wpdocs' ),
+					$state['checked'] ? wp_date( 'Y-m-d H:i', $state['checked'] ) : '—',
+					'' !== $state['result'] ? $state['result'] : '—'
+				) ) . '</p>',
+			)
+		);
+		?>
+
+	<?php else : /* keep */ ?>
+		<p class="section-desc"><?php esc_html_e( '正文保留在 WordPress。需要时把已绑定的文档站页写入文章（会覆盖正文）。', 'wpdocs' ); ?></p>
+		<div class="wenpai-actions">
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=sync' ) ); ?>" style="display:inline" onsubmit="return confirm('<?php echo esc_js( __( '将覆盖已绑定文章正文，确定？', 'wpdocs' ) ); ?>');">
+				<?php wp_nonce_field( 'wpdocs_import_cb', 'wpdocs_import_cb_nonce' ); ?>
+				<button type="submit" class="btn btn-primary" <?php disabled( ! Settings::is_configured() ); ?>><?php esc_html_e( '从文档站导入', 'wpdocs' ); ?></button>
+			</form>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=sync' ) ); ?>" style="display:inline">
+				<?php wp_nonce_field( 'wpdocs_test', 'wpdocs_test_nonce' ); ?>
+				<button type="submit" class="btn btn-ghost" <?php disabled( ! Settings::is_configured() ); ?>><?php esc_html_e( '测试连接', 'wpdocs' ); ?></button>
+			</form>
+		</div>
+		<?php if ( ! Settings::is_configured() ) : ?>
+			<p class="hint"><?php esc_html_e( '导入需要 Token：设置 → 保留 → 开「高级」填文档站连接。', 'wpdocs' ); ?>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-settings&mode=advanced' ) ); ?>"><?php esc_html_e( '去设置', 'wpdocs' ); ?></a>
+			</p>
+		<?php endif; ?>
 	<?php endif; ?>
 </section>
+
+<?php if ( ! empty( $log ) ) : ?>
+<section class="card">
+	<h2 class="section-title"><?php esc_html_e( '最近日志', 'wpdocs' ); ?></h2>
+	<?php foreach ( array_slice( $log, 0, 12 ) as $row ) : ?>
+		<div class="simple-row is-static">
+			<div class="tile"><?php echo View::icon( 'info' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+			<div>
+				<div class="t"><?php echo esc_html( (string) ( $row['m'] ?? '' ) ); ?></div>
+				<div class="d"><?php echo esc_html( wp_date( 'Y-m-d H:i', (int) ( $row['t'] ?? 0 ) ) ); ?></div>
+			</div>
+		</div>
+	<?php endforeach; ?>
+</section>
+<?php endif; ?>
