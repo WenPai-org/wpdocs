@@ -27,17 +27,20 @@ final class Menu {
 	}
 
 	/**
-	 * remove_submenu_page drops the title from WP's submenu map; restore for 帮助.
+	 * null-parent 帮助页没有 submenu 标题；补进 document title。
+	 *
+	 * @param string $admin_title Full title (already includes site name).
+	 * @param string $title       Page title segment (may be empty).
 	 */
-	public static function help_admin_title( string $admin_title, string $title ): string {
+	public static function help_admin_title( $admin_title, $title ) {
 		if ( ! isset( $_GET['page'] ) || 'wpdocs-help' !== $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			return $admin_title;
 		}
-		$help = __( '帮助', 'wpdocs' );
-		if ( '' !== $title ) {
+		if ( is_string( $title ) && '' !== $title ) {
 			return $admin_title;
 		}
-		return $help . $admin_title;
+		$help = __( '帮助', 'wpdocs' );
+		return is_string( $admin_title ) ? ( $help . $admin_title ) : $help;
 	}
 
 	public static function menu(): void {
@@ -53,9 +56,8 @@ final class Menu {
 		add_submenu_page( 'wpdocs', __( '状态', 'wpdocs' ), __( '状态', 'wpdocs' ), 'manage_options', 'wpdocs', array( self::class, 'render_status' ) );
 		add_submenu_page( 'wpdocs', __( '绑定', 'wpdocs' ), __( '绑定', 'wpdocs' ), 'manage_options', 'wpdocs-bindings', array( self::class, 'render_bindings' ) );
 		add_submenu_page( 'wpdocs', __( '跳转', 'wpdocs' ), __( '跳转', 'wpdocs' ), 'manage_options', 'wpdocs-redirects', array( self::class, 'render_redirects' ) );
-		// Register under parent so admin title works; strip left-menu entry (帮助不占第四 Tab).
-		add_submenu_page( 'wpdocs', __( '帮助', 'wpdocs' ), __( '帮助', 'wpdocs' ), 'manage_options', 'wpdocs-help', array( self::class, 'render_help' ) );
-		remove_submenu_page( 'wpdocs', 'wpdocs-help' );
+		// 空 parent：不进左侧菜单（帮助不占第四 Tab）；标题靠 help_admin_title。
+		add_submenu_page( '', __( '帮助', 'wpdocs' ), __( '帮助', 'wpdocs' ), 'manage_options', 'wpdocs-help', array( self::class, 'render_help' ) );
 	}
 
 	public static function assets( string $hook ): void {
