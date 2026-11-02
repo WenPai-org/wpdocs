@@ -9,6 +9,8 @@
 - 设置对齐档 A：简单页一张卡（主选择 + 该源连接 + 旁路）；保存设置；导入用 `.wenpai-gate`
 - 保存不再因隐藏面板误清书目 / Git 仓库；概览 `.next` 按内容源给出
 - 工具 → 绑定：列表「远端」列显示 CocoBook 页标题；404→远端失效、别名漂移→别名已变（`Bind\RemoteMeta`，短 TTL transient，不存正文）
+- 发布树索引：`Catalog` 用短 TTL（默认 ≤300s），`page_ttl=0` 不再让索引永不过期；页正文缓存仍跟 `page_ttl`，不进 option
+- 日检抽查绑定远端：`Bind\DriftCheck`（失效/别名已变摘要进 transient；概览告警）
 
 ## 0.3.0-dev (UI)
 

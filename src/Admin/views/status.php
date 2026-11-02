@@ -165,6 +165,25 @@ if ( '' !== $base_show && ! $home_ok && ( $site_ok || ( ! $tree_skip && $tree_ok
 	<div class="notice warn"><span><?php esc_html_e( '首页探测超时或失败，但站点地图或发布树仍可达。可点「重新探测」再试。', 'wpdocs' ); ?></span></div>
 	<?php
 endif;
+
+$drift = \Wpdocs\Bind\DriftCheck::last();
+$drift_bad = (int) ( $drift['broken'] ?? 0 ) + (int) ( $drift['stale'] ?? 0 );
+if ( $drift_bad > 0 ) :
+	?>
+	<div class="notice warn"><span><?php
+		echo esc_html(
+			sprintf(
+				/* translators: 1: broken count, 2: stale count */
+				__( '绑定抽检：%1$d 条远端失效、%2$d 条别名已变。到工具 → 绑定查看「远端」列。', 'wpdocs' ),
+				(int) ( $drift['broken'] ?? 0 ),
+				(int) ( $drift['stale'] ?? 0 )
+			)
+		);
+	?></span>
+		<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=bindings' ) ); ?>"><?php esc_html_e( '打开绑定', 'wpdocs' ); ?></a>
+	</div>
+	<?php
+endif;
 ?>
 
 <section class="card">

@@ -26,6 +26,13 @@ final class Catalog {
 	private const KEY = 'catalog_v1';
 
 	/**
+	 * Cap for the books/pages **index** (no HTML). Independent of page body TTL:
+	 * page_ttl=0 means HTML never auto-expires, but the publish-tree index still
+	 * refreshes on this short window so bindings/suggest stay honest.
+	 */
+	public const INDEX_TTL = 300;
+
+	/**
 	 * Memoized catalog for this request.
 	 *
 	 * @var array<string,mixed>|null
@@ -33,7 +40,21 @@ final class Catalog {
 	private static ?array $memo = null;
 
 	/**
-	 * Get catalog (cached, stale on failure).
+	 * Resolve catalog-index TTL from the page body setting.
+	 *
+	 * @param int $page_ttl Settings page_ttl (0 = bodies never auto-stale).
+	 * @param int $cap      Max seconds for the index (default INDEX_TTL).
+	 */
+	public static function index_ttl( int $page_ttl, int $cap = self::INDEX_TTL ): int {
+		$cap = max( 30, $cap );
+		if ( $page_ttl <= 0 ) {
+			return $cap;
+		}
+		return min( $page_ttl, $cap );
+	}
+
+	/**
+	 * Get catalog (cached, stale on failure). Index only — no page HTML.
 	 *
 	 * @return array<string,mixed>|\WP_Error
 	 */
@@ -41,7 +62,8 @@ final class Catalog {
 		if ( null !== self::$memo ) {
 			return self::$memo;
 		}
-		$cat = Client::remember( self::KEY, (int) Settings::get( 'page_ttl' ), array( self::class, 'build' ) );
+		$ttl = self::index_ttl( (int) Settings::get( 'page_ttl' ) );
+		$cat = Client::remember( self::KEY, $ttl, array( self::class, 'build' ) );
 		if ( ! is_wp_error( $cat ) ) {
 			self::$memo = $cat;
 		}

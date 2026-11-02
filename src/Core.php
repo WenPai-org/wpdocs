@@ -17,7 +17,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Bootstraps the plugin.
  *
  * Freshness model:
- *  - Cached catalog and page bodies never expire on their own (page_ttl = 0).
+ *  - Page **bodies** honour page_ttl (0 = never auto-expire); stored as files, not options.
+ *  - Catalog **index** (books/pages metadata, no HTML) uses Catalog::index_ttl (≤300s).
  *  - CocoBook pushes changes through the BookStack webhook: a page event marks
  *    that page stale, anything else marks the catalog stale. Stale entries are
  *    refetched on next use; the old copy is only replaced by a successful fetch.
@@ -25,6 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *    for the total and newest updated_at of books, chapters and pages
  *    (3 tiny requests). Unchanged => nothing happens. Changed => only pages
  *    updated since the last check are cleared, then the catalog is rebuilt.
+ *  - Same daily pass samples bindings for remote title/slug drift (Bind\DriftCheck).
  *
  * @since 0.1.0
  */
@@ -194,6 +196,7 @@ final class Core {
 			$st['checked'] = $now;
 			$st['result']  = 'unchanged';
 			self::save_state( $st );
+			self::maybe_drift_check();
 			return;
 		}
 
@@ -230,6 +233,19 @@ final class Core {
 			is_wp_error( $cat ) ? 'error' : 'info',
 			sprintf( 'Daily check: 文档站有更新, %d page caches marked stale (%s), catalog %s.', $cleared, $how, is_wp_error( $cat ) ? 'failed: ' . $cat->get_error_message() : 'rebuilt' )
 		);
+		self::maybe_drift_check();
+	}
+
+	/** Sample bindings for remote broken / slug drift (compact transient only). */
+	private static function maybe_drift_check(): void {
+		if ( ! Settings::is_configured() ) {
+			return;
+		}
+		try {
+			\Wpdocs\Bind\DriftCheck::run();
+		} catch ( \Throwable $e ) {
+			Client::log( 'error', 'Drift check failed: ' . $e->getMessage() );
+		}
 	}
 
 	/** REST routes. */

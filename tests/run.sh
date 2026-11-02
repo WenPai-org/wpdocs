@@ -35,6 +35,12 @@ php tests/BindSuggestTest.php
 echo "== Bind remote meta unit tests (no WP) =="
 php tests/BindRemoteMetaTest.php
 
+echo "== Catalog index TTL unit tests (no WP) =="
+php tests/CatalogIndexTtlTest.php
+
+echo "== Bind drift check unit tests (no WP) =="
+php tests/BindDriftCheckTest.php
+
 echo "== dry-run must not persist =="
 # Listener::dry_run body (until the next method) must not call hit() or log_unmatched().
 dry_body="$(awk '

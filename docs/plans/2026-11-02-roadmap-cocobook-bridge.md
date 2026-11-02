@@ -80,9 +80,9 @@
 ### P1 — 绑定体验与目录真源
 
 1. `/wpdocs/v1` suggest：调用 `/api/search`（及可选 books contents），去掉空 stub — **已**
-2. 短 TTL 缓存发布树（object cache / transient），禁止整页 HTML — **待**
+2. 短 TTL 缓存发布树（object cache / transient），禁止整页 HTML — **已**（`Catalog::index_ttl`：索引 ≤300s；正文仍走 `page_ttl`/文件缓存，不进 option）
 3. 后台绑定表：显示远端 title、broken / 别名已变 — **已**（`Bind\RemoteMeta`）
-4. slug 漂移任务：周期抽检 binding → BS slug 是否变 — **列表已标；cron 待**
+4. slug 漂移任务：周期抽检 binding → BS slug 是否变 — **已**（日检 `Bind\DriftCheck` + 概览告警；列表「别名已变」）
 
 ### P2 — 事件与运维
 
@@ -125,4 +125,4 @@
 2. ~~Bind 保存校验~~（已）
 3. ~~打通 search suggest~~（`/search` + `/suggest` + 绑定页 UI）
 4. ~~补 `redirect-vs-cocobook-docs` 旧仓对照 TODO~~（已）
-5. 下一步（P1 余量）：~~绑定列表显示远端 title / broken~~（`Bind\RemoteMeta` + 工具→绑定表「远端」列）；发布树短 TTL 缓存；slug 漂移抽检（列表已标「别名已变」，周期任务另开）
+5. P1 余量已收口。下一步进 **P2**（Webhook 使缓存失效已有雏形；附件/权限可观测；导出手册；App Passwords 说明）。
