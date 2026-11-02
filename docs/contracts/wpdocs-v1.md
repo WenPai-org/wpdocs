@@ -149,7 +149,7 @@ Update URI 恒为 `https://updates.wenpai.net`。
 
 ### Publish status（G4）
 
-`GET /wpdocs/v1/status`（`manage_options`）。发布探测只读：HTTP **HEAD**，超时 `Probe::TIMEOUT_SEC`（3 秒），跟随最多 2 次跳转。失败写入对应 probe 的 `error` 且 `code=0`，**不抛** REST fatal。响应 **不含** body / markdown / content；**禁止**把探测正文写入 `wp_options`。
+`GET /wpdocs/v1/status`（`manage_options`）。发布探测只读：HTTP **HEAD**，超时 `Probe::TIMEOUT_SEC`（5 秒），跟随最多 2 次跳转。失败写入对应 probe 的 `error` 且 `code=0`，**不抛** REST fatal。响应 **不含** body / markdown / content；**禁止**把探测正文写入 `wp_options`。
 
 Sitemap 路径相对 `base_url`：`/cocobook/sitemap.xml`。发布树默认 `{base_url}/books`；`WPDOCS_TREE_URL` 优先，否则 `wpdocs_settings.tree_url`；该设置键存在且为空字符串则跳过 tree 探测（`skipped=true`，不发请求）。
 
@@ -170,7 +170,7 @@ Sitemap 路径相对 `base_url`：`/cocobook/sitemap.xml`。发布树默认 `{ba
 |------|------|------|
 | `base_url` | string | 文档站根，无尾斜杠（缺省 `https://docs.cocobook.com`） |
 | `tree_url` | string | 发布树 HEAD 目标；空则 tree 为 skipped |
-| `timeout` | int | 单次探测秒数，恒 `3` |
+| `timeout` | int | 单次探测秒数，恒 `5` |
 | `home` | object | HEAD `{base_url}/` |
 | `sitemap` | object | HEAD `{base_url}/cocobook/sitemap.xml` |
 | `tree` | object | HEAD `tree_url` |

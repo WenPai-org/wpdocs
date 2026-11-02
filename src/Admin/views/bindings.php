@@ -12,24 +12,34 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+$adv = View::is_advanced();
+ob_start();
+View::mode_toggle( 'wpdocs-bindings' );
+$mode_html = ob_get_clean();
+
 View::page_head(
 	__( '绑定', 'wpdocs' ),
-	__( '把 WordPress 文章映射到 BookStack 页面；可选 external_id 供评论挂件使用。', 'wpdocs' )
+	__( '把 WordPress 文章对到文档站的一页。不改文档站内容。', 'wpdocs' ),
+	$mode_html
 );
 View::saved_notice();
+View::error_notice();
 ?>
 
 <section class="card">
-	<h2 class="section-title"><?php esc_html_e( '新增 / 更新', 'wpdocs' ); ?></h2>
-	<p class="section-desc"><?php esc_html_e( '同一文章 ID 再次保存会覆盖。', 'wpdocs' ); ?></p>
+	<h2 class="section-title"><?php esc_html_e( '手工绑定', 'wpdocs' ); ?></h2>
+	<p class="section-desc"><?php esc_html_e( '一篇文章对应一页文档。外部 ID 给评论挂件用，可留空。', 'wpdocs' ); ?></p>
 	<form method="post">
 		<?php wp_nonce_field( 'wpdocs_bind', 'wpdocs_bind_nonce' ); ?>
+		<?php if ( $adv ) : ?>
+			<input type="hidden" name="wpdocs_mode" value="advanced" />
+		<?php endif; ?>
 		<?php
 		View::field(
 			array(
 				'for'     => 'wp_post_id',
 				'label'   => __( '文章 ID', 'wpdocs' ),
-				'help'    => __( 'WordPress 文章或页面的 ID。', 'wpdocs' ),
+				'help'    => __( 'WordPress 文章或页面的数字 ID。', 'wpdocs' ),
 				'control' => '<input id="wp_post_id" type="number" name="wp_post_id" required min="1" />',
 			)
 		);
@@ -37,37 +47,77 @@ View::saved_notice();
 			array(
 				'for'     => 'wp_post_type',
 				'label'   => __( '文章类型', 'wpdocs' ),
-				'control' => '<input id="wp_post_type" type="text" name="wp_post_type" value="post" />',
+				'control' => '<select id="wp_post_type" name="wp_post_type">'
+					. '<option value="post" selected>' . esc_html__( '文章', 'wpdocs' ) . '</option>'
+					. '<option value="page">' . esc_html__( '页面', 'wpdocs' ) . '</option>'
+					. '</select>',
 			)
 		);
 		View::field(
 			array(
 				'for'     => 'docs_page_id',
 				'label'   => __( '文档页 ID', 'wpdocs' ),
-				'help'    => __( 'BookStack page id。', 'wpdocs' ),
+				'help'    => __( '文档站页面的数字 ID，没有可填 0。', 'wpdocs' ),
 				'control' => '<input id="docs_page_id" type="number" name="docs_page_id" min="0" />',
 			)
 		);
 		View::field(
 			array(
 				'for'     => 'docs_book_slug',
-				'label'   => __( '书 slug', 'wpdocs' ),
-				'control' => '<input id="docs_book_slug" type="text" name="docs_book_slug" />',
+				'label'   => __( '书册别名', 'wpdocs' ),
+				'control' => '<input id="docs_book_slug" type="text" name="docs_book_slug" autocomplete="off" />',
 			)
 		);
 		View::field(
 			array(
 				'for'     => 'docs_page_slug',
-				'label'   => __( '页 slug', 'wpdocs' ),
-				'control' => '<input id="docs_page_slug" type="text" name="docs_page_slug" />',
+				'label'   => __( '页面别名', 'wpdocs' ),
+				'control' => '<input id="docs_page_slug" type="text" name="docs_page_slug" autocomplete="off" />',
 			)
 		);
 		View::field(
 			array(
 				'for'     => 'external_id',
-				'label'   => __( 'external_id（可选）', 'wpdocs' ),
-				'help'    => __( '不要填写密钥或真实邮箱。', 'wpdocs' ),
-				'control' => '<input id="external_id" type="text" name="external_id" placeholder="wpcy:post:11144" autocomplete="off" />',
+				'label'   => __( '外部 ID', 'wpdocs' ),
+				'help'    => __( '可选。评论挂件用来对文章，例如 wpcy:post:42。不要填密钥或邮箱。', 'wpdocs' ),
+				'control' => '<input id="external_id" type="text" name="external_id" placeholder="wpcy:post:42" autocomplete="off" />',
+			)
+		);
+		View::field(
+			array(
+				'for'      => 'bind_source',
+				'label'    => __( '来源', 'wpdocs' ),
+				'help'     => __( '别名匹配可按文章别名对照文档页别名。', 'wpdocs' ),
+				'advanced' => true,
+				'control'  => '<select id="bind_source" name="source">'
+					. '<option value="manual" selected>' . esc_html__( '手工', 'wpdocs' ) . '</option>'
+					. '<option value="slug">' . esc_html__( '别名匹配', 'wpdocs' ) . '</option>'
+					. '<option value="import">' . esc_html__( '导入', 'wpdocs' ) . '</option>'
+					. '</select>',
+			)
+		);
+		View::field(
+			array(
+				'for'      => 'bind_status',
+				'label'    => __( '状态', 'wpdocs' ),
+				'advanced' => true,
+				'control'  => '<select id="bind_status" name="status">'
+					. '<option value="active" selected>' . esc_html__( '已启用', 'wpdocs' ) . '</option>'
+					. '<option value="disabled">' . esc_html__( '已停用', 'wpdocs' ) . '</option>'
+					. '</select>',
+			)
+		);
+		$resolve_ctl  = '<div class="field-ctl-row">';
+		$resolve_ctl .= '<input id="resolve-post" type="number" min="1" placeholder="' . esc_attr__( '文章 ID 或文档页 ID', 'wpdocs' ) . '" autocomplete="off" />';
+		$resolve_ctl .= '<button type="button" class="btn btn-ghost" data-wpdocs-resolve>' . esc_html__( '反查', 'wpdocs' ) . '</button>';
+		$resolve_ctl .= '</div><p class="hint d">' . esc_html__( '对应 GET /wpdocs/v1/bindings/resolve。不写命中、不改表。', 'wpdocs' ) . '</p>';
+		$resolve_ctl .= '<div class="preview-out" data-resolve-out hidden></div>';
+		View::field(
+			array(
+				'for'      => 'resolve-post',
+				'label'    => __( '按 ID 反查', 'wpdocs' ),
+				'advanced' => true,
+				'control'  => $resolve_ctl,
 			)
 		);
 		?>
@@ -76,34 +126,38 @@ View::saved_notice();
 </section>
 
 <section class="card">
-	<h2 class="section-title"><?php esc_html_e( '现有绑定', 'wpdocs' ); ?></h2>
+	<h2 class="section-title"><?php esc_html_e( '已有绑定', 'wpdocs' ); ?></h2>
+	<p class="section-desc"><?php esc_html_e( '每篇文章最多一条。长列表截断显示，不另做分页。', 'wpdocs' ); ?></p>
 	<?php if ( array() === $items ) : ?>
-		<p class="empty"><?php esc_html_e( '还没有绑定。', 'wpdocs' ); ?></p>
+		<p class="empty"><?php esc_html_e( '还没有文章绑定到文档页。保存上方表单后会出现在这里。', 'wpdocs' ); ?></p>
 	<?php else : ?>
 		<table class="tbl">
 			<thead>
 				<tr>
-					<th><?php esc_html_e( 'ID', 'wpdocs' ); ?></th>
 					<th><?php esc_html_e( '文章', 'wpdocs' ); ?></th>
-					<th><?php esc_html_e( '文档', 'wpdocs' ); ?></th>
-					<th>external_id</th>
+					<th><?php esc_html_e( '文档页', 'wpdocs' ); ?></th>
+					<th><?php esc_html_e( '外部 ID', 'wpdocs' ); ?></th>
 					<th><?php esc_html_e( '来源', 'wpdocs' ); ?></th>
+					<th><?php esc_html_e( '状态', 'wpdocs' ); ?></th>
 				</tr>
 			</thead>
 			<tbody>
 			<?php foreach ( $items as $row ) : ?>
+				<?php
+				$pill = View::bind_status_pill( (string) ( $row->status ?? 'active' ) );
+				$ext  = (string) ( $row->external_id ?? '' );
+				$type = (string) ( $row->wp_post_type ?? 'post' );
+				$type_label = 'page' === $type ? __( '页面', 'wpdocs' ) : __( '文章', 'wpdocs' );
+				?>
 				<tr>
-					<td class="num"><?php echo (int) $row->id; ?></td>
+					<td><?php echo (int) $row->wp_post_id; ?> <code><?php echo esc_html( $type_label ); ?></code></td>
 					<td>
-						<div class="t">#<?php echo (int) $row->wp_post_id; ?></div>
-						<div class="d"><code><?php echo esc_html( $row->wp_post_type ); ?></code></div>
+						<?php echo esc_html( $row->docs_book_slug . '/' . $row->docs_page_slug ); ?>
+						<code>#<?php echo (int) $row->docs_page_id; ?></code>
 					</td>
-					<td>
-						<div class="t"><?php echo esc_html( $row->docs_book_slug . '/' . $row->docs_page_slug ); ?></div>
-						<div class="d">#<?php echo (int) $row->docs_page_id; ?></div>
-					</td>
-					<td><code><?php echo esc_html( $row->external_id ); ?></code></td>
-					<td><?php echo esc_html( $row->source ); ?></td>
+					<td><?php echo '' !== $ext ? '<code>' . esc_html( $ext ) . '</code>' : '—'; ?></td>
+					<td><?php echo esc_html( View::bind_source_label( (string) $row->source ) ); ?></td>
+					<td><span class="pill <?php echo esc_attr( $pill['class'] ); ?>"><?php echo esc_html( $pill['label'] ); ?></span></td>
 				</tr>
 			<?php endforeach; ?>
 			</tbody>

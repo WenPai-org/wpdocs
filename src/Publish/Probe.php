@@ -16,8 +16,8 @@ final class Probe {
 	/** HTTP method for all docs/tree probes. Never GET a body. */
 	public const METHOD = 'HEAD';
 
-	/** Seconds. Short so GET /status cannot stall the admin. */
-	public const TIMEOUT_SEC = 3;
+	/** Seconds. Short so GET /status cannot stall the admin; sitemap often ~2s. */
+	public const TIMEOUT_SEC = 5;
 
 	/** Sitemap path relative to docs base_url. */
 	public const SITEMAP_PATH = '/cocobook/sitemap.xml';

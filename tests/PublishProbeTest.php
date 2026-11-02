@@ -72,8 +72,8 @@ wpdocs_pub_expect( 'tree setting skip', Probe::resolve_tree_url( $base, '', '' )
 wpdocs_pub_expect( 'tree default when unset', Probe::resolve_tree_url( $base, '', null ), $base . '/books' );
 
 // --- short timeout ---
-wpdocs_pub_true( 'timeout short', Probe::TIMEOUT_SEC > 0 && Probe::TIMEOUT_SEC <= 4 );
-wpdocs_pub_expect( 'timeout sec', Probe::TIMEOUT_SEC, 3 );
+wpdocs_pub_true( 'timeout short', Probe::TIMEOUT_SEC > 0 && Probe::TIMEOUT_SEC <= 8 );
+wpdocs_pub_expect( 'timeout sec', Probe::TIMEOUT_SEC, 5 );
 wpdocs_pub_expect( 'method HEAD', Probe::METHOD, 'HEAD' );
 
 // --- result shape: HEAD metadata only, never a body ---

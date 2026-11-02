@@ -30,28 +30,56 @@ $fmt_probe = static function ( array $p ): string {
 	if ( $err ) {
 		return sprintf( '%s · %dms', $err, $ms );
 	}
+	if ( 0 === $code && 0 === $ms && '' === $base_show ) {
+		return __( '尚未探测', 'wpdocs' );
+	}
 	return sprintf( '%d · %dms', $code, $ms );
 };
 
+$refresh = '<a class="btn btn-ghost" href="' . esc_url( admin_url( 'admin.php?page=wpdocs' ) ) . '">' . esc_html__( '重新探测', 'wpdocs' ) . '</a>';
+
 View::page_head(
 	__( '状态', 'wpdocs' ),
-	__( '文档站与发布树只读探测。正文不会写入 option。', 'wpdocs' )
+	__( '文档站与发布树只读探测。正文不会写入 option。', 'wpdocs' ),
+	$refresh
 );
 View::saved_notice();
+View::error_notice();
+
+if ( '' === $base_show ) :
+	?>
+	<div class="notice warn"><span><?php esc_html_e( '尚未填写文档站地址。探测会在保存地址后出现结果。', 'wpdocs' ); ?></span></div>
+	<?php
+elseif ( ! $home_ok ) :
+	?>
+	<div class="notice bad"><span><?php esc_html_e( '暂时无法探测文档站，请检查文档站地址后重试。', 'wpdocs' ); ?></span></div>
+	<?php
+else :
+	?>
+	<div class="notice info"><span><?php esc_html_e( '若站点曾使用旧文档桥，启用本插件时会把旧跳转一次性导入。', 'wpdocs' ); ?></span></div>
+	<?php
+endif;
 
 if ( 0 === $bind_n && 0 === $redir_n ) :
 	?>
 	<div class="next">
-		<p><?php esc_html_e( '还没有绑定或跳转。可先保存文档站地址，再到绑定页录入映射。', 'wpdocs' ); ?></p>
+		<p><?php esc_html_e( '还没有绑定或跳转。保存绑定后这里会出现计数；若站点曾用旧文档桥，启用本插件时会一次性导入跳转。', 'wpdocs' ); ?></p>
 		<a class="btn btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-bindings' ) ); ?>"><?php esc_html_e( '去绑定', 'wpdocs' ); ?></a>
+	</div>
+	<?php
+elseif ( ! $home_ok && '' !== $base_show ) :
+	?>
+	<div class="next">
+		<p><?php esc_html_e( '暂时无法探测文档站，请检查文档站地址后重试。', 'wpdocs' ); ?></p>
+		<a class="btn btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs' ) ); ?>"><?php esc_html_e( '重新探测', 'wpdocs' ); ?></a>
 	</div>
 	<?php
 endif;
 ?>
 
 <section class="card">
-	<h2 class="section-title"><?php esc_html_e( '运行状态', 'wpdocs' ); ?></h2>
-	<p class="section-desc"><?php echo esc_html( sprintf( /* translators: %s: plugin version */ __( '版本 %s · 发布树只读，不写文档站。', 'wpdocs' ), WPDOCS_VERSION ) ); ?></p>
+	<h2 class="section-title"><?php esc_html_e( '探测', 'wpdocs' ); ?></h2>
+	<p class="section-desc"><?php echo esc_html( sprintf( /* translators: %s: plugin version */ __( '版本 %s。发布树只读，不写文档站。', 'wpdocs' ), WPDOCS_VERSION ) ); ?></p>
 	<?php
 	View::status_row(
 		array(
@@ -67,9 +95,9 @@ endif;
 		array(
 			'title'      => __( '首页', 'wpdocs' ),
 			'detail'     => $fmt_probe( (array) ( $st['home'] ?? array() ) ),
-			'pill'       => $home_ok ? __( '正常', 'wpdocs' ) : __( '失败', 'wpdocs' ),
-			'pill_class' => $home_ok ? 'ok' : 'bad',
-			'tile_class' => $home_ok ? 'ok' : 'bad',
+			'pill'       => $home_ok ? __( '正常', 'wpdocs' ) : ( '' !== $base_show ? __( '失败', 'wpdocs' ) : __( '等待', 'wpdocs' ) ),
+			'pill_class' => $home_ok ? 'ok' : ( '' !== $base_show ? 'bad' : 'warn' ),
+			'tile_class' => $home_ok ? 'ok' : ( '' !== $base_show ? 'bad' : 'warn' ),
 			'icon_html'  => View::icon( 'home' ),
 		)
 	);
@@ -77,7 +105,7 @@ endif;
 		array(
 			'title'      => __( '站点地图', 'wpdocs' ),
 			'detail'     => $fmt_probe( (array) ( $st['sitemap'] ?? array() ) ),
-			'pill'       => $site_ok ? __( '正常', 'wpdocs' ) : __( '异常', 'wpdocs' ),
+			'pill'       => $site_ok ? __( '正常', 'wpdocs' ) : ( '' !== $base_show ? __( '异常', 'wpdocs' ) : __( '等待', 'wpdocs' ) ),
 			'pill_class' => $site_ok ? 'ok' : 'warn',
 			'tile_class' => $site_ok ? 'ok' : 'warn',
 			'icon_html'  => View::icon( 'map' ),

@@ -80,6 +80,14 @@ final class Menu {
 			WPDOCS_VERSION,
 			true
 		);
+		wp_localize_script(
+			'wpdocs-admin',
+			'wpdocsAdmin',
+			array(
+				'root'  => esc_url_raw( rest_url( 'wpdocs/v1' ) ),
+				'nonce' => wp_create_nonce( 'wp_rest' ),
+			)
+		);
 	}
 
 	/** @return array<string,mixed> */
@@ -118,11 +126,11 @@ final class Menu {
 			'help_url'           => admin_url( 'admin.php?page=wpdocs-help' ),
 			'help_label'         => __( '帮助', 'wpdocs' ),
 			'help_icon_html'     => $icon( 'help' ),
-			'feedback_url'       => 'https://cyberforums.com/',
+			'feedback_url'       => 'https://wpcy.com/support',
 			'feedback_label'     => __( '反馈', 'wpdocs' ),
 			'feedback_icon_html' => $icon( 'feedback' ),
 			'version'            => 'wpdocs ' . WPDOCS_VERSION,
-			'doc_url'            => 'https://wpcy.com/',
+			'doc_url'            => 'https://wpcy.com/document',
 			'doc_label'          => __( '文档', 'wpdocs' ),
 		);
 	}
@@ -150,6 +158,14 @@ final class Menu {
 			return;
 		}
 		if ( isset( $_POST['wpdocs_bind_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_bind_nonce'] ) ), 'wpdocs_bind' ) ) {
+			$source = sanitize_key( (string) ( $_POST['source'] ?? 'manual' ) );
+			$status = sanitize_key( (string) ( $_POST['status'] ?? 'active' ) );
+			if ( ! in_array( $source, array( 'manual', 'slug', 'import' ), true ) ) {
+				$source = 'manual';
+			}
+			if ( ! in_array( $status, array( 'active', 'disabled' ), true ) ) {
+				$status = 'active';
+			}
 			$id = BindRepo::upsert(
 				array(
 					'wp_post_id'     => (int) ( $_POST['wp_post_id'] ?? 0 ),
@@ -158,12 +174,13 @@ final class Menu {
 					'docs_book_slug' => sanitize_title( (string) ( $_POST['docs_book_slug'] ?? '' ) ),
 					'docs_page_slug' => sanitize_title( (string) ( $_POST['docs_page_slug'] ?? '' ) ),
 					'external_id'    => sanitize_text_field( (string) ( $_POST['external_id'] ?? '' ) ),
-					'source'         => 'manual',
-					'status'         => 'active',
+					'source'         => $source,
+					'status'         => $status,
 				)
 			);
 			$q = $id ? 'updated=1' : 'error=1';
-			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-bindings&' . $q ) );
+			$mode = isset( $_POST['wpdocs_mode'] ) && 'advanced' === sanitize_key( (string) wp_unslash( $_POST['wpdocs_mode'] ) ) ? '&mode=advanced' : '';
+			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-bindings&' . $q . $mode ) );
 			exit;
 		}
 		if ( isset( $_POST['wpdocs_redirect_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_redirect_nonce'] ) ), 'wpdocs_redirect' ) ) {
@@ -176,8 +193,13 @@ final class Menu {
 					'wp_title' => sanitize_text_field( (string) ( $_POST['wp_title'] ?? '' ) ),
 				)
 			);
-			$q = $id ? 'updated=1' : 'error=1';
-			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-redirects&' . $q ) );
+			$q    = $id ? 'updated=1' : 'error=1';
+			$mode = View::is_advanced() ? '&mode=advanced' : '';
+			// Prefer posted mode so save keeps advanced fields visible.
+			if ( isset( $_POST['wpdocs_mode'] ) && 'advanced' === sanitize_key( (string) wp_unslash( $_POST['wpdocs_mode'] ) ) ) {
+				$mode = '&mode=advanced';
+			}
+			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-redirects&' . $q . $mode ) );
 			exit;
 		}
 		if ( isset( $_POST['wpdocs_settings_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_settings_nonce'] ) ), 'wpdocs_settings' ) ) {
