@@ -23,21 +23,6 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
-if command -v wp >/dev/null 2>&1; then
-	WP=(wp)
-elif [[ -f /var/www/html/wp-cli.phar ]]; then
-	WP=(php /var/www/html/wp-cli.phar)
-else
-	echo "wp-cli is required" >&2
-	exit 127
-fi
-
-ROOT_ARGS=()
-if [[ "$(id -u)" -eq 0 ]]; then
-	ROOT_ARGS+=(--allow-root)
-fi
-
-IGNORE_CODES="plugin_updater_detected,trademarked_term"
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 WP_PATH="${WP_PATH:-${WENPAI_PLUGIN_CHECK_WP:-}}"
 if [[ -z "$WP_PATH" ]]; then
@@ -53,6 +38,24 @@ if [[ -z "$WP_PATH" ]]; then
 	exit 2
 fi
 
+if [[ "$WP_PATH" == *"/Studio/"* ]] && [[ -x /usr/local/bin/studio ]]; then
+	# WordPress Studio Playground: host `wp` cannot open SQLite db.php.
+	WP=(/usr/local/bin/studio wp)
+elif command -v wp >/dev/null 2>&1; then
+	WP=(wp)
+elif [[ -f /var/www/html/wp-cli.phar ]]; then
+	WP=(php /var/www/html/wp-cli.phar)
+else
+	echo "wp-cli is required (or /usr/local/bin/studio for Studio sites)" >&2
+	exit 127
+fi
+
+ROOT_ARGS=()
+if [[ "$(id -u)" -eq 0 ]]; then
+	ROOT_ARGS+=(--allow-root)
+fi
+
+IGNORE_CODES="plugin_updater_detected,trademarked_term"
 PLUGINS_DIR="$WP_PATH/wp-content/plugins"
 LIVE="$PLUGINS_DIR/$PLUGIN_SLUG"
 BACKUP=""
@@ -94,12 +97,22 @@ if [[ "${WPDOCS_SKIP_ZIP:-}" != "1" ]]; then
 	STAGED=1
 fi
 
-"${WP[@]}" plugin check "$PLUGIN_SLUG" \
-	--path="$WP_PATH" \
-	--mode=update \
-	--ignore-codes="$IGNORE_CODES" \
-	--ignore-warnings \
-	--exclude-directories=tests,docs,scripts,prototypes,node_modules,.git,.forgejo,.github \
-	--format=strict-table \
-	"${ROOT_ARGS[@]}" \
-	"${EXTRA[@]+"${EXTRA[@]}"}"
+cmd=(
+	"${WP[@]}"
+	plugin
+	check
+	"$PLUGIN_SLUG"
+	--path="$WP_PATH"
+	--mode=update
+	--ignore-codes="$IGNORE_CODES"
+	--ignore-warnings
+	--exclude-directories=tests,docs,scripts,prototypes,node_modules,.git,.forgejo,.github
+	--format=strict-table
+)
+if [[ ${#ROOT_ARGS[@]} -gt 0 ]]; then
+	cmd+=("${ROOT_ARGS[@]}")
+fi
+if [[ ${#EXTRA[@]} -gt 0 ]]; then
+	cmd+=("${EXTRA[@]}")
+fi
+"${cmd[@]}"
