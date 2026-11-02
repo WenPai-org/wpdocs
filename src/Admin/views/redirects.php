@@ -92,7 +92,7 @@ endif;
 			)
 		);
 		?>
-		<p class="wenpai-actions"><button type="submit" class="btn btn-primary"><?php esc_html_e( '保存跳转', 'wpdocs' ); ?></button></p>
+		<div class="wenpai-actions"><button type="submit" class="btn btn-primary"><?php esc_html_e( '保存跳转', 'wpdocs' ); ?></button></div>
 	</form>
 </section>
 

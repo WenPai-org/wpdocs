@@ -121,7 +121,7 @@ View::error_notice();
 			)
 		);
 		?>
-		<p class="wenpai-actions"><button type="submit" class="btn btn-primary"><?php esc_html_e( '保存绑定', 'wpdocs' ); ?></button></p>
+		<div class="wenpai-actions"><button type="submit" class="btn btn-primary"><?php esc_html_e( '保存绑定', 'wpdocs' ); ?></button></div>
 	</form>
 </section>
 

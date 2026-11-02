@@ -1,15 +1,151 @@
-/* Product-only; kit owns chrome / field / tbl / pill. */
-body.wenpai-ui-page .wenpai-app .wenpai-actions {
-  margin: 8px 0 0;
-}
+/* Product-only; kit owns chrome / field / tbl / pill.
+ * APPROVAL prototypes: stacked fields (label above), kv status rows (no tile).
+ * Kit default `.field` is 280px|1fr — override to one column for this plugin. */
 
-body.wenpai-ui-page .wenpai-app .wenpai-actions .btn {
-  margin-right: 8px;
-}
-
-/* Ensure brand mark sizes to 28 without .wenpai-ico shrink. */
 body.wenpai-ui-page .wenpai-app .wenpai-mark svg {
   width: 28px;
   height: 28px;
   display: block;
+}
+
+/* —— fields: stacked like prototypes/wpdocs/*.html —— */
+body.wenpai-ui-page .wenpai-app .field {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  align-items: stretch;
+  padding: 14px 0;
+}
+
+body.wenpai-ui-page .wenpai-app .field:first-of-type {
+  padding-top: 8px;
+}
+
+body.wenpai-ui-page .wenpai-app .field[hidden] {
+  display: none;
+}
+
+body.wenpai-ui-page .wenpai-app .field > label,
+body.wenpai-ui-page .wenpai-app .field > .field-label {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 22px;
+  margin: 0;
+}
+
+body.wenpai-ui-page .wenpai-app .field > .hint,
+body.wenpai-ui-page .wenpai-app .field .hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--wenpai-ink-3);
+}
+
+body.wenpai-ui-page .wenpai-app .field .hint.is-bad {
+  color: var(--wenpai-bad, #d63638);
+}
+
+.field-ctl-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 28rem;
+}
+
+.field-ctl-row input[type="text"],
+.field-ctl-row input[type="number"],
+.field-ctl-row input[type="url"] {
+  flex: 1 1 auto;
+  width: auto;
+  max-width: none;
+  min-width: 0;
+}
+
+.field-ctl-row .btn {
+  flex: none;
+  white-space: nowrap;
+}
+
+/* —— status kv rows (prototype .k / .v / .pill) —— */
+body.wenpai-ui-page .wenpai-app .simple-row.wpdocs-kv {
+  gap: 12px;
+  padding: 12px 0;
+}
+
+body.wenpai-ui-page .wenpai-app .simple-row.wpdocs-kv > .t {
+  flex: none;
+  min-width: 5.5rem;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+body.wenpai-ui-page .wenpai-app .simple-row.wpdocs-kv > .d {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: none;
+  color: var(--wenpai-ink-2);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+body.wenpai-ui-page .wenpai-app .simple-row.wpdocs-kv > .r {
+  margin-left: 0;
+}
+
+/* —— chrome density —— */
+body.wenpai-ui-page .wenpai-app .wenpai-page-head {
+  align-items: center;
+}
+
+body.wenpai-ui-page .wenpai-main > .wenpai-stack {
+  gap: 20px;
+}
+
+body.wenpai-ui-page .wenpai-app .section-title {
+  font-weight: 600;
+}
+
+body.wenpai-ui-page .wenpai-app .section-desc {
+  margin-bottom: 8px;
+}
+
+body.wenpai-ui-page .wenpai-app .wenpai-lede {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--wenpai-ink-3);
+}
+
+body.wenpai-ui-page .wenpai-app .card {
+  padding: 20px 24px;
+}
+
+body.wenpai-ui-page .wenpai-app .wenpai-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding-top: 8px;
+}
+
+body.wenpai-ui-page .wenpai-app .notice {
+  font-size: 12px;
+  line-height: 18px;
+}
+
+body.wenpai-ui-page .wenpai-app .mode .btn-primary {
+  height: 32px;
+  min-height: 32px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+body.wenpai-ui-page .wenpai-app input[type="number"]::-webkit-outer-spin-button,
+body.wenpai-ui-page .wenpai-app input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* help: steps stay stacked; boundary rows keep kit tile */
+body.wenpai-ui-page .wenpai-app .wpdocs-help-step .hint {
+  margin-top: 0;
 }

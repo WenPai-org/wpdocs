@@ -57,9 +57,10 @@ final class View {
 	}
 
 	/**
-	 * Kit field: label column + control column.
+	 * Stacked field (APPROVAL prototypes: label → control → hint).
+	 * Product CSS forces `.field` to one column; kit default is 280px|1fr settings grid.
 	 *
-	 * @param array{label:string,help?:string,for?:string,control:string,advanced?:bool,attrs?:string} $args
+	 * @param array{label:string,help?:string,for?:string,control:string,advanced?:bool} $args
 	 */
 	public static function field( array $args ): void {
 		$for   = isset( $args['for'] ) ? (string) $args['for'] : '';
@@ -73,39 +74,37 @@ final class View {
 				$extra .= ' hidden';
 			}
 		}
-		echo '<div class="field"' . $extra . '><div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		echo '<div class="field-label">';
+		echo '<div class="field"' . $extra . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		if ( '' !== $for ) {
 			echo '<label for="' . esc_attr( $for ) . '">' . esc_html( $label ) . '</label>';
 		} else {
-			echo esc_html( $label );
+			echo '<span class="field-label">' . esc_html( $label ) . '</span>';
+		}
+		echo $ctl; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- caller HTML.
+		if ( '' !== $help ) {
+			echo '<p class="hint d">' . esc_html( $help ) . '</p>';
 		}
 		echo '</div>';
-		if ( '' !== $help ) {
-			echo '<div class="field-help">' . esc_html( $help ) . '</div>';
-		}
-		echo '</div><div class="field-ctl">' . $ctl . '</div></div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	}
 
 	/**
-	 * Overview status row.
+	 * Probe / kv status row (APPROVAL: .k | .v | .pill — no tile).
 	 *
-	 * @param array{title:string,detail?:string,pill?:string,pill_class?:string,tile_class?:string,icon_html?:string} $args
+	 * @param array{title:string,detail?:string,pill?:string,pill_class?:string,url?:bool} $args
 	 */
 	public static function status_row( array $args ): void {
 		$title  = (string) ( $args['title'] ?? '' );
 		$detail = (string) ( $args['detail'] ?? '' );
 		$pill   = (string) ( $args['pill'] ?? '' );
 		$pcls   = (string) ( $args['pill_class'] ?? '' );
-		$tcls   = (string) ( $args['tile_class'] ?? '' );
-		$icon   = (string) ( $args['icon_html'] ?? '' );
-		echo '<div class="simple-row is-static">';
-		echo '<div class="tile' . ( '' !== $tcls ? ' ' . esc_attr( $tcls ) : '' ) . '">' . $icon . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		echo '<div><div class="t">' . esc_html( $title ) . '</div>';
+		$is_url = ! empty( $args['url'] );
+		echo '<div class="simple-row is-static wpdocs-kv">';
+		echo '<div class="t">' . esc_html( $title ) . '</div>';
 		if ( '' !== $detail ) {
-			echo '<div class="d">' . esc_html( $detail ) . '</div>';
+			echo '<div class="d' . ( $is_url ? ' is-url' : '' ) . '">' . esc_html( $detail ) . '</div>';
+		} else {
+			echo '<div class="d"></div>';
 		}
-		echo '</div>';
 		echo '<div class="r">';
 		if ( '' !== $pill ) {
 			echo '<span class="pill' . ( '' !== $pcls ? ' ' . esc_attr( $pcls ) : '' ) . '">' . esc_html( $pill ) . '</span>';

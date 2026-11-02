@@ -67,17 +67,19 @@ final class Menu {
 		if ( class_exists( 'Wenpai_Admin_Loader', false ) ) {
 			\Wenpai_Admin_Loader::enqueue( array( 'full' => true ) );
 		}
+		$css = WPDOCS_DIR . 'assets/admin/admin.css';
+		$js  = WPDOCS_DIR . 'assets/admin/admin.js';
 		wp_enqueue_style(
 			'wpdocs-admin',
 			WPDOCS_URL . 'assets/admin/admin.css',
 			array( 'wenpai-admin-ui' ),
-			WPDOCS_VERSION
+			is_readable( $css ) ? (string) filemtime( $css ) : WPDOCS_VERSION
 		);
 		wp_enqueue_script(
 			'wpdocs-admin',
 			WPDOCS_URL . 'assets/admin/admin.js',
 			array( 'wenpai-admin-ui' ),
-			WPDOCS_VERSION,
+			is_readable( $js ) ? (string) filemtime( $js ) : WPDOCS_VERSION,
 			true
 		);
 		wp_localize_script(

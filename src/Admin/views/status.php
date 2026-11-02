@@ -91,10 +91,9 @@ endif;
 		array(
 			'title'      => __( '文档站', 'wpdocs' ),
 			'detail'     => '' !== $base_show ? $base_show : __( '未填写', 'wpdocs' ),
+			'url'        => '' !== $base_show,
 			'pill'       => $home_ok ? __( '已连接', 'wpdocs' ) : ( '' !== $base_show ? __( '探测失败', 'wpdocs' ) : __( '未连接', 'wpdocs' ) ),
 			'pill_class' => $home_ok ? 'ok' : ( '' !== $base_show ? 'bad' : 'warn' ),
-			'tile_class' => $home_ok ? 'ok' : ( '' !== $base_show ? 'bad' : 'warn' ),
-			'icon_html'  => View::icon( 'external' ),
 		)
 	);
 	View::status_row(
@@ -103,8 +102,6 @@ endif;
 			'detail'     => $fmt_probe( (array) ( $st['home'] ?? array() ) ),
 			'pill'       => $home_ok ? __( '正常', 'wpdocs' ) : ( '' !== $base_show ? __( '失败', 'wpdocs' ) : __( '等待', 'wpdocs' ) ),
 			'pill_class' => $home_ok ? 'ok' : ( '' !== $base_show ? 'bad' : 'warn' ),
-			'tile_class' => $home_ok ? 'ok' : ( '' !== $base_show ? 'bad' : 'warn' ),
-			'icon_html'  => View::icon( 'home' ),
 		)
 	);
 	View::status_row(
@@ -113,8 +110,6 @@ endif;
 			'detail'     => $fmt_probe( (array) ( $st['sitemap'] ?? array() ) ),
 			'pill'       => $site_ok ? __( '正常', 'wpdocs' ) : ( '' !== $base_show ? __( '异常', 'wpdocs' ) : __( '等待', 'wpdocs' ) ),
 			'pill_class' => $site_ok ? 'ok' : 'warn',
-			'tile_class' => $site_ok ? 'ok' : 'warn',
-			'icon_html'  => View::icon( 'map' ),
 		)
 	);
 	if ( $tree_skip ) {
@@ -124,8 +119,6 @@ endif;
 				'detail'     => __( '已跳过（未配置或显式留空）', 'wpdocs' ),
 				'pill'       => __( '已跳过', 'wpdocs' ),
 				'pill_class' => 'warn',
-				'tile_class' => 'warn',
-				'icon_html'  => View::icon( 'server' ),
 			)
 		);
 	} else {
@@ -135,8 +128,6 @@ endif;
 				'detail'     => $fmt_probe( (array) ( $st['tree'] ?? array() ) ),
 				'pill'       => $tree_ok ? __( '正常', 'wpdocs' ) : __( '失败', 'wpdocs' ),
 				'pill_class' => $tree_ok ? 'ok' : 'bad',
-				'tile_class' => $tree_ok ? 'ok' : 'bad',
-				'icon_html'  => View::icon( 'server' ),
 			)
 		);
 	}
@@ -146,8 +137,6 @@ endif;
 			'detail'     => (string) $bind_n,
 			'pill'       => $bind_n > 0 ? __( '已有', 'wpdocs' ) : __( '空', 'wpdocs' ),
 			'pill_class' => $bind_n > 0 ? 'ok' : 'warn',
-			'tile_class' => $bind_n > 0 ? 'ok' : 'warn',
-			'icon_html'  => View::icon( 'plug' ),
 		)
 	);
 	View::status_row(
@@ -156,8 +145,6 @@ endif;
 			'detail'     => (string) $redir_n,
 			'pill'       => $redir_n > 0 ? __( '已有', 'wpdocs' ) : __( '空', 'wpdocs' ),
 			'pill_class' => $redir_n > 0 ? 'ok' : 'warn',
-			'tile_class' => $redir_n > 0 ? 'ok' : 'warn',
-			'icon_html'  => View::icon( 'external' ),
 		)
 	);
 	?>
@@ -186,6 +173,6 @@ endif;
 			)
 		);
 		?>
-		<p class="wenpai-actions"><button type="submit" class="btn btn-primary"><?php esc_html_e( '保存并刷新探测', 'wpdocs' ); ?></button></p>
+		<div class="wenpai-actions"><button type="submit" class="btn btn-primary"><?php esc_html_e( '保存并刷新探测', 'wpdocs' ); ?></button></div>
 	</form>
 </section>
