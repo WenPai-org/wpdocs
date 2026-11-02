@@ -100,6 +100,7 @@ endif;
 			'title'      => __( '文档站', 'wpdocs' ),
 			'detail'     => '' !== $base_show ? $base_show : __( '未填写', 'wpdocs' ),
 			'url'        => '' !== $base_show,
+			'icon'       => 'external',
 			'pill'       => $home_ok ? __( '已连接', 'wpdocs' ) : ( '' !== $base_show ? __( '探测失败', 'wpdocs' ) : __( '未连接', 'wpdocs' ) ),
 			'pill_class' => $home_ok ? 'ok' : ( '' !== $base_show ? 'bad' : 'warn' ),
 		)
@@ -108,6 +109,7 @@ endif;
 		array(
 			'title'      => __( '首页', 'wpdocs' ),
 			'detail'     => $fmt_probe( (array) ( $st['home'] ?? array() ) ),
+			'icon'       => 'home',
 			'pill'       => $home_ok ? __( '正常', 'wpdocs' ) : ( '' !== $base_show ? __( '失败', 'wpdocs' ) : __( '等待', 'wpdocs' ) ),
 			'pill_class' => $home_ok ? 'ok' : ( '' !== $base_show ? 'bad' : 'warn' ),
 		)
@@ -116,6 +118,7 @@ endif;
 		array(
 			'title'      => __( '站点地图', 'wpdocs' ),
 			'detail'     => $fmt_probe( (array) ( $st['sitemap'] ?? array() ) ),
+			'icon'       => 'map',
 			'pill'       => $site_ok ? __( '正常', 'wpdocs' ) : ( '' !== $base_show ? __( '异常', 'wpdocs' ) : __( '等待', 'wpdocs' ) ),
 			'pill_class' => $site_ok ? 'ok' : 'warn',
 		)
@@ -125,6 +128,7 @@ endif;
 			array(
 				'title'      => __( '发布树', 'wpdocs' ),
 				'detail'     => __( '已跳过（未配置或显式留空）', 'wpdocs' ),
+				'icon'       => 'server',
 				'pill'       => __( '已跳过', 'wpdocs' ),
 				'pill_class' => 'warn',
 			)
@@ -134,6 +138,7 @@ endif;
 			array(
 				'title'      => __( '发布树', 'wpdocs' ),
 				'detail'     => $fmt_probe( (array) ( $st['tree'] ?? array() ) ),
+				'icon'       => 'server',
 				'pill'       => $tree_ok ? __( '正常', 'wpdocs' ) : __( '失败', 'wpdocs' ),
 				'pill_class' => $tree_ok ? 'ok' : 'bad',
 			)
@@ -143,8 +148,9 @@ endif;
 	if ( empty( $api ) || ! empty( $api['skipped'] ) || empty( $api['configured'] ) ) {
 		View::status_row(
 			array(
-				'title'      => __( 'BookStack API', 'wpdocs' ),
+				'title'      => __( 'CocoBook API', 'wpdocs' ),
 				'detail'     => __( '未配置 Token（WPDOCS_TOKEN_ID / SECRET）', 'wpdocs' ),
+				'icon'       => 'plug',
 				'pill'       => __( '已跳过', 'wpdocs' ),
 				'pill_class' => 'warn',
 			)
@@ -159,8 +165,9 @@ endif;
 			: ( '' !== $api_err ? sprintf( '%s · %dms', $api_err, $api_ms ) : sprintf( '%dms', $api_ms ) );
 		View::status_row(
 			array(
-				'title'      => __( 'BookStack API', 'wpdocs' ),
+				'title'      => __( 'CocoBook API', 'wpdocs' ),
 				'detail'     => $detail,
+				'icon'       => 'plug',
 				'pill'       => $api_ok ? __( '已连接', 'wpdocs' ) : __( '探测失败', 'wpdocs' ),
 				'pill_class' => $api_ok ? 'ok' : 'bad',
 			)
@@ -170,6 +177,7 @@ endif;
 		array(
 			'title'      => __( '绑定', 'wpdocs' ),
 			'detail'     => (string) $bind_n,
+			'icon'       => 'link',
 			'pill'       => $bind_n > 0 ? __( '已有', 'wpdocs' ) : __( '空', 'wpdocs' ),
 			'pill_class' => $bind_n > 0 ? 'ok' : 'warn',
 		)
@@ -178,6 +186,7 @@ endif;
 		array(
 			'title'      => __( '跳转', 'wpdocs' ),
 			'detail'     => (string) $redir_n,
+			'icon'       => 'share',
 			'pill'       => $redir_n > 0 ? __( '已有', 'wpdocs' ) : __( '空', 'wpdocs' ),
 			'pill_class' => $redir_n > 0 ? 'ok' : 'warn',
 		)

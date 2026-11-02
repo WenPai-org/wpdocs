@@ -92,9 +92,9 @@ final class View {
 	}
 
 	/**
-	 * Probe / kv status row (APPROVAL: .k | .v | .pill — no tile).
+	 * Status row — same shape as 智储 overview: tile icon | title+detail | pill.
 	 *
-	 * @param array{title:string,detail?:string,pill?:string,pill_class?:string,url?:bool} $args
+	 * @param array{title:string,detail?:string,pill?:string,pill_class?:string,url?:bool,icon?:string,tile_class?:string} $args
 	 */
 	public static function status_row( array $args ): void {
 		$title  = (string) ( $args['title'] ?? '' );
@@ -102,14 +102,17 @@ final class View {
 		$pill   = (string) ( $args['pill'] ?? '' );
 		$pcls   = (string) ( $args['pill_class'] ?? '' );
 		$is_url = ! empty( $args['url'] );
-		echo '<div class="simple-row is-static wpdocs-kv">';
+		$icon   = (string) ( $args['icon'] ?? 'info' );
+		$tile   = (string) ( $args['tile_class'] ?? $pcls );
+		echo '<div class="simple-row is-static">';
+		echo '<div class="tile' . ( '' !== $tile ? ' ' . esc_attr( $tile ) : '' ) . '">';
+		echo self::icon( $icon ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- kit/local SVG.
+		echo '</div><div>';
 		echo '<div class="t">' . esc_html( $title ) . '</div>';
 		if ( '' !== $detail ) {
 			echo '<div class="d' . ( $is_url ? ' is-url' : '' ) . '">' . esc_html( $detail ) . '</div>';
-		} else {
-			echo '<div class="d"></div>';
 		}
-		echo '<div class="r">';
+		echo '</div><div class="r">';
 		if ( '' !== $pill ) {
 			echo '<span class="pill' . ( '' !== $pcls ? ' ' . esc_attr( $pcls ) : '' ) . '">' . esc_html( $pill ) . '</span>';
 		}

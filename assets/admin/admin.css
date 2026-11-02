@@ -67,32 +67,7 @@ body.wenpai-ui-page .wenpai-app .preview-out.is-bad {
   color: #d63638;
 }
 
-/* —— status kv rows —— */
-body.wenpai-ui-page .wenpai-app .simple-row.wpdocs-kv {
-  gap: 12px;
-  padding: 12px 0;
-}
-
-body.wenpai-ui-page .wenpai-app .simple-row.wpdocs-kv > .t {
-  flex: none;
-  min-width: 5.5rem;
-  font-weight: 500;
-  font-size: 14px;
-  line-height: 22px;
-}
-
-body.wenpai-ui-page .wenpai-app .simple-row.wpdocs-kv > .d {
-  flex: 1 1 auto;
-  min-width: 0;
-  max-width: none;
-  color: var(--wenpai-ink-2);
-  font-size: 13px;
-  line-height: 20px;
-}
-
-body.wenpai-ui-page .wenpai-app .simple-row.wpdocs-kv > .r {
-  margin-left: 0;
-}
+/* Status rows: kit owns .simple-row + .tile; no product kv override. */
 
 /* —— chrome density (overlay numbers) —— */
 body.wenpai-ui-page .wenpai-app .wenpai-page-head {
