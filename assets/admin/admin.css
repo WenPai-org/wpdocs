@@ -1,36 +1,15 @@
-/* Product-only tweaks; kit provides .wenpai-app chrome. */
-body.wpdocs_page_wpdocs .wenpai-app,
-body.wpdocs_page_wpdocs-bindings .wenpai-app,
-body.wpdocs_page_wpdocs-redirects .wenpai-app {
-  /* slug hook for future overrides */
-}
-
-.wenpai-app .wpdocs-muted {
-  color: var(--wenpai-ink-3, #646970);
-}
-
-.wenpai-app .tbl {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-  line-height: 20px;
-}
-
-.wenpai-app .tbl th,
-.wenpai-app .tbl td {
-  text-align: left;
-  padding: 10px 8px;
-  border-top: 1px solid var(--wenpai-line, #e0e0e0);
-  vertical-align: top;
-}
-
-.wenpai-app .tbl thead th {
-  border-top: 0;
-  color: var(--wenpai-ink-3, #646970);
-  font-weight: 500;
-}
-
-.wenpai-app .empty {
+/* Product-only; kit owns chrome / field / tbl / pill. */
+body.wenpai-ui-page .wenpai-app .wenpai-actions {
   margin: 8px 0 0;
-  color: var(--wenpai-ink-2, #50575e);
+}
+
+body.wenpai-ui-page .wenpai-app .wenpai-actions .btn {
+  margin-right: 8px;
+}
+
+/* Ensure brand mark sizes to 28 without .wenpai-ico shrink. */
+body.wenpai-ui-page .wenpai-app .wenpai-mark svg {
+  width: 28px;
+  height: 28px;
+  display: block;
 }

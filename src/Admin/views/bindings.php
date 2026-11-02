@@ -6,76 +6,102 @@
  * @var array<int,object> $items
  */
 
+use Wpdocs\Admin\View;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
-?>
-<div class="page-head">
-	<div>
-		<h1><?php esc_html_e( '绑定', 'wpdocs' ); ?></h1>
-		<p class="lede"><?php esc_html_e( 'WP 文章与 BookStack 页的映射；可选 external_id 供评论挂件。', 'wpdocs' ); ?></p>
-	</div>
-</div>
 
-<?php if ( ! empty( $_GET['updated'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
-	<div class="notice ok"><span><?php esc_html_e( '绑定已保存。', 'wpdocs' ); ?></span></div>
-<?php endif; ?>
+View::page_head(
+	__( '绑定', 'wpdocs' ),
+	__( '把 WordPress 文章映射到 BookStack 页面；可选 external_id 供评论挂件使用。', 'wpdocs' )
+);
+View::saved_notice();
+?>
 
 <section class="card">
 	<h2 class="section-title"><?php esc_html_e( '新增 / 更新', 'wpdocs' ); ?></h2>
-	<p class="section-desc"><?php esc_html_e( '同一 wp_post_id 再次保存会覆盖。', 'wpdocs' ); ?></p>
+	<p class="section-desc"><?php esc_html_e( '同一文章 ID 再次保存会覆盖。', 'wpdocs' ); ?></p>
 	<form method="post">
 		<?php wp_nonce_field( 'wpdocs_bind', 'wpdocs_bind_nonce' ); ?>
-		<div class="field">
-			<label for="wp_post_id"><?php esc_html_e( 'WP Post ID', 'wpdocs' ); ?></label>
-			<input id="wp_post_id" type="number" name="wp_post_id" required min="1" />
-		</div>
-		<div class="field">
-			<label for="wp_post_type"><?php esc_html_e( '文章类型', 'wpdocs' ); ?></label>
-			<input id="wp_post_type" type="text" name="wp_post_type" value="post" />
-		</div>
-		<div class="field">
-			<label for="docs_page_id"><?php esc_html_e( 'Docs page id', 'wpdocs' ); ?></label>
-			<input id="docs_page_id" type="number" name="docs_page_id" min="0" />
-		</div>
-		<div class="field">
-			<label for="docs_book_slug"><?php esc_html_e( 'Book slug', 'wpdocs' ); ?></label>
-			<input id="docs_book_slug" type="text" name="docs_book_slug" />
-		</div>
-		<div class="field">
-			<label for="docs_page_slug"><?php esc_html_e( 'Page slug', 'wpdocs' ); ?></label>
-			<input id="docs_page_slug" type="text" name="docs_page_slug" />
-		</div>
-		<div class="field">
-			<label for="external_id"><?php esc_html_e( 'external_id（可选）', 'wpdocs' ); ?></label>
-			<input id="external_id" type="text" name="external_id" placeholder="wpcy:post:11144" autocomplete="off" />
-			<p class="d"><?php esc_html_e( '不要填密钥或真实邮箱。', 'wpdocs' ); ?></p>
-		</div>
-		<p><button type="submit" class="btn btn-primary"><?php esc_html_e( '保存绑定', 'wpdocs' ); ?></button></p>
+		<?php
+		View::field(
+			array(
+				'for'     => 'wp_post_id',
+				'label'   => __( '文章 ID', 'wpdocs' ),
+				'help'    => __( 'WordPress 文章或页面的 ID。', 'wpdocs' ),
+				'control' => '<input id="wp_post_id" type="number" name="wp_post_id" required min="1" />',
+			)
+		);
+		View::field(
+			array(
+				'for'     => 'wp_post_type',
+				'label'   => __( '文章类型', 'wpdocs' ),
+				'control' => '<input id="wp_post_type" type="text" name="wp_post_type" value="post" />',
+			)
+		);
+		View::field(
+			array(
+				'for'     => 'docs_page_id',
+				'label'   => __( '文档页 ID', 'wpdocs' ),
+				'help'    => __( 'BookStack page id。', 'wpdocs' ),
+				'control' => '<input id="docs_page_id" type="number" name="docs_page_id" min="0" />',
+			)
+		);
+		View::field(
+			array(
+				'for'     => 'docs_book_slug',
+				'label'   => __( '书 slug', 'wpdocs' ),
+				'control' => '<input id="docs_book_slug" type="text" name="docs_book_slug" />',
+			)
+		);
+		View::field(
+			array(
+				'for'     => 'docs_page_slug',
+				'label'   => __( '页 slug', 'wpdocs' ),
+				'control' => '<input id="docs_page_slug" type="text" name="docs_page_slug" />',
+			)
+		);
+		View::field(
+			array(
+				'for'     => 'external_id',
+				'label'   => __( 'external_id（可选）', 'wpdocs' ),
+				'help'    => __( '不要填写密钥或真实邮箱。', 'wpdocs' ),
+				'control' => '<input id="external_id" type="text" name="external_id" placeholder="wpcy:post:11144" autocomplete="off" />',
+			)
+		);
+		?>
+		<p class="wenpai-actions"><button type="submit" class="btn btn-primary"><?php esc_html_e( '保存绑定', 'wpdocs' ); ?></button></p>
 	</form>
 </section>
 
 <section class="card">
 	<h2 class="section-title"><?php esc_html_e( '现有绑定', 'wpdocs' ); ?></h2>
 	<?php if ( array() === $items ) : ?>
-		<p class="empty"><?php esc_html_e( '尚无绑定。', 'wpdocs' ); ?></p>
+		<p class="empty"><?php esc_html_e( '还没有绑定。', 'wpdocs' ); ?></p>
 	<?php else : ?>
 		<table class="tbl">
 			<thead>
 				<tr>
-					<th>ID</th>
-					<th>WP</th>
-					<th>Docs</th>
+					<th><?php esc_html_e( 'ID', 'wpdocs' ); ?></th>
+					<th><?php esc_html_e( '文章', 'wpdocs' ); ?></th>
+					<th><?php esc_html_e( '文档', 'wpdocs' ); ?></th>
 					<th>external_id</th>
-					<th>source</th>
+					<th><?php esc_html_e( '来源', 'wpdocs' ); ?></th>
 				</tr>
 			</thead>
 			<tbody>
 			<?php foreach ( $items as $row ) : ?>
 				<tr>
-					<td><?php echo (int) $row->id; ?></td>
-					<td><?php echo (int) $row->wp_post_id; ?> <code><?php echo esc_html( $row->wp_post_type ); ?></code></td>
-					<td><?php echo esc_html( $row->docs_book_slug . '/' . $row->docs_page_slug ); ?> (#<?php echo (int) $row->docs_page_id; ?>)</td>
+					<td class="num"><?php echo (int) $row->id; ?></td>
+					<td>
+						<div class="t">#<?php echo (int) $row->wp_post_id; ?></div>
+						<div class="d"><code><?php echo esc_html( $row->wp_post_type ); ?></code></div>
+					</td>
+					<td>
+						<div class="t"><?php echo esc_html( $row->docs_book_slug . '/' . $row->docs_page_slug ); ?></div>
+						<div class="d">#<?php echo (int) $row->docs_page_id; ?></div>
+					</td>
 					<td><code><?php echo esc_html( $row->external_id ); ?></code></td>
 					<td><?php echo esc_html( $row->source ); ?></td>
 				</tr>

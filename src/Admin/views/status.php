@@ -1,85 +1,157 @@
 <?php
 /**
- * Status page (档 A).
+ * Status / overview (档 A).
  *
  * @package Wpdocs
  * @var array<string,mixed> $st
  */
 
+use Wpdocs\Admin\View;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$home_ok    = ! empty( $st['home']['ok'] );
-$site_ok    = ! empty( $st['sitemap']['ok'] );
-$tree_skip  = ! empty( $st['tree']['skipped'] );
-$tree_ok    = ! empty( $st['tree']['ok'] );
-$bind_n     = (int) \Wpdocs\Bind\Repository::count();
-$redir_n    = (int) \Wpdocs\Redirect\Repository::count();
-$opt        = get_option( 'wpdocs_settings', array() );
-$base_input = is_array( $opt ) ? (string) ( $opt['base_url'] ?? ( $st['base_url'] ?? '' ) ) : '';
-$tree_input = is_array( $opt ) ? (string) ( $opt['tree_url'] ?? '' ) : '';
-?>
-<div class="page-head">
-	<div>
-		<h1><?php esc_html_e( '状态', 'wpdocs' ); ?></h1>
-		<p class="lede"><?php esc_html_e( '文档站与发布树只读探测。正文不会写入 option。', 'wpdocs' ); ?></p>
-	</div>
-</div>
+$home_ok   = ! empty( $st['home']['ok'] );
+$site_ok   = ! empty( $st['sitemap']['ok'] );
+$tree_skip = ! empty( $st['tree']['skipped'] );
+$tree_ok   = ! empty( $st['tree']['ok'] );
+$bind_n    = (int) \Wpdocs\Bind\Repository::count();
+$redir_n   = (int) \Wpdocs\Redirect\Repository::count();
+$opt       = get_option( 'wpdocs_settings', array() );
+$base_in   = is_array( $opt ) ? (string) ( $opt['base_url'] ?? ( $st['base_url'] ?? '' ) ) : '';
+$tree_in   = is_array( $opt ) && array_key_exists( 'tree_url', $opt ) ? (string) $opt['tree_url'] : '';
+$base_show = (string) ( $st['base_url'] ?? '' );
 
-<?php if ( ! empty( $_GET['updated'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
-	<div class="notice ok"><span><?php esc_html_e( '设置已保存。', 'wpdocs' ); ?></span></div>
-<?php endif; ?>
+$fmt_probe = static function ( array $p ): string {
+	$code = (int) ( $p['code'] ?? 0 );
+	$ms   = (int) ( $p['ms'] ?? 0 );
+	$err  = (string) ( $p['error'] ?? '' );
+	if ( $err ) {
+		return sprintf( '%s · %dms', $err, $ms );
+	}
+	return sprintf( '%d · %dms', $code, $ms );
+};
+
+View::page_head(
+	__( '状态', 'wpdocs' ),
+	__( '文档站与发布树只读探测。正文不会写入 option。', 'wpdocs' )
+);
+View::saved_notice();
+
+if ( 0 === $bind_n && 0 === $redir_n ) :
+	?>
+	<div class="next">
+		<p><?php esc_html_e( '还没有绑定或跳转。可先保存文档站地址，再到绑定页录入映射。', 'wpdocs' ); ?></p>
+		<a class="btn btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-bindings' ) ); ?>"><?php esc_html_e( '去绑定', 'wpdocs' ); ?></a>
+	</div>
+	<?php
+endif;
+?>
 
 <section class="card">
-	<h2 class="section-title"><?php esc_html_e( '概览', 'wpdocs' ); ?></h2>
-	<p class="section-desc"><?php esc_html_e( '版本、计数与探测摘要。', 'wpdocs' ); ?></p>
-	<div class="simple-row"><span class="k"><?php esc_html_e( '版本', 'wpdocs' ); ?></span><span class="v"><code><?php echo esc_html( WPDOCS_VERSION ); ?></code></span></div>
-	<div class="simple-row"><span class="k"><?php esc_html_e( '文档站', 'wpdocs' ); ?></span><span class="v"><code><?php echo esc_html( (string) ( $st['base_url'] ?? '' ) ); ?></code></span></div>
-	<div class="simple-row">
-		<span class="k"><?php esc_html_e( '首页探测', 'wpdocs' ); ?></span>
-		<span class="v"><span class="pill <?php echo $home_ok ? 'ok' : 'bad'; ?>"><?php echo esc_html( (string) ( $st['home']['code'] ?? 0 ) ); ?> · <?php echo esc_html( (string) ( $st['home']['ms'] ?? 0 ) ); ?>ms</span></span>
-	</div>
-	<div class="simple-row">
-		<span class="k"><?php esc_html_e( '站点地图', 'wpdocs' ); ?></span>
-		<span class="v"><span class="pill <?php echo $site_ok ? 'ok' : 'warn'; ?>"><?php echo esc_html( (string) ( $st['sitemap']['code'] ?? 0 ) ); ?> · <?php echo esc_html( (string) ( $st['sitemap']['ms'] ?? 0 ) ); ?>ms</span></span>
-	</div>
-	<div class="simple-row">
-		<span class="k"><?php esc_html_e( '发布树', 'wpdocs' ); ?></span>
-		<span class="v">
-			<?php if ( $tree_skip ) : ?>
-				<span class="pill warn"><?php esc_html_e( '已跳过', 'wpdocs' ); ?></span>
-			<?php else : ?>
-				<span class="pill <?php echo $tree_ok ? 'ok' : 'bad'; ?>"><?php echo esc_html( (string) ( $st['tree']['code'] ?? 0 ) ); ?> · <?php echo esc_html( (string) ( $st['tree']['ms'] ?? 0 ) ); ?>ms</span>
-			<?php endif; ?>
-		</span>
-	</div>
-	<div class="simple-row"><span class="k"><?php esc_html_e( '绑定', 'wpdocs' ); ?></span><span class="v"><?php echo esc_html( (string) $bind_n ); ?></span></div>
-	<div class="simple-row"><span class="k"><?php esc_html_e( '跳转', 'wpdocs' ); ?></span><span class="v"><?php echo esc_html( (string) $redir_n ); ?></span></div>
+	<h2 class="section-title"><?php esc_html_e( '运行状态', 'wpdocs' ); ?></h2>
+	<p class="section-desc"><?php echo esc_html( sprintf( /* translators: %s: plugin version */ __( '版本 %s · 发布树只读，不写文档站。', 'wpdocs' ), WPDOCS_VERSION ) ); ?></p>
+	<?php
+	View::status_row(
+		array(
+			'title'      => __( '文档站', 'wpdocs' ),
+			'detail'     => '' !== $base_show ? $base_show : __( '未填写', 'wpdocs' ),
+			'pill'       => $home_ok ? __( '已连接', 'wpdocs' ) : ( '' !== $base_show ? __( '探测失败', 'wpdocs' ) : __( '未连接', 'wpdocs' ) ),
+			'pill_class' => $home_ok ? 'ok' : ( '' !== $base_show ? 'bad' : 'warn' ),
+			'tile_class' => $home_ok ? 'ok' : ( '' !== $base_show ? 'bad' : 'warn' ),
+			'icon_html'  => View::icon( 'external' ),
+		)
+	);
+	View::status_row(
+		array(
+			'title'      => __( '首页', 'wpdocs' ),
+			'detail'     => $fmt_probe( (array) ( $st['home'] ?? array() ) ),
+			'pill'       => $home_ok ? __( '正常', 'wpdocs' ) : __( '失败', 'wpdocs' ),
+			'pill_class' => $home_ok ? 'ok' : 'bad',
+			'tile_class' => $home_ok ? 'ok' : 'bad',
+			'icon_html'  => View::icon( 'home' ),
+		)
+	);
+	View::status_row(
+		array(
+			'title'      => __( '站点地图', 'wpdocs' ),
+			'detail'     => $fmt_probe( (array) ( $st['sitemap'] ?? array() ) ),
+			'pill'       => $site_ok ? __( '正常', 'wpdocs' ) : __( '异常', 'wpdocs' ),
+			'pill_class' => $site_ok ? 'ok' : 'warn',
+			'tile_class' => $site_ok ? 'ok' : 'warn',
+			'icon_html'  => View::icon( 'map' ),
+		)
+	);
+	if ( $tree_skip ) {
+		View::status_row(
+			array(
+				'title'      => __( '发布树', 'wpdocs' ),
+				'detail'     => __( '已跳过（未配置或显式留空）', 'wpdocs' ),
+				'pill'       => __( '已跳过', 'wpdocs' ),
+				'pill_class' => 'warn',
+				'tile_class' => 'warn',
+				'icon_html'  => View::icon( 'server' ),
+			)
+		);
+	} else {
+		View::status_row(
+			array(
+				'title'      => __( '发布树', 'wpdocs' ),
+				'detail'     => $fmt_probe( (array) ( $st['tree'] ?? array() ) ),
+				'pill'       => $tree_ok ? __( '正常', 'wpdocs' ) : __( '失败', 'wpdocs' ),
+				'pill_class' => $tree_ok ? 'ok' : 'bad',
+				'tile_class' => $tree_ok ? 'ok' : 'bad',
+				'icon_html'  => View::icon( 'server' ),
+			)
+		);
+	}
+	View::status_row(
+		array(
+			'title'      => __( '绑定', 'wpdocs' ),
+			'detail'     => (string) $bind_n,
+			'pill'       => $bind_n > 0 ? __( '已有', 'wpdocs' ) : __( '空', 'wpdocs' ),
+			'pill_class' => $bind_n > 0 ? 'ok' : 'warn',
+			'tile_class' => $bind_n > 0 ? 'ok' : 'warn',
+			'icon_html'  => View::icon( 'plug' ),
+		)
+	);
+	View::status_row(
+		array(
+			'title'      => __( '跳转', 'wpdocs' ),
+			'detail'     => (string) $redir_n,
+			'pill'       => $redir_n > 0 ? __( '已有', 'wpdocs' ) : __( '空', 'wpdocs' ),
+			'pill_class' => $redir_n > 0 ? 'ok' : 'warn',
+			'tile_class' => $redir_n > 0 ? 'ok' : 'warn',
+			'icon_html'  => View::icon( 'external' ),
+		)
+	);
+	?>
 </section>
 
 <section class="card">
 	<h2 class="section-title"><?php esc_html_e( '探测地址', 'wpdocs' ); ?></h2>
-	<p class="section-desc"><?php esc_html_e( '可用 wp-config 常量 WPDOCS_BASE_URL / WPDOCS_TREE_URL 覆盖。', 'wpdocs' ); ?></p>
+	<p class="section-desc"><?php esc_html_e( '也可用 wp-config 常量 WPDOCS_BASE_URL / WPDOCS_TREE_URL 覆盖。', 'wpdocs' ); ?></p>
 	<form method="post">
 		<?php wp_nonce_field( 'wpdocs_settings', 'wpdocs_settings_nonce' ); ?>
-		<div class="field">
-			<label for="wpdocs-base-url"><?php esc_html_e( '文档站 base URL', 'wpdocs' ); ?></label>
-			<input id="wpdocs-base-url" type="url" name="base_url" value="<?php echo esc_attr( $base_input ); ?>" placeholder="https://docs.example.test" />
-			<p class="d"><?php esc_html_e( '用于 home 与 /cocobook/sitemap.xml HEAD。', 'wpdocs' ); ?></p>
-		</div>
-		<div class="field">
-			<label for="wpdocs-tree-url"><?php esc_html_e( '发布树 URL（可选）', 'wpdocs' ); ?></label>
-			<input id="wpdocs-tree-url" type="url" name="tree_url" value="<?php echo esc_attr( $tree_input ); ?>" placeholder="" />
-			<p class="d"><?php esc_html_e( '留空则用 base/books；显式空串跳过 tree。', 'wpdocs' ); ?></p>
-		</div>
-		<p><button type="submit" class="btn btn-primary"><?php esc_html_e( '保存并刷新探测', 'wpdocs' ); ?></button></p>
+		<?php
+		View::field(
+			array(
+				'for'     => 'wpdocs-base-url',
+				'label'   => __( '文档站地址', 'wpdocs' ),
+				'help'    => __( '用于首页与 /cocobook/sitemap.xml 的 HEAD 探测。', 'wpdocs' ),
+				'control' => '<input id="wpdocs-base-url" type="url" name="base_url" value="' . esc_attr( $base_in ) . '" placeholder="https://docs.example.test" />',
+			)
+		);
+		View::field(
+			array(
+				'for'     => 'wpdocs-tree-url',
+				'label'   => __( '发布树地址（可选）', 'wpdocs' ),
+				'help'    => __( '留空则用「文档站/books」；保存为空字符串则跳过发布树探测。', 'wpdocs' ),
+				'control' => '<input id="wpdocs-tree-url" type="url" name="tree_url" value="' . esc_attr( $tree_in ) . '" />',
+			)
+		);
+		?>
+		<p class="wenpai-actions"><button type="submit" class="btn btn-primary"><?php esc_html_e( '保存并刷新探测', 'wpdocs' ); ?></button></p>
 	</form>
 </section>
-
-<?php if ( 0 === $bind_n && 0 === $redir_n ) : ?>
-	<div class="next">
-		<p><?php esc_html_e( '还没有绑定或跳转。可从绑定页手工录入，或激活时从旧 cocobook_redirects 表导入。', 'wpdocs' ); ?></p>
-		<a class="btn btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-bindings' ) ); ?>"><?php esc_html_e( '去绑定', 'wpdocs' ); ?></a>
-	</div>
-<?php endif; ?>
