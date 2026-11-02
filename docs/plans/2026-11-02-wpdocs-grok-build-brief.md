@@ -253,13 +253,13 @@ Prompt 必须：点名文件、禁止扫整个 `~/Projects`、禁止改 linuxjoy
 
 ## 10. 验收清单（DoD）
 
-- [ ] 仓公开可读：https://feicode.com/WenPai-org/wpdocs  
-- [ ] `tiers.yml` 含 `wpdocs: A`  
-- [ ] 契约与本 brief 在仓内  
-- [ ] G1 原型落地  
-- [ ] G2–G4 行为与测试说明落地  
-- [ ] G5 仅在 APPROVAL 后  
-- [ ] CHANGELOG 记录相对 `cocobook-docs` 的破坏性/兼容项  
+- [x] 仓公开可读：https://feicode.com/WenPai-org/wpdocs  
+- [x] `tiers.yml` 含 `wpdocs: A`  
+- [x] 契约与本 brief 在仓内（另：`docs/design/admin-ui-a.md`、完整计划）  
+- [x] G1 原型落地（`prototypes/wpdocs/{status,bindings,redirects}.html`）  
+- [x] G2–G4 行为与测试说明落地（`tests/run.sh` ALL PASS；main `14eae03`）  
+- [ ] G5 仅在 APPROVAL 后（**BLOCKED**：等人签 `prototypes/wpdocs/APPROVAL.md`）  
+- [x] CHANGELOG 记录相对 `cocobook-docs` 的破坏性/兼容项（G2–G4 条目）  
 
 ---
 
