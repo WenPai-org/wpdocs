@@ -1,0 +1,10 @@
+.wpdocs-admin .wpdocs-card {
+  background: #fff;
+  border: 1px solid #dcdcde;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin: 12px 0 16px;
+  max-width: 960px;
+}
+.wpdocs-admin .wpdocs-muted { color: #757575; }
+.wpdocs-admin code { font-size: 12px; }
