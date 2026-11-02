@@ -3,7 +3,7 @@
  * Plugin Name:       文派文档
  * Plugin URI:        https://wpcy.com/docs
  * Description:       文派文档（wpdocs）：内容从哪来（保留正文 / 文档站读取 / Git 写入）、绑定、旧路径跳转与 CocoBook 只读探测。
- * Version:           0.3.0-dev
+ * Version:           0.3.0
  * Requires at least: 6.0
  * Requires PHP:      8.0
  * Author:            WPCY.COM
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'WPDOCS_VERSION', '0.3.0-dev' );
+define( 'WPDOCS_VERSION', '0.3.0' );
 define( 'WPDOCS_FILE', __FILE__ );
 define( 'WPDOCS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WPDOCS_URL', plugin_dir_url( __FILE__ ) );

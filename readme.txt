@@ -1,9 +1,10 @@
 === 文派文档 ===
 Contributors: wenpai
+Tags: documentation, bookstack, redirects
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 0.3.0-dev
+Stable tag: 0.3.0
 License: GPLv2 or later
 
 内容从哪来（保留正文 / 文档站读取 / Git 写入）、绑定、旧路径跳转、CocoBook 只读探测。
@@ -28,7 +29,7 @@ License: GPLv2 or later
 
 == Changelog ==
 
-= 0.3.0-dev =
+= 0.3.0 =
 * 主选择：保留正文 / 文档站读取 / Git 写入；评论仅文档站读取
 * 改名文派文档 / wpdocs，新表与 REST 契约
 * 兼容旧 option / 表名别名（见 Compat\Legacy）
