@@ -7,6 +7,8 @@
 
 namespace Wpdocs\Http;
 
+use Wpdocs\Settings;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -66,17 +68,23 @@ final class BookStackClient {
 	 */
 	public static function from_config( array $override = array() ): ?self {
 		$base = isset( $override['base_url'] ) ? (string) $override['base_url'] : '';
-		if ( '' === $base && defined( 'WPDOCS_BASE_URL' ) && WPDOCS_BASE_URL ) {
+		if ( '' === $base && class_exists( '\Wpdocs\Settings', false ) ) {
+			$base = Settings::base_url();
+		} elseif ( '' === $base && defined( 'WPDOCS_BASE_URL' ) && WPDOCS_BASE_URL ) {
 			$base = (string) WPDOCS_BASE_URL;
 		}
 
 		$id = isset( $override['token_id'] ) ? (string) $override['token_id'] : '';
-		if ( '' === $id && defined( 'WPDOCS_TOKEN_ID' ) ) {
+		if ( '' === $id && class_exists( '\Wpdocs\Settings', false ) ) {
+			$id = trim( (string) Settings::get( 'token_id' ) );
+		} elseif ( '' === $id && defined( 'WPDOCS_TOKEN_ID' ) ) {
 			$id = (string) WPDOCS_TOKEN_ID;
 		}
 
 		$secret = isset( $override['token_secret'] ) ? (string) $override['token_secret'] : '';
-		if ( '' === $secret && defined( 'WPDOCS_TOKEN_SECRET' ) ) {
+		if ( '' === $secret && class_exists( '\Wpdocs\Settings', false ) ) {
+			$secret = trim( (string) Settings::get( 'token_secret' ) );
+		} elseif ( '' === $secret && defined( 'WPDOCS_TOKEN_SECRET' ) ) {
 			$secret = (string) WPDOCS_TOKEN_SECRET;
 		}
 

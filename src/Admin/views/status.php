@@ -2,6 +2,9 @@
 /**
  * Status / overview (档 A).
  *
+ * Overview answers: what / how now / whether to act.
+ * Address form stays here (product need); constant names stay out of notices.
+ *
  * @package Wpdocs
  * @var array<string,mixed> $st
  */
@@ -23,7 +26,7 @@ $base_in   = is_array( $opt ) ? (string) ( $opt['base_url'] ?? ( $st['base_url']
 $tree_in   = is_array( $opt ) && array_key_exists( 'tree_url', $opt ) ? (string) $opt['tree_url'] : '';
 $base_show = (string) ( $st['base_url'] ?? '' );
 
-$fmt_probe = static function ( array $p ): string {
+$fmt_probe = static function ( array $p ) use ( $base_show ): string {
 	$code = (int) ( $p['code'] ?? 0 );
 	$ms   = (int) ( $p['ms'] ?? 0 );
 	$err  = (string) ( $p['error'] ?? '' );
@@ -40,33 +43,19 @@ $refresh = '<a class="btn btn-ghost" href="' . esc_url( admin_url( 'admin.php?pa
 
 View::page_head(
 	__( '状态', 'wpdocs' ),
-	__( '文档站与发布树只读探测。正文不会写入 option。', 'wpdocs' ),
+	__( '文档站与发布树只读探测。不把正文写入站点选项。', 'wpdocs' ),
 	$refresh
 );
 View::saved_notice();
 View::error_notice();
 
-$partial_ok = $site_ok || ( ! $tree_skip && $tree_ok );
+$partial_ok   = $site_ok || ( ! $tree_skip && $tree_ok );
+$show_next    = false;
+$empty_maps   = ( 0 === $bind_n && 0 === $redir_n );
+$probe_failed = ( '' !== $base_show && ! $home_ok && ! $partial_ok );
 
-if ( '' === $base_show ) :
-	?>
-	<div class="notice warn"><span><?php esc_html_e( '尚未填写文档站地址。探测会在保存地址后出现结果。', 'wpdocs' ); ?></span></div>
-	<?php
-elseif ( ! $home_ok && ! $partial_ok ) :
-	?>
-	<div class="notice bad"><span><?php esc_html_e( '暂时无法探测文档站，请检查文档站地址后重试。', 'wpdocs' ); ?></span></div>
-	<?php
-elseif ( ! $home_ok && $partial_ok ) :
-	?>
-	<div class="notice warn"><span><?php esc_html_e( '首页探测超时或失败，但站点地图或发布树仍可达。可点「重新探测」再试。', 'wpdocs' ); ?></span></div>
-	<?php
-else :
-	?>
-	<div class="notice info"><span><?php esc_html_e( '若站点曾使用旧文档桥，启用本插件时会把旧跳转一次性导入。', 'wpdocs' ); ?></span></div>
-	<?php
-endif;
-
-if ( 0 === $bind_n && 0 === $redir_n ) :
+if ( $empty_maps ) :
+	$show_next = true;
 	?>
 	<div class="next">
 		<div class="tile accent"><?php echo View::icon( 'map' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
@@ -77,7 +66,8 @@ if ( 0 === $bind_n && 0 === $redir_n ) :
 		<a class="btn btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-bindings' ) ); ?>"><?php esc_html_e( '去绑定', 'wpdocs' ); ?></a>
 	</div>
 	<?php
-elseif ( ! $home_ok && ! $partial_ok && '' !== $base_show ) :
+elseif ( $probe_failed ) :
+	$show_next = true;
 	?>
 	<div class="next">
 		<div class="tile bad"><?php echo View::icon( 'external' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
@@ -87,6 +77,25 @@ elseif ( ! $home_ok && ! $partial_ok && '' !== $base_show ) :
 		</div>
 		<a class="btn btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs&refresh=1' ) ); ?>"><?php esc_html_e( '重新探测', 'wpdocs' ); ?></a>
 	</div>
+	<?php
+endif;
+
+// Notices: no engineering keys; skip info when .next already covers empty/import tip.
+if ( '' === $base_show ) :
+	?>
+	<div class="notice warn"><span><?php esc_html_e( '尚未填写文档站地址。探测会在保存地址后出现结果。', 'wpdocs' ); ?></span></div>
+	<?php
+elseif ( $probe_failed && ! $show_next ) :
+	?>
+	<div class="notice bad"><span><?php esc_html_e( '暂时无法探测文档站，请检查文档站地址后重试。', 'wpdocs' ); ?></span></div>
+	<?php
+elseif ( ! $home_ok && $partial_ok ) :
+	?>
+	<div class="notice warn"><span><?php esc_html_e( '首页探测超时或失败，但站点地图或发布树仍可达。可点「重新探测」再试。', 'wpdocs' ); ?></span></div>
+	<?php
+elseif ( $home_ok && ! $empty_maps ) :
+	?>
+	<div class="notice info"><span><?php esc_html_e( '若站点曾使用旧文档桥，启用本插件时会把旧跳转一次性导入。', 'wpdocs' ); ?></span></div>
 	<?php
 endif;
 ?>
@@ -103,6 +112,7 @@ endif;
 			'icon'       => 'external',
 			'pill'       => $home_ok ? __( '已连接', 'wpdocs' ) : ( '' !== $base_show ? __( '探测失败', 'wpdocs' ) : __( '未连接', 'wpdocs' ) ),
 			'pill_class' => $home_ok ? 'ok' : ( '' !== $base_show ? 'bad' : 'warn' ),
+			'tile_class' => $home_ok ? 'ok' : ( '' !== $base_show ? 'bad' : 'warn' ),
 		)
 	);
 	View::status_row(
@@ -112,6 +122,7 @@ endif;
 			'icon'       => 'home',
 			'pill'       => $home_ok ? __( '正常', 'wpdocs' ) : ( '' !== $base_show ? __( '失败', 'wpdocs' ) : __( '等待', 'wpdocs' ) ),
 			'pill_class' => $home_ok ? 'ok' : ( '' !== $base_show ? 'bad' : 'warn' ),
+			'tile_class' => $home_ok ? 'ok' : ( '' !== $base_show ? 'bad' : 'warn' ),
 		)
 	);
 	View::status_row(
@@ -121,6 +132,7 @@ endif;
 			'icon'       => 'map',
 			'pill'       => $site_ok ? __( '正常', 'wpdocs' ) : ( '' !== $base_show ? __( '异常', 'wpdocs' ) : __( '等待', 'wpdocs' ) ),
 			'pill_class' => $site_ok ? 'ok' : 'warn',
+			'tile_class' => $site_ok ? 'ok' : 'warn',
 		)
 	);
 	if ( $tree_skip ) {
@@ -131,6 +143,7 @@ endif;
 				'icon'       => 'server',
 				'pill'       => __( '已跳过', 'wpdocs' ),
 				'pill_class' => 'warn',
+				'tile_class' => 'warn',
 			)
 		);
 	} else {
@@ -141,6 +154,7 @@ endif;
 				'icon'       => 'server',
 				'pill'       => $tree_ok ? __( '正常', 'wpdocs' ) : __( '失败', 'wpdocs' ),
 				'pill_class' => $tree_ok ? 'ok' : 'bad',
+				'tile_class' => $tree_ok ? 'ok' : 'bad',
 			)
 		);
 	}
@@ -148,11 +162,12 @@ endif;
 	if ( empty( $api ) || ! empty( $api['skipped'] ) || empty( $api['configured'] ) ) {
 		View::status_row(
 			array(
-				'title'      => __( 'CocoBook API', 'wpdocs' ),
-				'detail'     => __( '未配置 Token（WPDOCS_TOKEN_ID / SECRET）', 'wpdocs' ),
+				'title'      => __( '文档站接口', 'wpdocs' ),
+				'detail'     => __( '未配置接口令牌，搜索与反查不可用', 'wpdocs' ),
 				'icon'       => 'plug',
 				'pill'       => __( '已跳过', 'wpdocs' ),
 				'pill_class' => 'warn',
+				'tile_class' => 'warn',
 			)
 		);
 	} else {
@@ -165,11 +180,12 @@ endif;
 			: ( '' !== $api_err ? sprintf( '%s · %dms', $api_err, $api_ms ) : sprintf( '%dms', $api_ms ) );
 		View::status_row(
 			array(
-				'title'      => __( 'CocoBook API', 'wpdocs' ),
+				'title'      => __( '文档站接口', 'wpdocs' ),
 				'detail'     => $detail,
 				'icon'       => 'plug',
 				'pill'       => $api_ok ? __( '已连接', 'wpdocs' ) : __( '探测失败', 'wpdocs' ),
 				'pill_class' => $api_ok ? 'ok' : 'bad',
+				'tile_class' => $api_ok ? 'ok' : 'bad',
 			)
 		);
 	}
@@ -180,6 +196,7 @@ endif;
 			'icon'       => 'link',
 			'pill'       => $bind_n > 0 ? __( '已有', 'wpdocs' ) : __( '空', 'wpdocs' ),
 			'pill_class' => $bind_n > 0 ? 'ok' : 'warn',
+			'tile_class' => $bind_n > 0 ? 'ok' : 'warn',
 		)
 	);
 	View::status_row(
@@ -189,6 +206,7 @@ endif;
 			'icon'       => 'share',
 			'pill'       => $redir_n > 0 ? __( '已有', 'wpdocs' ) : __( '空', 'wpdocs' ),
 			'pill_class' => $redir_n > 0 ? 'ok' : 'warn',
+			'tile_class' => $redir_n > 0 ? 'ok' : 'warn',
 		)
 	);
 	?>
@@ -196,7 +214,7 @@ endif;
 
 <section class="card">
 	<h2 class="section-title"><?php esc_html_e( '探测地址', 'wpdocs' ); ?></h2>
-	<p class="section-desc"><?php esc_html_e( '也可用 wp-config 常量 WPDOCS_BASE_URL / WPDOCS_TREE_URL 覆盖。', 'wpdocs' ); ?></p>
+	<p class="section-desc"><?php esc_html_e( '保存后立即刷新探测。发布树留空则用「文档站/books」。', 'wpdocs' ); ?></p>
 	<form method="post">
 		<?php wp_nonce_field( 'wpdocs_settings', 'wpdocs_settings_nonce' ); ?>
 		<?php
@@ -204,7 +222,7 @@ endif;
 			array(
 				'for'     => 'wpdocs-base-url',
 				'label'   => __( '文档站地址', 'wpdocs' ),
-				'help'    => __( '用于首页与 /cocobook/sitemap.xml 的 HEAD 探测。', 'wpdocs' ),
+				'help'    => __( '用于首页与站点地图的探测。', 'wpdocs' ),
 				'control' => '<input id="wpdocs-base-url" type="url" name="base_url" value="' . esc_attr( $base_in ) . '" placeholder="https://docs.example.test" />',
 			)
 		);

@@ -11,6 +11,7 @@
 namespace Wpdocs\Publish;
 
 use Wpdocs\Compat\Legacy;
+use Wpdocs\Settings;
 use Wpdocs\Http\BookStackClient;
 use Throwable;
 
@@ -27,14 +28,7 @@ final class HttpSource {
 	public const STATUS_CACHE_TTL = 300;
 
 	public static function base_url(): string {
-		if ( defined( 'WPDOCS_BASE_URL' ) && WPDOCS_BASE_URL ) {
-			return untrailingslashit( (string) WPDOCS_BASE_URL );
-		}
-		$s = Legacy::get_option( 'wpdocs_settings', array() );
-		if ( is_array( $s ) && ! empty( $s['base_url'] ) ) {
-			return untrailingslashit( (string) $s['base_url'] );
-		}
-		return 'https://docs.cocobook.com';
+		return Settings::base_url();
 	}
 
 	/**

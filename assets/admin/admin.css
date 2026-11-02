@@ -245,3 +245,13 @@ body.wenpai-ui-page .wenpai-app .sr-only {
   white-space: nowrap;
   border: 0;
 }
+
+/* Settings groups (ported connection / books / rollout). */
+.wenpai-app .field-group { margin: 0 0 20px; }
+.wenpai-app .field-group-title {
+	font-size: 13px;
+	font-weight: 600;
+	margin: 0 0 12px;
+	color: var(--wenpai-fg, #1e1e1e);
+}
+.wenpai-app .wpdocs-books label { margin: 2px 0; }

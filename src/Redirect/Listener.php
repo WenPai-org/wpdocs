@@ -17,6 +17,7 @@ namespace Wpdocs\Redirect;
 
 use Wpdocs\Bind\Repository as BindRepo;
 use Wpdocs\Publish\HttpSource;
+use Wpdocs\Settings;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -29,7 +30,16 @@ final class Listener {
 	}
 
 	public static function maybe_redirect(): void {
+		if ( ! Settings::redirects_enabled() ) {
+			return;
+		}
 		if ( is_admin() || wp_doing_ajax() || wp_doing_cron() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
+			return;
+		}
+		if ( isset( $_GET['wpdocs_no_redirect'] ) && current_user_can( 'manage_options' ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			return;
+		}
+		if ( isset( $_GET['cocobook_no_redirect'] ) && current_user_can( 'manage_options' ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			return;
 		}
 		if ( ! in_array( $_SERVER['REQUEST_METHOD'] ?? 'GET', array( 'GET', 'HEAD' ), true ) ) {

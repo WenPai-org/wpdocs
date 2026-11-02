@@ -30,6 +30,7 @@ final class Plugin {
 		self::$booted = true;
 
 		Legacy::register_aliases();
+		Core::init();
 		Listener::register();
 		add_action( 'admin_init', array( RedirectRepo::class, 'install' ) );
 		add_action( 'admin_init', array( BindRepo::class, 'install' ) );
@@ -42,10 +43,12 @@ final class Plugin {
 	public static function activate(): void {
 		RedirectRepo::install( true );
 		BindRepo::install( true );
+		Core::ensure_schedule();
 		flush_rewrite_rules( false );
 	}
 
 	public static function deactivate(): void {
+		Core::unschedule();
 		flush_rewrite_rules( false );
 	}
 }

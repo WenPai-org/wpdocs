@@ -192,3 +192,19 @@ Sitemap 路径相对 `base_url`：`/cocobook/sitemap.xml`。发布树默认 `{ba
 | `error` | string | `WP_Error` / 异常信息；有 HTTP 响应时为 `""` |
 | `ok` | bool | `code` ∈ [200, 300) 且非 skipped |
 | `skipped` | bool | URL 为空，未发请求 |
+
+
+## 8. 设置与前台接管（2026-11-02 恢复）
+
+人拍板：旧 `cocobook-docs` 设置面全部需要。本插件在 Bind/Redirect/Publish 之外，再承载：
+
+| 能力 | 入口 |
+|------|------|
+| 连接（base_url / Token） | 后台「设置」；常量 `WPDOCS_*` 优先 |
+| 书目 / site 标签 / 文章类型 | 「设置」→ Catalog 同步索引 |
+| 模式 off/pilot/all + 试点 ID | Frontend `the_content` 接管 |
+| 评论 BFF + `cocobook:page:{id}` | Frontend / Embed shortcode+block |
+| 缓存 TTL + 测试连接 / 立即同步 / Webhook | Client 文件缓存 + `Core`；REST `POST /wpdocs/v1/refresh/{secret}`（兼容 `cocobook-docs/v1`） |
+| 旧链接跳转总开关 | `Settings::redirects_enabled()` 门控 Listener |
+
+正文仍**禁止**进 `wp_options`（文件缓存 `wp-content/cache/wpdocs/`）。

@@ -11,6 +11,11 @@ use Wpdocs\Bind\Repository as BindRepo;
 use Wpdocs\Http\BookStackClient;
 use Wpdocs\Publish\HttpSource;
 use Wpdocs\Redirect\Repository as RedirectRepo;
+use Wpdocs\Settings;
+use Wpdocs\Client;
+use Wpdocs\Catalog;
+use Wpdocs\Core;
+use Wpdocs\Compat\Legacy;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -57,6 +62,7 @@ final class Menu {
 		add_submenu_page( 'wpdocs', __( '状态', 'wpdocs' ), __( '状态', 'wpdocs' ), 'manage_options', 'wpdocs', array( self::class, 'render_status' ) );
 		add_submenu_page( 'wpdocs', __( '绑定', 'wpdocs' ), __( '绑定', 'wpdocs' ), 'manage_options', 'wpdocs-bindings', array( self::class, 'render_bindings' ) );
 		add_submenu_page( 'wpdocs', __( '跳转', 'wpdocs' ), __( '跳转', 'wpdocs' ), 'manage_options', 'wpdocs-redirects', array( self::class, 'render_redirects' ) );
+		add_submenu_page( 'wpdocs', __( '设置', 'wpdocs' ), __( '设置', 'wpdocs' ), 'manage_options', 'wpdocs-settings', array( self::class, 'render_settings' ) );
 		// 空 parent：不进左侧菜单（帮助不占第四 Tab）；标题靠 help_admin_title。
 		add_submenu_page( '', __( '帮助', 'wpdocs' ), __( '帮助', 'wpdocs' ), 'manage_options', 'wpdocs-help', array( self::class, 'render_help' ) );
 	}
@@ -114,6 +120,12 @@ final class Menu {
 					'icon_html' => $icon( 'status' ),
 				),
 				array(
+					'id'        => 'settings',
+					'label'     => __( '设置', 'wpdocs' ),
+					'url'       => admin_url( 'admin.php?page=wpdocs-settings' ),
+					'icon_html' => $icon( 'settings' ),
+				),
+				array(
 					'id'        => 'bindings',
 					'label'     => __( '绑定', 'wpdocs' ),
 					'url'       => admin_url( 'admin.php?page=wpdocs-bindings' ),
@@ -159,6 +171,29 @@ final class Menu {
 	public static function handle_post(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
+		}
+
+		// Full settings (connection / books / rollout / comments).
+		if ( isset( $_POST['wpdocs_settings_full_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_settings_full_nonce'] ) ), 'wpdocs_settings_full' ) ) {
+			$input = isset( $_POST['wpdocs'] ) && is_array( $_POST['wpdocs'] ) ? wp_unslash( $_POST['wpdocs'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			Settings::save( is_array( $input ) ? $input : array() );
+			\Wpdocs\Publish\HttpSource::bust_status_cache();
+			$mode = isset( $_POST['wpdocs_mode'] ) && 'advanced' === sanitize_key( (string) wp_unslash( $_POST['wpdocs_mode'] ) ) ? '&mode=advanced' : '';
+			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-settings&updated=1' . $mode ) );
+			exit;
+		}
+		if ( isset( $_POST['wpdocs_test_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_test_nonce'] ) ), 'wpdocs_test' ) ) {
+			Client::$force = true;
+			$res = Client::get( 'system' );
+			$ok  = ! is_wp_error( $res );
+			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-settings&msg=' . ( $ok ? 'test_ok' : 'test_error' ) ) );
+			exit;
+		}
+		if ( isset( $_POST['wpdocs_sync_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_sync_nonce'] ) ), 'wpdocs_sync' ) ) {
+			$cat = Core::sync_now();
+			$ok  = ! is_wp_error( $cat );
+			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-settings&msg=' . ( $ok ? 'synced' : 'sync_error' ) ) );
+			exit;
 		}
 
 		if ( isset( $_POST['wpdocs_bind_row_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_bind_row_nonce'] ) ), 'wpdocs_bind_row' ) ) {
@@ -328,6 +363,21 @@ final class Menu {
 		self::open_shell( 'redirects' );
 		include WPDOCS_DIR . 'src/Admin/views/redirects.php';
 		self::close_shell( 'redirects' );
+	}
+
+
+	public static function render_settings(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+		$s     = Settings::raw();
+		$books = Settings::is_configured() ? Client::get( 'books', array( 'count' => 500, 'sort' => 'name' ) ) : null;
+		$cat   = Settings::is_configured() ? Catalog::get() : null;
+		$log   = Legacy::get_option( 'wpdocs_log', array() );
+		$log   = is_array( $log ) ? array_reverse( $log ) : array();
+		self::open_shell( 'settings' );
+		include WPDOCS_DIR . 'src/Admin/views/settings.php';
+		self::close_shell( 'settings' );
 	}
 
 	public static function render_help(): void {

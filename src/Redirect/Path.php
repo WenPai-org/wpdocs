@@ -164,4 +164,35 @@ final class Path {
 		$ext = strtolower( substr( $file, $dot + 1 ) );
 		return in_array( $ext, self::SKIP_404_EXTENSIONS, true );
 	}
+
+	/**
+	 * Page ID from a number, `/link/{id}` URL or `/books/{book}/page/{slug}` URL.
+	 *
+	 * @param string $v Value.
+	 */
+	public static function page_id_from( string $v ): int {
+		$v = trim( $v );
+		if ( '' === $v ) {
+			return 0;
+		}
+		if ( ctype_digit( $v ) ) {
+			return (int) $v;
+		}
+		if ( preg_match( '#/link/(\d+)#', $v, $m ) ) {
+			return (int) $m[1];
+		}
+		if ( preg_match( '#/books/([^/]+)/page/([^/?\#]+)#', $v, $m ) ) {
+			$cat = \Wpdocs\Catalog::get();
+			if ( ! is_wp_error( $cat ) && is_array( $cat ) ) {
+				$book = rawurldecode( $m[1] );
+				$slug = rawurldecode( $m[2] );
+				foreach ( $cat['pages'] as $pid => $pg ) {
+					if ( ( $pg['slug'] ?? '' ) === $slug && ( $cat['books'][ (int) ( $pg['book_id'] ?? 0 ) ]['slug'] ?? '' ) === $book ) {
+						return (int) $pid;
+					}
+				}
+			}
+		}
+		return 0;
+	}
 }

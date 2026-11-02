@@ -19,6 +19,8 @@ final class Legacy {
 		'wpdocs_redirects_db'     => 'cocobook_docs_redirects_db',
 		'wpdocs_bindings_db'      => 'cocobook_docs_bindings_db',
 		'wpdocs_404'              => 'cocobook_docs_404',
+		'wpdocs_health'            => 'cocobook_docs_health',
+		'wpdocs_log'               => 'cocobook_docs_log',
 	);
 
 	public static function register_aliases(): void {
@@ -30,6 +32,9 @@ final class Legacy {
 		}
 		if ( defined( 'COCOBOOK_DOCS_TOKEN_SECRET' ) && ! defined( 'WPDOCS_TOKEN_SECRET' ) ) {
 			define( 'WPDOCS_TOKEN_SECRET', COCOBOOK_DOCS_TOKEN_SECRET );
+		}
+		if ( defined( 'COCOBOOK_DOCS_REFRESH_SECRET' ) && ! defined( 'WPDOCS_REFRESH_SECRET' ) ) {
+			define( 'WPDOCS_REFRESH_SECRET', COCOBOOK_DOCS_REFRESH_SECRET );
 		}
 	}
 

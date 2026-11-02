@@ -1,7 +1,7 @@
 # WPDocs 完善路线图：对齐 CocoBook/BookStack 能力，补齐 WP 文档桥盲点
 
 > 日期：2026-11-02 · 仓：`wpdocs-clone` · 现状真源：`docs/contracts/wpdocs-v1.md`、`docs/plans/2026-11-02-wpdocs-full-plan.md`
-> 对照： [CocoBook 能力](https://docs.cocobook.com/features) · [BookStack API](https://demo.bookstackapp.com/api/docs)
+> 对照： [CocoBook 能力](https://docs.cocobook.com/features) · [CocoBook API](https://demo.bookstackapp.com/api/docs)
 
 ## 0. REST 命名空间（已拍板）
 

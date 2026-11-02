@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0-dev
+
+- 恢复旧 cocobook-docs 设置能力：连接（Token）、书目/站点标签、关闭/试点/全部、评论 BFF、缓存 TTL、测试连接/立即同步、Webhook 刷新
+- 前台接管（Catalog + Frontend body swap）与评论挂件（shortcode/block）迁入
+- 跳转受「启用旧链接跳转」开关约束；顶栏新增「设置」Tab
+
 ## 0.3.0-dev (unreleased)
 
 ### Added
