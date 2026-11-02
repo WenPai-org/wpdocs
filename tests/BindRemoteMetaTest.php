@@ -101,7 +101,19 @@ $auth = RemoteMeta::from_response(
 		'code'  => 401,
 	)
 );
-assert_eq( $auth['state'], RemoteMeta::STATE_UNKNOWN, 'auth unknown not broken' );
+assert_eq( $auth['state'], RemoteMeta::STATE_FORBIDDEN, 'auth → forbidden' );
+
+$with_att = RemoteMeta::from_response(
+	array(
+		'ok'   => true,
+		'data' => array(
+			'name'        => '有附件',
+			'slug'        => 'with-files',
+			'attachments' => array( array( 'id' => 1 ), array( 'id' => 2 ) ),
+		),
+	)
+);
+assert_eq( $with_att['attachments'], 2, 'attachment count' );
 
 $stale = RemoteMeta::normalize(
 	array(

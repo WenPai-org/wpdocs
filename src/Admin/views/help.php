@@ -123,7 +123,33 @@ View::page_head(
 		<div class="tile"><?php echo View::icon( 'info' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
 		<div>
 			<div class="t"><?php esc_html_e( '本插件不做什么', 'wpdocs' ); ?></div>
-			<div class="d"><?php esc_html_e( '不改 CocoBook 主题壳；不在「保留正文 / Git 写入」提供统一评论；不把正文写入站点选项。', 'wpdocs' ); ?></div>
+			<div class="d"><?php esc_html_e( '不改 CocoBook 主题壳；不在「保留正文 / Git 写入」提供统一评论；不把正文写入站点选项；不做站内第二套导出。', 'wpdocs' ); ?></div>
 		</div>
 	</div>
+</section>
+
+<section class="card">
+	<h2 class="section-title"><?php esc_html_e( '运维与 REST', 'wpdocs' ); ?></h2>
+	<p class="section-desc"><?php esc_html_e( '导出走 CocoBook 原生；程序调用走 Application Passwords。', 'wpdocs' ); ?></p>
+	<?php
+	View::field(
+		array(
+			'label'   => __( '导出', 'wpdocs' ),
+			'control' => '<p class="hint d">' . esc_html__( '整书/单页 ZIP、Markdown、PDF 在 CocoBook 后台导出。本插件不提供「再导出一份」。', 'wpdocs' ) . '</p>',
+		)
+	);
+	View::field(
+		array(
+			'label'   => __( 'Webhook', 'wpdocs' ),
+			'control' => '<p class="hint d">' . esc_html__( '工具 → 同步里复制 CocoBook Webhook URL，在文档站挂 page 事件。会刷新索引与绑定「远端」探测。', 'wpdocs' ) . '</p>',
+		)
+	);
+	View::field(
+		array(
+			'label'   => __( 'REST', 'wpdocs' ),
+			'control' => '<p class="hint d">' . esc_html__( '命名空间 /wpdocs/v1，需 manage_options（Application Password）。status / bindings / redirects / search / suggest；refresh 用路径密钥不用 App Password。', 'wpdocs' ) . '</p>'
+				. '<p class="hint d"><code>docs/ops/wpdocs-ops.md</code></p>',
+		)
+	);
+	?>
 </section>

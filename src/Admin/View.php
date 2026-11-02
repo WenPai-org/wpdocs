@@ -304,23 +304,27 @@ final class View {
 			? (string) ( $meta_or_state['state'] ?? '' )
 			: (string) $meta_or_state;
 		$map = array(
-			'ok'      => array(
+			'ok'        => array(
 				'label' => __( '远端正常', 'wpdocs' ),
 				'class' => 'ok',
 			),
-			'broken'  => array(
+			'broken'    => array(
 				'label' => __( '远端失效', 'wpdocs' ),
 				'class' => 'bad',
 			),
-			'stale'   => array(
+			'stale'     => array(
 				'label' => __( '别名已变', 'wpdocs' ),
 				'class' => 'warn',
 			),
-			'skipped' => array(
+			'forbidden' => array(
+				'label' => __( '无权限', 'wpdocs' ),
+				'class' => 'bad',
+			),
+			'skipped'   => array(
 				'label' => __( '未探测', 'wpdocs' ),
 				'class' => '',
 			),
-			'unknown' => array(
+			'unknown'   => array(
 				'label' => __( '探测失败', 'wpdocs' ),
 				'class' => 'warn',
 			),

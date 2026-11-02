@@ -314,9 +314,20 @@ $form_cls       = 'wpdocs-settings-form' . ( $adv ? '' : ' wpdocs-simple' );
 				array(
 					'for'      => 'wpdocs-ttl',
 					'label'    => __( '缓存秒数', 'wpdocs' ),
-					'help'     => __( '0 = 不过期。', 'wpdocs' ),
+					'help'     => __( '页正文缓存；0 = 正文不过期。发布树索引仍最多约 5 分钟刷新。', 'wpdocs' ),
 					'advanced' => true,
 					'control'  => '<input id="wpdocs-ttl" type="number" min="0" name="wpdocs[page_ttl]" value="' . esc_attr( (string) ( $s['page_ttl'] ?? 0 ) ) . '" />',
+				)
+			);
+			View::field(
+				array(
+					'for'      => 'wpdocs-refresh-secret',
+					'label'    => __( 'Webhook 密钥', 'wpdocs' ),
+					'help'     => __( '拼进工具 → 同步里的 Webhook URL。留空保存时自动生成；也可在 wp-config 用 WPDOCS_REFRESH_SECRET。', 'wpdocs' ),
+					'advanced' => true,
+					'control'  => Settings::is_locked( 'refresh_secret' )
+						? '<code>' . esc_html__( '已由 wp-config.php 常量设置', 'wpdocs' ) . '</code>'
+						: '<input id="wpdocs-refresh-secret" type="text" name="wpdocs[refresh_secret]" value="' . esc_attr( (string) ( $s['refresh_secret'] ?? '' ) ) . '" autocomplete="off" />',
 				)
 			);
 			View::field(

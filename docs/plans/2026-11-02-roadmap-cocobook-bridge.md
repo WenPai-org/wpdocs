@@ -86,10 +86,10 @@
 
 ### P2 — 事件与运维
 
-1. Webhook 接收（校验签名/共享密钥）→ 使缓存失效 / 标记 binding stale
-2. 附件/权限失败可观测（Studio 列表）
-3. 导出运维手册：如何用 BS ZIP；WPDocs 不实现第二套导出器
-4. Application Passwords 调 REST 的说明 + 能力矩阵
+1. Webhook 接收（路径密钥）→ 使缓存失效 / bust 绑定远端元数据 — **已**（`Core::refresh` + 同步页完整 URL + 设置高级「Webhook 密钥」）
+2. 附件/权限失败可观测 — **已**（远端列：无权限；高级显示附件数；日检含 forbidden）
+3. 导出运维手册 — **已**（`docs/ops/wpdocs-ops.md`；帮助页摘要）
+4. Application Passwords 调 REST 的说明 + 能力矩阵 — **已**（同 ops 手册 §3）
 
 ### P3 — 工程化
 
@@ -125,4 +125,4 @@
 2. ~~Bind 保存校验~~（已）
 3. ~~打通 search suggest~~（`/search` + `/suggest` + 绑定页 UI）
 4. ~~补 `redirect-vs-cocobook-docs` 旧仓对照 TODO~~（已）
-5. P1 余量已收口。下一步进 **P2**（Webhook 使缓存失效已有雏形；附件/权限可观测；导出手册；App Passwords 说明）。
+5. P1 / P2 已收口。下一步 **P3**（BS fixtures / 导入脚本仓 / 指标）。

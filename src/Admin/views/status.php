@@ -167,16 +167,17 @@ if ( '' !== $base_show && ! $home_ok && ( $site_ok || ( ! $tree_skip && $tree_ok
 endif;
 
 $drift = \Wpdocs\Bind\DriftCheck::last();
-$drift_bad = (int) ( $drift['broken'] ?? 0 ) + (int) ( $drift['stale'] ?? 0 );
+$drift_bad = (int) ( $drift['broken'] ?? 0 ) + (int) ( $drift['stale'] ?? 0 ) + (int) ( $drift['forbidden'] ?? 0 );
 if ( $drift_bad > 0 ) :
 	?>
 	<div class="notice warn"><span><?php
 		echo esc_html(
 			sprintf(
-				/* translators: 1: broken count, 2: stale count */
-				__( '绑定抽检：%1$d 条远端失效、%2$d 条别名已变。到工具 → 绑定查看「远端」列。', 'wpdocs' ),
+				/* translators: 1: broken, 2: stale, 3: forbidden */
+				__( '绑定抽检：%1$d 失效、%2$d 别名已变、%3$d 无权限。到工具 → 绑定查看「远端」列。', 'wpdocs' ),
 				(int) ( $drift['broken'] ?? 0 ),
-				(int) ( $drift['stale'] ?? 0 )
+				(int) ( $drift['stale'] ?? 0 ),
+				(int) ( $drift['forbidden'] ?? 0 )
 			)
 		);
 	?></span>

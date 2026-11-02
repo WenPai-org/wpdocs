@@ -417,6 +417,12 @@ final class Settings {
 			$out['mode'] = self::MODE_PILOT;
 		}
 
+		if ( isset( $input['refresh_secret'] ) && ! self::is_locked( 'refresh_secret' ) ) {
+			$rs = trim( (string) $input['refresh_secret'] );
+			if ( '' !== $rs ) {
+				$out['refresh_secret'] = sanitize_text_field( $rs );
+			}
+		}
 		if ( '' === (string) $out['refresh_secret'] ) {
 			$out['refresh_secret'] = wp_generate_password( 40, false, false );
 		}

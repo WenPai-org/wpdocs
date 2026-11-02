@@ -20,11 +20,12 @@ final class RemoteMeta {
 	public const TTL = 300;
 	public const CAP = 20;
 
-	public const STATE_OK      = 'ok';
-	public const STATE_BROKEN  = 'broken';
-	public const STATE_STALE   = 'stale';
-	public const STATE_SKIPPED = 'skipped';
-	public const STATE_UNKNOWN = 'unknown';
+	public const STATE_OK        = 'ok';
+	public const STATE_BROKEN    = 'broken';
+	public const STATE_STALE     = 'stale';
+	public const STATE_FORBIDDEN = 'forbidden';
+	public const STATE_SKIPPED   = 'skipped';
+	public const STATE_UNKNOWN   = 'unknown';
 
 	/**
 	 * Map docs_page_id → remote summary for a binding list.
@@ -33,7 +34,7 @@ final class RemoteMeta {
 	 * @param BookStackClient|null $client Injected or from_config().
 	 * @param int                 $ttl    Transient seconds.
 	 * @param int                 $cap    Max unique page ids to probe this request.
-	 * @return array<int, array{state:string,title:string,slug:string,updated_at:string,error:string,slug_match:bool}>
+	 * @return array<int, array{state:string,title:string,slug:string,updated_at:string,error:string,slug_match:bool,attachments:int}>
 	 */
 	public static function for_rows( array $rows, ?BookStackClient $client = null, int $ttl = self::TTL, int $cap = self::CAP ): array {
 		$ids = array();
@@ -75,16 +76,17 @@ final class RemoteMeta {
 	/**
 	 * Probe one page (cache-aware).
 	 *
-	 * @return array{state:string,title:string,slug:string,updated_at:string,error:string,slug_match:bool}
+	 * @return array{state:string,title:string,slug:string,updated_at:string,error:string,slug_match:bool,attachments:int}
 	 */
 	public static function for_page( int $page_id, ?BookStackClient $client, string $stored_slug = '', int $ttl = self::TTL ): array {
 		$empty = array(
-			'state'      => self::STATE_SKIPPED,
-			'title'      => '',
-			'slug'       => '',
-			'updated_at' => '',
-			'error'      => '',
-			'slug_match' => true,
+			'state'       => self::STATE_SKIPPED,
+			'title'       => '',
+			'slug'        => '',
+			'updated_at'  => '',
+			'error'       => '',
+			'slug_match'  => true,
+			'attachments' => 0,
 		);
 		if ( $page_id < 1 ) {
 			return $empty;
@@ -109,16 +111,17 @@ final class RemoteMeta {
 
 	/**
 	 * @param array{ok?:bool,error?:string,data?:array<string,mixed>} $res Client response.
-	 * @return array{state:string,title:string,slug:string,updated_at:string,error:string,slug_match:bool}
+	 * @return array{state:string,title:string,slug:string,updated_at:string,error:string,slug_match:bool,attachments:int}
 	 */
 	public static function from_response( array $res ): array {
 		$base = array(
-			'state'      => self::STATE_UNKNOWN,
-			'title'      => '',
-			'slug'       => '',
-			'updated_at' => '',
-			'error'      => (string) ( $res['error'] ?? '' ),
-			'slug_match' => true,
+			'state'       => self::STATE_UNKNOWN,
+			'title'       => '',
+			'slug'        => '',
+			'updated_at'  => '',
+			'error'       => (string) ( $res['error'] ?? '' ),
+			'slug_match'  => true,
+			'attachments' => 0,
 		);
 		if ( ! empty( $res['ok'] ) && isset( $res['data'] ) && is_array( $res['data'] ) ) {
 			$data = $res['data'];
@@ -136,16 +139,28 @@ final class RemoteMeta {
 					break;
 				}
 			}
-			$base['state']      = self::STATE_OK;
-			$base['title']      = $title;
-			$base['slug']       = $slug;
-			$base['updated_at'] = $upd;
-			$base['error']      = '';
+			$att = 0;
+			if ( isset( $data['attachments'] ) && is_array( $data['attachments'] ) ) {
+				$att = count( $data['attachments'] );
+			} elseif ( isset( $data['attachment_count'] ) && is_numeric( $data['attachment_count'] ) ) {
+				$att = (int) $data['attachment_count'];
+			}
+			$base['state']       = self::STATE_OK;
+			$base['title']       = $title;
+			$base['slug']        = $slug;
+			$base['updated_at']  = $upd;
+			$base['error']       = '';
+			$base['attachments'] = max( 0, $att );
 			return $base;
 		}
 		$err = (string) ( $res['error'] ?? '' );
 		if ( BookStackClient::ERR_NOT_FOUND === $err ) {
 			$base['state'] = self::STATE_BROKEN;
+			$base['error'] = $err;
+			return $base;
+		}
+		if ( BookStackClient::ERR_AUTH === $err ) {
+			$base['state'] = self::STATE_FORBIDDEN;
 			$base['error'] = $err;
 			return $base;
 		}
@@ -156,7 +171,7 @@ final class RemoteMeta {
 
 	/**
 	 * @param array<string,mixed> $meta
-	 * @return array{state:string,title:string,slug:string,updated_at:string,error:string,slug_match:bool}
+	 * @return array{state:string,title:string,slug:string,updated_at:string,error:string,slug_match:bool,attachments:int}
 	 */
 	public static function normalize( array $meta, string $stored_slug = '' ): array {
 		$state = (string) ( $meta['state'] ?? self::STATE_UNKNOWN );
@@ -169,12 +184,13 @@ final class RemoteMeta {
 			}
 		}
 		return array(
-			'state'      => $state,
-			'title'      => (string) ( $meta['title'] ?? '' ),
-			'slug'       => $slug,
-			'updated_at' => (string) ( $meta['updated_at'] ?? '' ),
-			'error'      => (string) ( $meta['error'] ?? '' ),
-			'slug_match' => $match,
+			'state'       => $state,
+			'title'       => (string) ( $meta['title'] ?? '' ),
+			'slug'        => $slug,
+			'updated_at'  => (string) ( $meta['updated_at'] ?? '' ),
+			'error'       => (string) ( $meta['error'] ?? '' ),
+			'slug_match'  => $match,
+			'attachments' => max( 0, (int) ( $meta['attachments'] ?? 0 ) ),
 		);
 	}
 

@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 $content = Settings::content_mode();
-$refresh = rest_url( 'wpdocs/v1/refresh/' ) . ( '' !== (string) Settings::get( 'refresh_secret' ) ? '{secret}' : '' );
+$refresh = Core::refresh_url();
 $state   = Core::state();
 
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -149,6 +149,7 @@ $mode_lab = array(
 		View::field(
 			array(
 				'label'   => __( 'CocoBook Webhook', 'wpdocs' ),
+				'help'    => __( '在 CocoBook 后台把 page 创建/更新/删除事件 POST 到此地址。密钥在路径里；保存设置时自动生成。', 'wpdocs' ),
 				'control' => '<code class="wenpai-code">' . esc_html( $refresh ) . '</code><p class="hint">' . esc_html( sprintf(
 					__( '上次检查 %1$s（%2$s）', 'wpdocs' ),
 					$state['checked'] ? wp_date( 'Y-m-d H:i', $state['checked'] ) : '—',

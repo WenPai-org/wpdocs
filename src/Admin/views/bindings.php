@@ -217,6 +217,13 @@ if ( ! $embed ) {
 							<div class="t"><?php echo esc_html( (string) $rmeta['title'] ); ?></div>
 						<?php endif; ?>
 						<span class="pill <?php echo esc_attr( $rpill['class'] ); ?>"><?php echo esc_html( $rpill['label'] ); ?></span>
+						<?php if ( $adv && (int) ( $rmeta['attachments'] ?? 0 ) > 0 ) : ?>
+							<p class="hint"><?php echo esc_html( sprintf(
+								/* translators: %d: attachment count */
+								__( '附件 %d', 'wpdocs' ),
+								(int) $rmeta['attachments']
+							) ); ?></p>
+						<?php endif; ?>
 					</td>
 					<?php if ( $adv ) : ?>
 						<td><?php echo '' !== $ext ? '<code>' . esc_html( $ext ) . '</code>' : '—'; ?></td>

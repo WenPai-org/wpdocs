@@ -285,10 +285,11 @@ final class Core {
 		$body  = $req->get_json_params();
 		$body  = is_array( $body ) ? $body : array();
 		$event = sanitize_key( (string) ( $body['event'] ?? '' ) );
-		$id    = absint( $body['related_item']['id'] ?? 0 );
+		$id    = absint( $body['related_item']['id'] ?? $body['id'] ?? 0 );
 
 		if ( 0 === strpos( $event, 'page_' ) && $id > 0 ) {
 			Catalog::invalidate( $id );
+			\Wpdocs\Bind\RemoteMeta::bust( $id );
 		} else {
 			Catalog::invalidate( 0 );
 		}
@@ -299,8 +300,18 @@ final class Core {
 				'ok'      => true,
 				'event'   => $event,
 				'page_id' => $id,
+				'bind'    => $id > 0 ? 'remote_meta_busted' : 'catalog_only',
 			),
 			200
 		);
+	}
+
+	/** Full CocoBook → wpdocs refresh URL (admin copy-paste). */
+	public static function refresh_url(): string {
+		$secret = (string) Settings::get( 'refresh_secret' );
+		if ( '' === $secret ) {
+			return rest_url( 'wpdocs/v1/refresh/{secret}' );
+		}
+		return rest_url( 'wpdocs/v1/refresh/' . rawurlencode( $secret ) );
 	}
 }

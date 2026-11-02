@@ -25,7 +25,7 @@ final class DriftCheck {
 	 *
 	 * @param array<int, array{state?:string,title?:string,slug?:string}> $meta Map page_id → meta.
 	 * @param object[]                                                    $rows Binding rows (for counts).
-	 * @return array{checked:int,ok:int,broken:int,stale:int,unknown:int,skipped:int,at:int,samples:array<int,array{wp_post_id:int,docs_page_id:int,state:string,title:string}>}
+	 * @return array{checked:int,ok:int,broken:int,stale:int,forbidden:int,unknown:int,skipped:int,at:int,samples:array<int,array{wp_post_id:int,docs_page_id:int,state:string,title:string}>}
 	 */
 	public static function summarize( array $meta, array $rows ): array {
 		$by_page = array();
@@ -41,14 +41,15 @@ final class DriftCheck {
 		}
 
 		$out = array(
-			'checked' => 0,
-			'ok'      => 0,
-			'broken'  => 0,
-			'stale'   => 0,
-			'unknown' => 0,
-			'skipped' => 0,
-			'at'      => time(),
-			'samples' => array(),
+			'checked'   => 0,
+			'ok'        => 0,
+			'broken'    => 0,
+			'stale'     => 0,
+			'forbidden' => 0,
+			'unknown'   => 0,
+			'skipped'   => 0,
+			'at'        => time(),
+			'samples'   => array(),
 		);
 
 		foreach ( $meta as $page_id => $m ) {
@@ -57,12 +58,12 @@ final class DriftCheck {
 			}
 			$state = (string) ( $m['state'] ?? RemoteMeta::STATE_UNKNOWN );
 			++$out['checked'];
-			if ( isset( $out[ $state ] ) ) {
+			if ( isset( $out[ $state ] ) && is_int( $out[ $state ] ) ) {
 				++$out[ $state ];
 			} else {
 				++$out['unknown'];
 			}
-			if ( in_array( $state, array( RemoteMeta::STATE_BROKEN, RemoteMeta::STATE_STALE ), true ) && count( $out['samples'] ) < 10 ) {
+			if ( in_array( $state, array( RemoteMeta::STATE_BROKEN, RemoteMeta::STATE_STALE, RemoteMeta::STATE_FORBIDDEN ), true ) && count( $out['samples'] ) < 10 ) {
 				$out['samples'][] = array(
 					'wp_post_id'   => (int) ( $by_page[ (int) $page_id ] ?? 0 ),
 					'docs_page_id' => (int) $page_id,
@@ -98,14 +99,15 @@ final class DriftCheck {
 			return $cached;
 		}
 		return array(
-			'checked' => 0,
-			'ok'      => 0,
-			'broken'  => 0,
-			'stale'   => 0,
-			'unknown' => 0,
-			'skipped' => 0,
-			'at'      => 0,
-			'samples' => array(),
+			'checked'   => 0,
+			'ok'        => 0,
+			'broken'    => 0,
+			'stale'     => 0,
+			'forbidden' => 0,
+			'unknown'   => 0,
+			'skipped'   => 0,
+			'at'        => 0,
+			'samples'   => array(),
 		);
 	}
 }
