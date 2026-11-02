@@ -8,9 +8,11 @@
 namespace Wpdocs\Rest;
 
 use Wpdocs\Bind\Repository as BindRepo;
+use Wpdocs\Bind\ResolveDraft;
 use Wpdocs\Publish\HttpSource;
 use Wpdocs\Redirect\Listener;
 use Wpdocs\Redirect\Repository as RedirectRepo;
+use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 
@@ -53,6 +55,15 @@ final class Controller {
 			array(
 				'methods'             => 'GET',
 				'callback'            => array( self::class, 'resolve_binding' ),
+				'permission_callback' => array( self::class, 'can_manage' ),
+			)
+		);
+		register_rest_route(
+			$ns,
+			'/bindings/resolve-batch',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( self::class, 'resolve_batch' ),
 				'permission_callback' => array( self::class, 'can_manage' ),
 			)
 		);
@@ -119,6 +130,113 @@ final class Controller {
 		$page_id = (int) $req->get_param( 'docs_page_id' );
 		$row     = $post_id ? BindRepo::find_by_post( $post_id ) : ( $page_id ? BindRepo::find_by_docs_page( $page_id ) : null );
 		return new WP_REST_Response( array( 'row' => $row ) );
+	}
+
+	/**
+	 * POST /bindings/resolve-batch — source=slug drafts.
+	 *
+	 * Default is dry-run (no table writes). Upsert only when apply=true.
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public static function resolve_batch( WP_REST_Request $req ) {
+		$params  = $req->get_json_params();
+		$payload = is_array( $params ) ? $params : array();
+		if ( isset( $payload['posts'] ) && ! is_array( $payload['posts'] ) ) {
+			return new WP_Error( 'wpdocs_bad_batch', 'posts must be an array', array( 'status' => 400 ) );
+		}
+		if ( isset( $payload['pages'] ) && ! is_array( $payload['pages'] ) ) {
+			return new WP_Error( 'wpdocs_bad_batch', 'pages must be an array', array( 'status' => 400 ) );
+		}
+
+		$payload = self::hydrate_batch_payload( $payload );
+		$plan    = ResolveDraft::plan( $payload );
+
+		$apply_raw   = array_key_exists( 'apply', $payload ) ? $payload['apply'] : $req->get_param( 'apply' );
+		$apply       = ResolveDraft::wants_apply( $apply_raw );
+		$applied_ids = array();
+		if ( $apply ) {
+			$applied_ids = BindRepo::apply_slug_drafts( ResolveDraft::bind_drafts( $plan ) );
+		}
+		$plan['apply']       = $apply;
+		$plan['applied']     = array() !== $applied_ids;
+		$plan['applied_ids'] = $applied_ids;
+		return new WP_REST_Response( $plan );
+	}
+
+	/**
+	 * Fill post_name from WP when only wp_post_id is sent; load existing rows if omitted.
+	 *
+	 * Catalog `pages` stay caller-supplied (this endpoint does not fetch BookStack).
+	 *
+	 * @param array<string,mixed> $payload
+	 * @return array<string,mixed>
+	 */
+	private static function hydrate_batch_payload( array $payload ): array {
+		$posts = isset( $payload['posts'] ) && is_array( $payload['posts'] ) ? $payload['posts'] : array();
+		$out   = array();
+		$ids   = array();
+		foreach ( $posts as $post ) {
+			if ( ! is_array( $post ) ) {
+				continue;
+			}
+			$id   = (int) ( $post['wp_post_id'] ?? $post['ID'] ?? 0 );
+			$name = (string) ( $post['post_name'] ?? $post['slug'] ?? '' );
+			$type = (string) ( $post['post_type'] ?? '' );
+			if ( '' === $name && $id > 0 && function_exists( 'get_post' ) ) {
+				$wp = get_post( $id );
+				if ( $wp ) {
+					$name = (string) $wp->post_name;
+					if ( '' === $type ) {
+						$type = (string) $wp->post_type;
+					}
+				}
+			}
+			$row = array(
+				'wp_post_id' => $id,
+				'post_name'  => $name,
+				'post_type'  => '' !== $type ? $type : 'post',
+			);
+			if ( isset( $post['book_slug'] ) ) {
+				$row['book_slug'] = (string) $post['book_slug'];
+			} elseif ( isset( $post['docs_book_slug'] ) ) {
+				$row['book_slug'] = (string) $post['docs_book_slug'];
+			}
+			if ( isset( $post['external_id'] ) ) {
+				$row['external_id'] = (string) $post['external_id'];
+			}
+			$out[] = $row;
+			if ( $id > 0 ) {
+				$ids[] = $id;
+			}
+		}
+		$payload['posts'] = $out;
+
+		if ( ! array_key_exists( 'existing', $payload ) ) {
+			$payload['existing'] = self::existing_bindings_payload( $ids );
+		}
+
+		return $payload;
+	}
+
+	/**
+	 * @param int[] $post_ids
+	 * @return array<int, array<string,mixed>>
+	 */
+	private static function existing_bindings_payload( array $post_ids ): array {
+		$rows = BindRepo::find_by_posts( $post_ids );
+		$out  = array();
+		foreach ( $rows as $row ) {
+			$out[] = array(
+				'wp_post_id'     => (int) $row->wp_post_id,
+				'docs_page_id'   => (int) $row->docs_page_id,
+				'docs_book_slug' => (string) $row->docs_book_slug,
+				'docs_page_slug' => (string) $row->docs_page_slug,
+				'source'         => (string) $row->source,
+				'status'         => (string) $row->status,
+			);
+		}
+		return $out;
 	}
 
 	public static function list_redirects( WP_REST_Request $req ): WP_REST_Response {

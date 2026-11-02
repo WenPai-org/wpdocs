@@ -70,6 +70,62 @@ final class Repository {
 	}
 
 	/**
+	 * Load binding rows for a set of WP post ids.
+	 *
+	 * @param int[] $post_ids
+	 * @return object[]
+	 */
+	public static function find_by_posts( array $post_ids ): array {
+		global $wpdb;
+		$ids = array();
+		foreach ( $post_ids as $id ) {
+			$id = (int) $id;
+			if ( $id > 0 ) {
+				$ids[ $id ] = $id;
+			}
+		}
+		$ids = array_values( $ids );
+		if ( ! $ids ) {
+			return array();
+		}
+		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		$sql          = $wpdb->prepare(
+			'SELECT * FROM ' . self::table() . ' WHERE wp_post_id IN (' . $placeholders . ')',
+			...$ids
+		);
+		if ( ! is_string( $sql ) ) {
+			return array();
+		}
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql is $wpdb->prepare() output.
+		$rows = $wpdb->get_results( $sql );
+		return is_array( $rows ) ? $rows : array();
+	}
+
+	/**
+	 * Upsert source=slug drafts. REST calls this only when apply=true.
+	 *
+	 * @param array<int, array<string,mixed>> $drafts
+	 * @return int[] Binding row ids.
+	 */
+	public static function apply_slug_drafts( array $drafts ): array {
+		$ids = array();
+		foreach ( $drafts as $draft ) {
+			if ( ! is_array( $draft ) ) {
+				continue;
+			}
+			$draft['source'] = 'slug';
+			if ( empty( $draft['status'] ) ) {
+				$draft['status'] = 'active';
+			}
+			$id = self::upsert( $draft );
+			if ( $id > 0 ) {
+				$ids[] = $id;
+			}
+		}
+		return $ids;
+	}
+
+	/**
 	 * Upsert a binding.
 	 *
 	 * @param array<string,mixed> $data

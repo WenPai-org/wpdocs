@@ -48,6 +48,7 @@
 | GET | `/status` | 版本、计数、docs 探测摘要 |
 | GET \| POST | `/bindings` | 列表 / upsert |
 | GET | `/bindings/resolve` | 按 post 或 page/slug 反查 |
+| POST | `/bindings/resolve-batch` | `post_name`↔slug 批量草稿；默认 dry-run；`apply=true` 才 upsert |
 | GET \| POST | `/redirects` | 列表 / upsert |
 | GET | `/redirects/dry-run?path=` | 预览匹配；**不写 hits** |
 
@@ -69,8 +70,76 @@ Update URI 恒为 `https://updates.wenpai.net`。
 
 ## 5. 附录（G3+ 可补）
 
-- Bind 批量 `source=slug` dry-run 请求/响应形状
+- Bind 批量 `source=slug` dry-run 请求/响应形状（见下）
 - Publish status JSON 字段表（sitemap HEAD、发布树 HEAD 等）
+
+### Bind 批量 resolve（G3）
+
+`POST /wpdocs/v1/bindings/resolve-batch`（`manage_options`）。默认 **dry-run**：不写 `wpdocs_bindings`。仅当 `apply=true`（布尔 `true` / 整数 `1` / 字符串 `"1"` / `"true"`）才对 `action=bind` 的草稿 `upsert`，且 `source=slug`。其它 `apply` 值（缺省、`false`、`0`、`"yes"`）一律不写库。
+
+本轮 **不** 向 BookStack 拉目录；`pages` 由调用方传入。模糊匹配（前缀 / Levenshtein / 标题）为 stub，恒返回空候选。`wp_post_id` 已有行 → `skip_existing`（UNIQUE，不覆盖 `manual` / `import`）。
+
+单次最多处理 `ResolveDraft::MAX_ITEMS`（500）条 posts 与 500 条 pages，超出部分丢弃，`summary.capped=true`。
+
+#### 请求 JSON
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `posts` | array | 否（缺省 `[]`） | 待匹配 WP 文章 |
+| `posts[].wp_post_id` | int | 是（否则 `invalid`） | 别名 `ID` |
+| `posts[].post_name` | string | 是（否则 `invalid`） | 与 `docs_page_slug` 比；别名 `slug`。REST 若只给 id 会 `get_post()` 补 `post_name` |
+| `posts[].post_type` | string | 否 | 缺省 `post` |
+| `posts[].book_slug` | string | 否 | 只在该书内匹配；别名 `docs_book_slug`；覆盖请求级 `book_slug` |
+| `posts[].external_id` | string | 否 | 原样写入草稿 |
+| `pages` | array | 否（缺省 `[]`） | 文档站目录快照 |
+| `pages[].docs_page_id` | int | 建议 | 别名 `page_id` |
+| `pages[].docs_book_slug` | string | 否 | 别名 `book_slug` |
+| `pages[].docs_page_slug` | string | 是（空则忽略该行） | 别名 `page_slug` / `slug` |
+| `existing` | array | 否 | `wp_post_id` 整数列表，或含 `wp_post_id` 的对象。REST **省略**该键时从表补齐；显式 `[]` 表示忽略已有行 |
+| `book_slug` | string | 否 | 全批书过滤 |
+| `apply` | bool | 否 | 缺省 `false`（dry-run） |
+
+#### 响应 JSON
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `source` | string | 恒 `slug` |
+| `apply` | bool | 是否按写库意图解析 |
+| `applied` | bool | 是否至少 upsert 了一行。`ResolveDraft::plan()` 恒为 `false` |
+| `applied_ids` | int[] | 写入的 binding `id`；dry-run 为 `[]` |
+| `book_slug` | string | 规范化后的请求级书过滤 |
+| `summary.posts` | int | 实际处理的 post 数 |
+| `summary.pages` | int | 去重后的 page 数 |
+| `summary.bind` / `ambiguous` / `unmatched` / `skip_existing` / `invalid` | int | 按 `action` 计数 |
+| `summary.capped` | bool | 是否因 500 上限截断 |
+| `items[]` | array | 与 `posts` 顺序对应 |
+
+`items[]` 每项：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `wp_post_id` | int | |
+| `post_name` | string | 规范化后 |
+| `post_type` | string | |
+| `book_slug` | string | 实际用于过滤的书 |
+| `match` | string | `exact` \| `book_page` \| `ambiguous` \| `none` |
+| `action` | string | `bind` \| `skip_existing` \| `unmatched` \| `ambiguous` \| `invalid` |
+| `reason` | string | `exact` / `book_page` / `already_bound` / `multiple_candidates` / `no_candidate` / `missing_wp_post_id` / `missing_post_name` |
+| `candidates` | array | `{docs_page_id, docs_book_slug, docs_page_slug}` |
+| `draft` | object\|null | `action=bind`（及 `skip_existing` 若已能匹配）时的 upsert 形状；`source=slug` `status=active` |
+
+#### 匹配规则
+
+1. 规范化：小写、空白→`-`、保留 `a-z0-9/-`（不调用 `sanitize_title`，便于无 WP 单测）
+2. `exact`：`post_name === docs_page_slug`（可加 `book_slug` 过滤）
+3. 无 exact 时 `book_page`：`post_name === "{book}/{page}"` 或 `"{book}-{page}"`
+4. 同阶多于 1 条 → `ambiguous`，不写库
+5. 已有 `wp_post_id` 行 → `skip_existing`
+6. fuzzy stub：不产生候选
+
+#### dry-run
+
+`GET /bindings/resolve` 仍只反查已有行。批量草稿走 `POST /bindings/resolve-batch`。`plan()` 与 `Slug` **不**调用 `Repository::upsert` / `apply_slug_drafts`。
 
 ### Redirect dry-run / 404 日志（G2 勘误）
 
