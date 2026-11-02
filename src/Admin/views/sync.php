@@ -26,7 +26,7 @@ $state   = Core::state();
 $msg     = isset( $_GET['msg'] ) ? sanitize_key( (string) wp_unslash( $_GET['msg'] ) ) : '';
 $notices = array(
 	'test_ok'          => array( 'ok', __( '连接正常。', 'wpdocs' ) ),
-	'test_error'       => array( 'bad', __( '连不上文档站。', 'wpdocs' ) ),
+	'test_error'       => array( 'bad', __( '暂时无法测试连接，请检查 CocoBook 地址与 Token。', 'wpdocs' ) ),
 	'synced'           => array( 'ok', __( '索引已更新。', 'wpdocs' ) ),
 	'sync_error'       => array( 'bad', __( '同步失败。', 'wpdocs' ) ),
 	'imported'         => array( 'ok', __( '已写入绑定文章。', 'wpdocs' ) ),
@@ -41,9 +41,9 @@ if ( isset( $notices[ $msg ] ) ) {
 }
 
 $mode_lab = array(
-	Settings::CONTENT_KEEP     => __( '保留', 'wpdocs' ),
-	Settings::CONTENT_COCOBOOK => __( '文档站', 'wpdocs' ),
-	Settings::CONTENT_GIT      => __( 'Git', 'wpdocs' ),
+	Settings::CONTENT_KEEP     => __( '保留正文', 'wpdocs' ),
+	Settings::CONTENT_COCOBOOK => __( '文档站读取', 'wpdocs' ),
+	Settings::CONTENT_GIT      => __( 'Git 写入', 'wpdocs' ),
 );
 ?>
 <section class="card">
@@ -52,7 +52,7 @@ $mode_lab = array(
 		echo esc_html(
 			sprintf(
 				/* translators: %s: content mode label */
-				__( '当前模式：%s。设置里可改。', 'wpdocs' ),
+				__( '当前内容从哪来：%s。设置里可改。', 'wpdocs' ),
 				$mode_lab[ $content ] ?? $content
 			)
 		);
@@ -148,7 +148,7 @@ $mode_lab = array(
 		<?php
 		View::field(
 			array(
-				'label'   => __( '文档站 Webhook', 'wpdocs' ),
+				'label'   => __( 'CocoBook Webhook', 'wpdocs' ),
 				'control' => '<code class="wenpai-code">' . esc_html( $refresh ) . '</code><p class="hint">' . esc_html( sprintf(
 					__( '上次检查 %1$s（%2$s）', 'wpdocs' ),
 					$state['checked'] ? wp_date( 'Y-m-d H:i', $state['checked'] ) : '—',
@@ -159,19 +159,25 @@ $mode_lab = array(
 		?>
 
 	<?php else : /* keep */ ?>
-		<p class="section-desc"><?php esc_html_e( '正文保留在 WordPress。需要时把已绑定的文档站页写入文章（会覆盖正文）。', 'wpdocs' ); ?></p>
-		<div class="wenpai-actions">
-			<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=sync' ) ); ?>" style="display:inline" onsubmit="return confirm('<?php echo esc_js( __( '将覆盖已绑定文章正文，确定？', 'wpdocs' ) ); ?>');">
-				<?php wp_nonce_field( 'wpdocs_import_cb', 'wpdocs_import_cb_nonce' ); ?>
-				<button type="submit" class="btn btn-primary" <?php disabled( ! Settings::is_configured() ); ?>><?php esc_html_e( '从文档站导入', 'wpdocs' ); ?></button>
-			</form>
-			<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=sync' ) ); ?>" style="display:inline">
-				<?php wp_nonce_field( 'wpdocs_test', 'wpdocs_test_nonce' ); ?>
-				<button type="submit" class="btn btn-ghost" <?php disabled( ! Settings::is_configured() ); ?>><?php esc_html_e( '测试连接', 'wpdocs' ); ?></button>
-			</form>
-		</div>
+		<p class="section-desc"><?php esc_html_e( '正文留在 WordPress。把已绑定的 CocoBook 页一次性写入文章会覆盖正文。', 'wpdocs' ); ?></p>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=sync' ) ); ?>" id="wpdocs-import-cb-form">
+			<?php wp_nonce_field( 'wpdocs_import_cb', 'wpdocs_import_cb_nonce' ); ?>
+			<div class="wenpai-gate">
+				<label class="chk">
+					<input type="checkbox" name="wpdocs_import_confirm" value="1" required <?php disabled( ! Settings::is_configured() ); ?> />
+					<?php esc_html_e( '我已核对绑定列表，确认覆盖这些文章的正文。', 'wpdocs' ); ?>
+				</label>
+				<div class="wenpai-actions">
+					<button type="submit" class="btn btn-danger" <?php disabled( ! Settings::is_configured() ); ?>><?php esc_html_e( '从 CocoBook 导入', 'wpdocs' ); ?></button>
+				</div>
+			</div>
+		</form>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=sync' ) ); ?>" style="margin-top:12px">
+			<?php wp_nonce_field( 'wpdocs_test', 'wpdocs_test_nonce' ); ?>
+			<button type="submit" class="btn btn-ghost" <?php disabled( ! Settings::is_configured() ); ?>><?php esc_html_e( '测试连接', 'wpdocs' ); ?></button>
+		</form>
 		<?php if ( ! Settings::is_configured() ) : ?>
-			<p class="hint"><?php esc_html_e( '导入需要 Token：设置 → 保留 → 开「高级」填文档站连接。', 'wpdocs' ); ?>
+			<p class="hint"><?php esc_html_e( '导入需要 Token：设置 → 保留正文 → 开「高级」填 CocoBook 地址。', 'wpdocs' ); ?>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-settings&mode=advanced' ) ); ?>"><?php esc_html_e( '去设置', 'wpdocs' ); ?></a>
 			</p>
 		<?php endif; ?>

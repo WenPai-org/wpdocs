@@ -5,3 +5,13 @@
 - **看过**：`status.html` / `bindings.html` / `redirects.html`（`prototypes/wpdocs/`）
 - **批准**：按档 A vendor `wenpai-admin-ui` **0.2.3**，改 `src/Admin/**` 为 `.wenpai-app` 壳；随后本机 Studio 联测。
 
+## 续批 — 设置主轴（2026-11-03）
+
+- **新增原型**：`settings.html`（一张卡：主选择 + 该源连接 + 旁路；保存设置）
+- **业务钉死**：保留正文 / 文档站读取 / Git 写入；统一评论仅文档站读取；导入在工具确认门
+- **Studio 联测**（`wpdocs-dev` · `http://localhost:8899` · 2026-11-03）：
+  - 设置简单：一张卡；主选择切换到 Git 写入后只露 Forgejo 字段
+  - 概览：缺 Token 时一条 `.next`「去设置」；状态栈用「内容从哪来」
+  - 工具 → 同步（保留正文）：`.wenpai-gate` + 危险钮「从 CocoBook 导入」；无 Token 时钮 disabled
+  - lint `PASS`；人目视仍可再扫高级态
+

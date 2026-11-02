@@ -24,7 +24,7 @@ View::mode_toggle( 'wpdocs-tools' );
 $mode_html = ob_get_clean();
 
 if ( ! $embed ) {
-	View::page_head( __( '跳转', 'wpdocs' ), __( '旧文章地址转到文档站。没对上就回原文章，不拦截。', 'wpdocs' ), $mode_html );
+	View::page_head( __( '跳转', 'wpdocs' ), __( '旧文章地址转到 CocoBook 页。没对上就回原文章，不拦截。', 'wpdocs' ), $mode_html );
 	View::saved_notice();
 	View::error_notice();
 } else {

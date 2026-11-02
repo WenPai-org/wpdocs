@@ -22,9 +22,9 @@ $redir_n   = (int) \Wpdocs\Redirect\Repository::count();
 $base_show = Settings::base_url();
 $content   = Settings::content_mode();
 $content_lab = array(
-	Settings::CONTENT_KEEP     => __( '保留', 'wpdocs' ),
-	Settings::CONTENT_COCOBOOK => __( '文档站', 'wpdocs' ),
-	Settings::CONTENT_GIT      => __( 'Git', 'wpdocs' ),
+	Settings::CONTENT_KEEP     => __( '保留正文', 'wpdocs' ),
+	Settings::CONTENT_COCOBOOK => __( '文档站读取', 'wpdocs' ),
+	Settings::CONTENT_GIT      => __( 'Git 写入', 'wpdocs' ),
 );
 $mode      = Settings::mode();
 $mode_lab  = array(
@@ -54,7 +54,7 @@ $refresh = '<a class="btn btn-ghost" href="' . esc_url( admin_url( 'admin.php?pa
 
 View::page_head(
 	__( '概览', 'wpdocs' ),
-	__( '文档站探测与接管状态。配置请到设置；绑定与同步请到工具。', 'wpdocs' ),
+	__( '看现在怎样：内容从哪来、CocoBook 探测、绑定与跳转。配置去设置；动作去工具。', 'wpdocs' ),
 	$refresh
 );
 View::saved_notice();
@@ -64,32 +64,77 @@ $configured   = Settings::is_configured() || ( '' !== $base_show );
 $empty_maps   = ( 0 === $bind_n && 0 === $redir_n );
 $probe_failed = ( '' !== $base_show && ! $home_ok && ! ( $site_ok || ( ! $tree_skip && $tree_ok ) ) );
 $show_next    = false;
+$git_url      = (string) Settings::get( 'git_forgejo_url' );
+$git_repos    = Settings::git_repositories();
+$git_has_repo = false;
+foreach ( $git_repos as $gr ) {
+	if ( is_array( $gr ) && '' !== (string) ( $gr['username'] ?? '' ) && '' !== (string) ( $gr['repository'] ?? '' ) ) {
+		$git_has_repo = true;
+		break;
+	}
+}
 
-if ( ! $configured ) :
+if ( Settings::CONTENT_GIT === $content && '' === $git_url ) :
 	$show_next = true;
 	?>
 	<div class="next">
 		<div class="tile accent"><?php echo View::icon( 'settings' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
 		<div>
-			<strong><?php esc_html_e( '还没连上文档站', 'wpdocs' ); ?></strong>
-			<p class="d"><?php esc_html_e( '先填写文档站地址与 Token，再回来看探测结果。', 'wpdocs' ); ?></p>
+			<strong><?php esc_html_e( '还没配 Forgejo', 'wpdocs' ); ?></strong>
+			<p class="d"><?php esc_html_e( '当前是 Git 写入。先在设置填写 Forgejo 地址、Token 与仓库。', 'wpdocs' ); ?></p>
 		</div>
 		<a class="btn btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-settings' ) ); ?>"><?php esc_html_e( '去设置', 'wpdocs' ); ?></a>
 	</div>
 	<?php
-elseif ( $probe_failed ) :
+elseif ( Settings::CONTENT_GIT === $content && ! $git_has_repo && '' === (string) Settings::get( 'git_base_directory' ) ) :
+	$show_next = true;
+	?>
+	<div class="next">
+		<div class="tile accent"><?php echo View::icon( 'settings' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+		<div>
+			<strong><?php esc_html_e( '还没填仓库', 'wpdocs' ); ?></strong>
+			<p class="d"><?php esc_html_e( '填写 owner/name，再到工具 → 同步拉取。', 'wpdocs' ); ?></p>
+		</div>
+		<a class="btn btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-settings' ) ); ?>"><?php esc_html_e( '去设置', 'wpdocs' ); ?></a>
+	</div>
+	<?php
+elseif ( Settings::CONTENT_KEEP === $content && $empty_maps ) :
+	$show_next = true;
+	?>
+	<div class="next">
+		<div class="tile accent"><?php echo View::icon( 'link' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+		<div>
+			<strong><?php esc_html_e( '还没有绑定或跳转', 'wpdocs' ); ?></strong>
+			<p class="d"><?php esc_html_e( '保留正文时，绑定用于一次性导入；跳转处理旧路径。', 'wpdocs' ); ?></p>
+		</div>
+		<a class="btn btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=bindings' ) ); ?>"><?php esc_html_e( '去工具', 'wpdocs' ); ?></a>
+	</div>
+	<?php
+elseif ( Settings::CONTENT_COCOBOOK === $content && ! $configured ) :
+	$show_next = true;
+	?>
+	<div class="next">
+		<div class="tile accent"><?php echo View::icon( 'settings' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+		<div>
+			<strong><?php esc_html_e( '还没连上 CocoBook', 'wpdocs' ); ?></strong>
+			<p class="d"><?php esc_html_e( '当前是文档站读取。先在设置填写地址与 Token。', 'wpdocs' ); ?></p>
+		</div>
+		<a class="btn btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-settings' ) ); ?>"><?php esc_html_e( '去设置', 'wpdocs' ); ?></a>
+	</div>
+	<?php
+elseif ( Settings::CONTENT_COCOBOOK === $content && $probe_failed ) :
 	$show_next = true;
 	?>
 	<div class="next">
 		<div class="tile bad"><?php echo View::icon( 'external' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
 		<div>
-			<strong><?php esc_html_e( '暂时无法探测文档站', 'wpdocs' ); ?></strong>
-			<p class="d"><?php esc_html_e( '请检查文档站地址后重试。', 'wpdocs' ); ?></p>
+			<strong><?php esc_html_e( '暂时无法探测 CocoBook', 'wpdocs' ); ?></strong>
+			<p class="d"><?php esc_html_e( '请检查地址后重试。', 'wpdocs' ); ?></p>
 		</div>
 		<a class="btn btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs&refresh=1' ) ); ?>"><?php esc_html_e( '重新探测', 'wpdocs' ); ?></a>
 	</div>
 	<?php
-elseif ( $empty_maps && Settings::MODE_OFF !== $mode ) :
+elseif ( Settings::CONTENT_COCOBOOK === $content && $empty_maps ) :
 	$show_next = true;
 	?>
 	<div class="next">
@@ -101,7 +146,7 @@ elseif ( $empty_maps && Settings::MODE_OFF !== $mode ) :
 		<a class="btn btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=bindings' ) ); ?>"><?php esc_html_e( '去工具', 'wpdocs' ); ?></a>
 	</div>
 	<?php
-elseif ( ! Settings::is_configured() && '' !== $base_show && ! $show_next ) :
+elseif ( Settings::CONTENT_COCOBOOK === $content && ! Settings::is_configured() && '' !== $base_show ) :
 	$show_next = true;
 	?>
 	<div class="next">
@@ -124,11 +169,11 @@ endif;
 
 <section class="card">
 	<h2 class="section-title"><?php esc_html_e( '现在怎样', 'wpdocs' ); ?></h2>
-	<p class="section-desc"><?php echo esc_html( sprintf( __( '版本 %s。发布树只读，不写文档站。', 'wpdocs' ), WPDOCS_VERSION ) ); ?></p>
+	<p class="section-desc"><?php echo esc_html( sprintf( __( '版本 %s。发布树只读，不写 CocoBook。', 'wpdocs' ), WPDOCS_VERSION ) ); ?></p>
 	<?php
 	View::status_row(
 		array(
-			'title'      => __( '文档站', 'wpdocs' ),
+			'title'      => __( 'CocoBook', 'wpdocs' ),
 			'detail'     => '' !== $base_show ? $base_show : __( '未填写', 'wpdocs' ),
 			'url'        => '' !== $base_show,
 			'icon'       => 'external',
@@ -184,7 +229,7 @@ endif;
 	if ( empty( $api ) || ! empty( $api['skipped'] ) || empty( $api['configured'] ) ) {
 		View::status_row(
 			array(
-				'title'      => __( '文档站接口', 'wpdocs' ),
+				'title'      => __( 'CocoBook 接口', 'wpdocs' ),
 				'detail'     => __( '未配置 Token，搜索与同步不可用', 'wpdocs' ),
 				'icon'       => 'plug',
 				'pill'       => __( '已跳过', 'wpdocs' ),
@@ -202,7 +247,7 @@ endif;
 			: ( '' !== $api_err ? sprintf( '%s · %dms', $api_err, $api_ms ) : sprintf( '%dms', $api_ms ) );
 		View::status_row(
 			array(
-				'title'      => __( '文档站接口', 'wpdocs' ),
+				'title'      => __( 'CocoBook 接口', 'wpdocs' ),
 				'detail'     => $detail,
 				'icon'       => 'plug',
 				'pill'       => $api_ok ? __( '已连接', 'wpdocs' ) : __( '探测失败', 'wpdocs' ),
@@ -213,12 +258,12 @@ endif;
 	}
 	View::status_row(
 		array(
-			'title'      => __( '内容模式', 'wpdocs' ),
+			'title'      => __( '内容从哪来', 'wpdocs' ),
 			'detail'     => $mode_txt,
 			'icon'       => 'flash',
-			'pill'       => Settings::MODE_OFF === $mode ? __( '未开启', 'wpdocs' ) : __( '已开启', 'wpdocs' ),
-			'pill_class' => Settings::MODE_OFF === $mode ? 'warn' : 'ok',
-			'tile_class' => Settings::MODE_OFF === $mode ? 'warn' : 'ok',
+			'pill'       => Settings::CONTENT_KEEP === $content ? __( '不换正文', 'wpdocs' ) : __( '已选用', 'wpdocs' ),
+			'pill_class' => Settings::CONTENT_KEEP === $content ? 'warn' : 'ok',
+			'tile_class' => Settings::CONTENT_KEEP === $content ? 'warn' : 'ok',
 		)
 	);
 	View::status_row(

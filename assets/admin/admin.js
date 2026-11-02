@@ -468,6 +468,22 @@
     btn.appendChild(document.createTextNode(label || (on ? "已开启" : "未开启")));
   }
 
+  /** Hidden content panels must not submit (duplicate name=wpdocs[base_url] etc.). */
+  function setPanelEnabled(panel, on) {
+    if (!panel) return;
+    panel.querySelectorAll("input, select, textarea").forEach(function (el) {
+      if (on) {
+        if (el.dataset.wpdocsPanelDisable === "1") {
+          el.disabled = false;
+          delete el.dataset.wpdocsPanelDisable;
+        }
+      } else if (!el.disabled) {
+        el.disabled = true;
+        el.dataset.wpdocsPanelDisable = "1";
+      }
+    });
+  }
+
   function refreshDisclosure() {
     var form = document.getElementById("wpdocs-settings-form");
     if (!form) return;
@@ -481,24 +497,32 @@
           return s.trim();
         })
         .filter(Boolean);
-      el.hidden = need.indexOf(content) === -1;
+      var show = need.indexOf(content) !== -1;
+      el.hidden = !show;
+      // Hidden panels must not submit (duplicate name=wpdocs[base_url] etc.).
+      setPanelEnabled(el, show);
     });
     var mode =
       (form.querySelector('input[name="wpdocs[mode]"]:checked') || {}).value ||
       "off";
     form.querySelectorAll("[data-wpdocs-when-mode]").forEach(function (el) {
       var need = el.getAttribute("data-wpdocs-when-mode");
-      el.hidden = need !== mode;
+      var show = need === mode;
+      el.hidden = !show;
+      setPanelEnabled(el, show && !el.closest("[data-wpdocs-when-content][hidden]"));
     });
     var commentsOn = false;
     var ccb = form.querySelector(
       '[data-wpdocs-toggle-cb][name="wpdocs[comments]"]'
     );
-    if (ccb) commentsOn = !!ccb.checked;
+    if (ccb && !ccb.disabled) commentsOn = !!ccb.checked;
     form.querySelectorAll('[data-wpdocs-when-on="comments"]').forEach(function (
       el
     ) {
-      el.hidden = !commentsOn;
+      var parentHidden = !!el.closest("[data-wpdocs-when-content][hidden]");
+      var show = commentsOn && !parentHidden;
+      el.hidden = !show;
+      setPanelEnabled(el, show);
     });
     // choice is-on class
     form.querySelectorAll(".choice-cards .choice").forEach(function (lab) {

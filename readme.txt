@@ -6,13 +6,21 @@ Requires PHP: 8.0
 Stable tag: 0.3.0-dev
 License: GPLv2 or later
 
-品牌站 ↔ BookStack 文档绑定、旧路径跳转、发布树只读诊断。
+内容从哪来（保留正文 / 文档站读取 / Git 写入）、绑定、旧路径跳转、CocoBook 只读探测。
 
 == Description ==
 
-文派文档（技术名 wpdocs）承接原 CocoBook Docs（cocobook-docs）的品牌站侧职责：
+文派文档（技术名 wpdocs）承接原 CocoBook Docs（cocobook-docs）的品牌站侧职责。
 
-* Bind：文章 ↔ docs 页
+主选择「内容从哪来」三选一：
+
+* 保留正文：品牌站自己管正文；可选一次性从 CocoBook 导入
+* 文档站读取：打开文章时从 CocoBook 读正文；统一评论仅此路径
+* Git 写入：从 Forgejo / 本地目录把 Markdown 写入文章
+
+旁路能力：
+
+* Bind：文章 ↔ CocoBook 页
 * Redirect：旧 WP 路径 301/410
 * Publish：发布树 / BookStack 只读诊断（不写正文进 option）
 
@@ -21,5 +29,6 @@ License: GPLv2 or later
 == Changelog ==
 
 = 0.3.0-dev =
+* 主选择：保留正文 / 文档站读取 / Git 写入；评论仅文档站读取
 * 改名文派文档 / wpdocs，新表与 REST 契约
 * 兼容旧 option / 表名别名（见 Compat\Legacy）

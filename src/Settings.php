@@ -298,12 +298,15 @@ final class Settings {
 		if ( isset( $input['site_tag'] ) ) {
 			$out['site_tag'] = sanitize_key( (string) $input['site_tag'] );
 		}
-		$out['books'] = self::int_list( $input['books'] ?? array() );
 		if ( isset( $input['content_mode'] ) ) {
 			$cm = sanitize_key( (string) $input['content_mode'] );
 			$out['content_mode'] = in_array( $cm, array( self::CONTENT_KEEP, self::CONTENT_COCOBOOK, self::CONTENT_GIT ), true )
 				? $cm
 				: self::CONTENT_COCOBOOK;
+		}
+		// Only rewrite books when CocoBook path is active (hidden panels still post empty).
+		if ( self::CONTENT_COCOBOOK === ( $out['content_mode'] ?? '' ) && array_key_exists( 'books', $input ) ) {
+			$out['books'] = self::int_list( $input['books'] );
 		}
 
 		// Comments BFF is CocoBook-only; don't wipe when saving keep/git forms.
@@ -316,16 +319,16 @@ final class Settings {
 			}
 		}
 
-		if ( isset( $input['mode'] ) ) {
+		// Rollout scope only applies to 文档站读取; ignore posted mode from hidden panels.
+		if ( self::CONTENT_COCOBOOK === ( $out['content_mode'] ?? '' ) && isset( $input['mode'] ) ) {
 			$m           = sanitize_key( (string) $input['mode'] );
 			$out['mode'] = in_array( $m, array( self::MODE_OFF, self::MODE_PILOT, self::MODE_ALL ), true ) ? $m : self::MODE_PILOT;
 		}
-		// Keep + content_mode=keep ⇒ force rollout off for Frontend.
 		if ( self::CONTENT_KEEP === ( $out['content_mode'] ?? '' ) ) {
 			$out['mode'] = self::MODE_OFF;
 		}
 
-		if ( isset( $input['pilot_post_ids'] ) ) {
+		if ( self::CONTENT_COCOBOOK === ( $out['content_mode'] ?? '' ) && isset( $input['pilot_post_ids'] ) ) {
 			$out['pilot_post_ids'] = self::int_list( $input['pilot_post_ids'] );
 		}
 		if ( isset( $input['post_types'] ) ) {
@@ -380,8 +383,8 @@ final class Settings {
 		}
 		if ( isset( $input['git_repositories'] ) && is_array( $input['git_repositories'] ) ) {
 			$out['git_repositories'] = self::sanitize_git_repos( $input['git_repositories'] );
-		} elseif ( array_key_exists( 'git_repo_slug', $input ) ) {
-			// Simple settings form: one primary repo as owner/name.
+		} elseif ( self::CONTENT_GIT === ( $out['content_mode'] ?? '' ) && array_key_exists( 'git_repo_slug', $input ) ) {
+			// Simple settings form: one primary repo as owner/name. Only when Git 写入.
 			$slug   = trim( (string) $input['git_repo_slug'] );
 			$folder = sanitize_text_field( (string) ( $input['git_repo_folder'] ?? '' ) );
 			$branch = sanitize_text_field( (string) ( $input['git_repo_branch'] ?? 'main' ) ) ?: 'main';

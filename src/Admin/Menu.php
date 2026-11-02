@@ -193,6 +193,10 @@ final class Menu {
 			exit;
 		}
 		if ( isset( $_POST['wpdocs_import_cb_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_import_cb_nonce'] ) ), 'wpdocs_import_cb' ) ) {
+			if ( empty( $_POST['wpdocs_import_confirm'] ) ) {
+				wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-tools&section=sync&msg=import_error' ) );
+				exit;
+			}
 			$stats = CocoBookImport::run();
 			$ok    = $stats['fail'] < 1 && $stats['ok'] > 0;
 			Legacy::update_option(
@@ -452,7 +456,7 @@ final class Menu {
 		$titles = array(
 			'bindings'  => array( __( '绑定', 'wpdocs' ), __( '文章对到文档页。', 'wpdocs' ) ),
 			'redirects' => array( __( '跳转', 'wpdocs' ), __( '旧路径 301 / 410。', 'wpdocs' ) ),
-			'sync'      => array( __( '同步', 'wpdocs' ), __( '按当前模式更新索引、导入或拉取 Git。', 'wpdocs' ) ),
+			'sync'      => array( __( '同步', 'wpdocs' ), __( '按「内容从哪来」更新索引、一次性导入或拉取 Git。', 'wpdocs' ) ),
 		);
 		$title = $titles[ $section ][0] ?? __( '工具', 'wpdocs' );
 		$lede  = $titles[ $section ][1] ?? '';

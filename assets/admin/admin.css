@@ -259,9 +259,25 @@ body.wenpai-ui-page .wenpai-app .sr-only {
   max-width: 36em;
 }
 
-/* Choice cards on settings — one column on simple stack if needed. */
+/* Choice cards on settings — full width; simple page stacks label above cards. */
 .wenpai-app .wpdocs-settings-form .choice-cards {
   width: 100%;
+}
+
+.wenpai-app .wpdocs-settings-form.wpdocs-simple .field {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.wenpai-app .wpdocs-settings-form.wpdocs-simple .field .field-label {
+  width: auto;
+  max-width: none;
+}
+
+.wenpai-app .wpdocs-settings-form .wpdocs-when-content[hidden] {
+  display: none;
 }
 
 /* Screen-reader checkbox driving kit toggle. */

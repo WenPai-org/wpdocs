@@ -15,19 +15,44 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 View::page_head(
 	__( '帮助', 'wpdocs' ),
-	__( '文派文档把品牌站文章绑到文档站，并处理旧路径跳转。', 'wpdocs' )
+	__( '先选「内容从哪来」，再绑文章、处理旧链。', 'wpdocs' )
 );
 ?>
-<div class="notice info"><span><?php esc_html_e( '连接、书目、试点模式、评论与缓存请到「设置」页配置；Token 也可写在 wp-config.php。', 'wpdocs' ); ?></span></div>
+<div class="notice info"><span><?php esc_html_e( '主选择、连接与旁路能力在「设置」；绑定 / 跳转 / 同步在「工具」。Token 也可写在 wp-config.php。', 'wpdocs' ); ?></span></div>
 
 <section class="card">
-	<h2 class="section-title"><?php esc_html_e( '怎么开', 'wpdocs' ); ?></h2>
-	<p class="section-desc"><?php esc_html_e( '按顺序做完这三步即可日常使用。', 'wpdocs' ); ?></p>
+	<h2 class="section-title"><?php esc_html_e( '主选择（内容从哪来）', 'wpdocs' ); ?></h2>
+	<p class="section-desc"><?php esc_html_e( '三选一；只走一条路径。', 'wpdocs' ); ?></p>
 	<?php
 	View::field(
 		array(
-			'label'   => __( '填文档站', 'wpdocs' ),
-			'control' => '<p class="hint d">' . esc_html__( '在「设置」填写文档站地址与 Token，再到「概览」确认探测为正常。', 'wpdocs' ) . '</p>'
+			'label'   => __( '保留正文', 'wpdocs' ),
+			'control' => '<p class="hint d">' . esc_html__( '品牌站自己管正文。可选到「工具 → 同步」把已绑定的 CocoBook 页一次性写入文章。', 'wpdocs' ) . '</p>',
+		)
+	);
+	View::field(
+		array(
+			'label'   => __( '文档站读取', 'wpdocs' ),
+			'control' => '<p class="hint d">' . esc_html__( '打开文章时从 CocoBook 读正文（不改正文库）。统一评论只在此路径提供；读取范围用试点/全部。', 'wpdocs' ) . '</p>',
+		)
+	);
+	View::field(
+		array(
+			'label'   => __( 'Git 写入', 'wpdocs' ),
+			'control' => '<p class="hint d">' . esc_html__( '从 Forgejo（或本地目录）把 Markdown 导入并写入文章。拉取在「工具 → 同步」。', 'wpdocs' ) . '</p>',
+		)
+	);
+	?>
+</section>
+
+<section class="card">
+	<h2 class="section-title"><?php esc_html_e( '怎么开', 'wpdocs' ); ?></h2>
+	<p class="section-desc"><?php esc_html_e( '按顺序做完即可日常使用。', 'wpdocs' ); ?></p>
+	<?php
+	View::field(
+		array(
+			'label'   => __( '选路径并连接', 'wpdocs' ),
+			'control' => '<p class="hint d">' . esc_html__( '在「设置」先选内容从哪来，再填对应连接（CocoBook 或 Forgejo）。选「文档站读取」时再到「概览」确认探测正常。', 'wpdocs' ) . '</p>'
 				. '<div class="wenpai-actions"><a class="btn btn-ghost" href="' . esc_url( admin_url( 'admin.php?page=wpdocs-settings' ) ) . '">' . esc_html__( '打开设置', 'wpdocs' ) . '</a></div>',
 		)
 	);
@@ -91,14 +116,14 @@ View::page_head(
 		<div class="tile accent"><?php echo View::icon( 'info' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
 		<div>
 			<div class="t"><?php esc_html_e( '本插件做什么', 'wpdocs' ); ?></div>
-			<div class="d"><?php esc_html_e( '品牌站侧绑定与跳转，以及文档站只读探测。', 'wpdocs' ); ?></div>
+			<div class="d"><?php esc_html_e( '内容源切换、绑定、旧链跳转、CocoBook 只读探测，以及按源导入/拉取。', 'wpdocs' ); ?></div>
 		</div>
 	</div>
 	<div class="simple-row is-static">
 		<div class="tile"><?php echo View::icon( 'info' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
 		<div>
 			<div class="t"><?php esc_html_e( '本插件不做什么', 'wpdocs' ); ?></div>
-			<div class="d"><?php esc_html_e( '不改文档站主题壳、不自建评论、不把正文写入站点选项。', 'wpdocs' ); ?></div>
+			<div class="d"><?php esc_html_e( '不改 CocoBook 主题壳；不在「保留正文 / Git 写入」提供统一评论；不把正文写入站点选项。', 'wpdocs' ); ?></div>
 		</div>
 	</div>
 </section>

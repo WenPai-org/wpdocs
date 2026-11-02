@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       文派文档
  * Plugin URI:        https://wenpai.org
- * Description:       文派文档（wpdocs）：品牌站与 BookStack 文档站的绑定、旧路径跳转与发布树只读诊断。原 CocoBook Docs 重构。
+ * Description:       文派文档（wpdocs）：内容从哪来（保留正文 / 文档站读取 / Git 写入）、绑定、旧路径跳转与 CocoBook 只读探测。
  * Version:           0.3.0-dev
  * Requires at least: 6.0
  * Requires PHP:      8.0

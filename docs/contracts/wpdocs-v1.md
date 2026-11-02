@@ -13,12 +13,12 @@
 | Bind | 本插件表 `wpdocs_bindings` | 不写 BookStack；不嵌 Cyberforums 业务 UI |
 | Redirect | 本插件表 `wpdocs_redirects` | 不管 docs 站内 `slug_history` |
 | Publish | 只读探测 docs / 发布树 / sitemap | 正文、Markdown **永不**进 `wp_options` |
-| 内容模式 | `content_mode` ∈ `keep` \| `cocobook` \| `git` | 三选一；见下 |
-| CocoBook 读取 | `Frontend` body-swap；范围仍用 `mode` pilot/all | 不改正文库 |
-| CocoBook 导入 | 工具「从 CocoBook 导入」写入 `post_content` | 覆盖 WP 正文，需确认 |
-| Git 导入 | 内置 Git it Write（Forgejo / 本地目录） | 独立 GIW 插件激活时不加载内置副本 |
+| 内容从哪来 | `content_mode` ∈ `keep` \| `cocobook` \| `git` | UI：**保留正文** / **文档站读取** / **Git 写入**；三选一 |
+| 文档站读取 | `Frontend` body-swap；范围仍用 `mode` pilot/all | 不改正文库 |
+| 保留正文 · 导入 | 工具「从 CocoBook 导入」写入 `post_content` | 覆盖 WP 正文，需确认 |
+| Git 写入 | 内置 Git it Write（Forgejo / 本地目录） | 独立 GIW 插件激活时不加载内置副本 |
 | 阅读壳 / SEO / 反馈 / 相关 | `cocobook-docs-theme` | 本插件不改主题 |
-| 评论挂件 | Cyberforums + 可选 `external_id` | 本插件不自建评论 |
+| 统一评论 | 仅 `content_mode=cocobook` + `comments`；Cyberforums BFF | keep/git 不提供；本插件不自建评论 |
 
 ---
 
@@ -198,17 +198,25 @@ Sitemap 路径相对 `base_url`：`/cocobook/sitemap.xml`。发布树默认 `{ba
 | `skipped` | bool | URL 为空，未发请求 |
 
 
-## 8. 设置与前台接管（2026-11-02 恢复）
+## 8. 设置主轴（内容从哪来）
 
-人拍板：旧 `cocobook-docs` 设置面全部需要。本插件在 Bind/Redirect/Publish 之外，再承载：
+一条主轴，三选一（`content_mode`）：
+
+| UI 名 | 值 | 前台 | 工具 → 同步 |
+|-------|-----|------|-------------|
+| 保留正文 | `keep` | 不换 `the_content` | 可选「从 CocoBook 导入」写库 |
+| 文档站读取 | `cocobook` | body-swap；范围 `mode`=pilot/all | 测试连接 / 更新索引 / Webhook |
+| Git 写入 | `git` | 用已写入的 WP 正文 | 拉取仓库 / 本地扫描 |
+
+旁路（与主轴无关）：旧链接跳转；统一评论**仅** `cocobook`。
 
 | 能力 | 入口 |
 |------|------|
-| 连接（base_url / Token） | 后台「设置」；常量 `WPDOCS_*` 优先 |
-| 书目 / site 标签 / 文章类型 | 「设置」→ Catalog 同步索引 |
-| 模式 off/pilot/all + 试点 ID | Frontend `the_content` 接管 |
-| 评论 BFF + `cocobook:page:{id}` | Frontend / Embed shortcode+block |
-| 缓存 TTL + 测试连接 / 立即同步 / Webhook | Client 文件缓存 + `Core`；REST `POST /wpdocs/v1/refresh/{secret}`（兼容 `cocobook-docs/v1`） |
-| 旧链接跳转总开关 | `Settings::redirects_enabled()` 门控 Listener |
+| 连接（base_url / Token / Forgejo） | 「设置」对应当前源；常量 `WPDOCS_*` 优先 |
+| 书目 / site 标签 / 文章类型 | 「文档站读取」卡；Catalog 同步索引 |
+| 试点 / 全部 + 试点 ID | 仅「文档站读取」；Frontend 接管范围 |
+| 评论 BFF + `cocobook:page:{id}` | `Settings::comments_enabled()`；Embed shortcode+block |
+| 缓存 TTL + 测试 / 同步 / Webhook | Client 文件缓存 + `Core`；REST `POST /wpdocs/v1/refresh/{secret}` |
+| 旧链接跳转总开关 | 「旁路能力」；`Settings::redirects_enabled()` |
 
 正文仍**禁止**进 `wp_options`（文件缓存 `wp-content/cache/wpdocs/`）。

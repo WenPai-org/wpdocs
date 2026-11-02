@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>文派文档 · 设置（原型）</title>
+	<style>
+		body { margin: 24px; font: 14px/22px system-ui, sans-serif; color: #1e1e1e; background: #f0f0f1; }
+		.wenpai-app { --wenpai-accent: #3858e9; max-width: 920px; margin: 0 auto; }
+		.card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 20px 24px; }
+		.section-title { margin: 0 0 4px; font-size: 16px; line-height: 24px; }
+		.section-desc { margin: 0 0 16px; color: #646970; font-size: 13px; }
+		.choice-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+		.choice { border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; cursor: pointer; }
+		.choice.is-on { border-color: var(--wenpai-accent); background: #eef1fd; }
+		.choice .t { font-weight: 600; display: block; }
+		.choice .d { color: #646970; font-size: 12px; }
+		.simple-row { display: flex; gap: 12px; align-items: center; padding: 12px 0; border-top: 1px solid #f0f0f1; }
+		.btn { display: inline-flex; height: 36px; align-items: center; padding: 0 14px; border-radius: 2px; border: 1px solid #ddd; background: #fff; }
+		.btn-primary { background: var(--wenpai-accent); color: #fff; border-color: var(--wenpai-accent); }
+		.field { margin: 12px 0; }
+		.field-label { font-weight: 600; display: block; margin-bottom: 6px; }
+		input[type=url], input[type=text], input[type=password] { height: 36px; width: 100%; max-width: 28rem; padding: 0 10px; }
+		.note { margin-top: 16px; padding: 12px; background: #fff; border-left: 3px solid var(--wenpai-accent); }
+		@media (max-width: 782px) { .choice-cards { grid-template-columns: 1fr; } }
+	</style>
+</head>
+<body>
+<div class="wenpai-app">
+	<h1>设置</h1>
+	<p>先选内容从哪来，再填这一条路径需要的连接。</p>
+	<section class="card">
+		<h2 class="section-title">内容从哪来</h2>
+		<p class="section-desc">三选一。只走一条路径；统一评论只在「文档站读取」。</p>
+		<div class="field">
+			<span class="field-label">主选择</span>
+			<div class="choice-cards">
+				<label class="choice"><span class="t">保留正文</span><span class="d">品牌站自己管正文；可到工具一次性导入。</span></label>
+				<label class="choice is-on"><span class="t">文档站读取</span><span class="d">打开文章时读 CocoBook，不改正文库。</span></label>
+				<label class="choice"><span class="t">Git 写入</span><span class="d">把仓库 Markdown 写入文章。</span></label>
+			</div>
+		</div>
+		<div class="field">
+			<label class="field-label" for="base">CocoBook 地址</label>
+			<input id="base" type="url" placeholder="https://docs.example.test" />
+		</div>
+		<div class="field">
+			<label class="field-label" for="tid">Token ID</label>
+			<input id="tid" type="text" />
+		</div>
+		<div class="simple-row">
+			<div><div class="t">统一评论</div><div class="d">与 CocoBook 同一帖。仅此路径提供。</div></div>
+			<div>已开启</div>
+		</div>
+		<div class="simple-row">
+			<div><div class="t">旧链接跳转</div><div class="d">旁路能力，与内容源无关。</div></div>
+			<div>未开启</div>
+		</div>
+		<p><button type="button" class="btn btn-primary">保存设置</button></p>
+	</section>
+	<p class="note">原型：简单态一张卡。高级才露发布树 / 缓存 / Webhook / 本地目录。破坏性导入在工具 → 同步，用确认门。</p>
+</div>
+</body>
+</html>

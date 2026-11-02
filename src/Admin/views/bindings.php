@@ -22,7 +22,7 @@ View::mode_toggle( 'wpdocs-tools' );
 $mode_html = ob_get_clean();
 
 if ( ! $embed ) {
-	View::page_head( __( '绑定', 'wpdocs' ), __( '把 WordPress 文章对到文档站的一页。不改文档站内容。', 'wpdocs' ), $mode_html );
+	View::page_head( __( '绑定', 'wpdocs' ), __( '把 WordPress 文章对到 CocoBook 的一页。不改 CocoBook 内容。', 'wpdocs' ), $mode_html );
 	View::saved_notice();
 	View::error_notice();
 } else {
@@ -62,7 +62,7 @@ if ( ! $embed ) {
 			array(
 				'for'     => 'docs_book_slug',
 				'label'   => __( '书册别名', 'wpdocs' ),
-				'help'    => __( '文档站书册 slug，与下方页面别名一起定位一页。', 'wpdocs' ),
+				'help'    => __( 'CocoBook 书册 slug，与下方页面别名一起定位一页。', 'wpdocs' ),
 				'control' => '<input id="docs_book_slug" type="text" name="docs_book_slug" autocomplete="off" />',
 			)
 		);
@@ -90,7 +90,7 @@ if ( ! $embed ) {
 			array(
 				'for'      => 'wpdocs-suggest-q',
 				'label'    => __( '搜索文档页', 'wpdocs' ),
-				'help'     => __( '需已配置文档站接口令牌。点候选填入上方别名与文档页 ID。', 'wpdocs' ),
+				'help'     => __( '需已配置 CocoBook Token。点候选填入上方别名与文档页 ID。', 'wpdocs' ),
 				'advanced' => true,
 				'control'  => $suggest_ctl,
 			)
