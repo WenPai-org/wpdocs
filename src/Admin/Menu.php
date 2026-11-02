@@ -360,11 +360,11 @@ final class Menu {
 		$items = null;
 		$filter = '';
 		if ( 'bindings' === $section ) {
-			$items = BindRepo::all();
+			$items = BindRepo::list();
 		} elseif ( 'redirects' === $section ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$filter = isset( $_GET['filter'] ) ? sanitize_key( (string) wp_unslash( $_GET['filter'] ) ) : '';
-			$items  = RedirectRepo::all( $filter );
+			$items  = RedirectRepo::list( $filter );
 		} elseif ( 'sync' === $section ) {
 			$s     = Settings::raw();
 			$books = Settings::is_configured() ? Client::get( 'books', array( 'count' => 500, 'sort' => 'name' ) ) : null;

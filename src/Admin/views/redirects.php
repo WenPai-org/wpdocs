@@ -110,12 +110,13 @@ endif;
 			<p class="section-desc"><?php esc_html_e( '点「编辑」回填上方表单。删除前先勾确认门。', 'wpdocs' ); ?></p>
 		</div>
 		<form method="get" class="wpdocs-filter">
-			<input type="hidden" name="page" value="wpdocs-redirects" />
+			<input type="hidden" name="page" value="wpdocs-tools" />
+			<input type="hidden" name="section" value="redirects" />
 			<?php if ( $adv ) : ?>
 				<input type="hidden" name="mode" value="advanced" />
 			<?php endif; ?>
 			<label class="sr-only" for="redir-filter"><?php esc_html_e( '按状态筛选', 'wpdocs' ); ?></label>
-			<select id="redir-filter" name="status" onchange="this.form.submit()">
+			<select id="redir-filter" name="filter" onchange="this.form.submit()">
 				<option value="" <?php selected( $filter, '' ); ?>><?php esc_html_e( '全部', 'wpdocs' ); ?></option>
 				<option value="matched" <?php selected( $filter, 'matched' ); ?>><?php esc_html_e( '已匹配', 'wpdocs' ); ?></option>
 				<option value="gone" <?php selected( $filter, 'gone' ); ?>><?php esc_html_e( '已下线', 'wpdocs' ); ?></option>

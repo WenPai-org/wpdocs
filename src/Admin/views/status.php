@@ -92,6 +92,18 @@ elseif ( $empty_maps && Settings::MODE_OFF !== $mode ) :
 		<a class="btn btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=bindings' ) ); ?>"><?php esc_html_e( '去工具', 'wpdocs' ); ?></a>
 	</div>
 	<?php
+elseif ( ! Settings::is_configured() && '' !== $base_show && ! $show_next ) :
+	$show_next = true;
+	?>
+	<div class="next">
+		<div class="tile warn"><?php echo View::icon( 'plug' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+		<div>
+			<strong><?php esc_html_e( '还没填 API Token', 'wpdocs' ); ?></strong>
+			<p class="d"><?php esc_html_e( '搜索、同步书目和接口探测需要 Token ID 与 Secret。', 'wpdocs' ); ?></p>
+		</div>
+		<a class="btn btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-settings' ) ); ?>"><?php esc_html_e( '去设置', 'wpdocs' ); ?></a>
+	</div>
+	<?php
 endif;
 
 if ( '' !== $base_show && ! $home_ok && ( $site_ok || ( ! $tree_skip && $tree_ok ) ) && ! $show_next ) :

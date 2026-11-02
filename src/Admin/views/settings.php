@@ -89,7 +89,7 @@ $mode_ctl = View::choice_cards(
 		Settings::MODE_ALL   => array(
 			'label' => __( '全部', 'wpdocs' ),
 			'desc'  => __( '接管所有能对应到文档页的文章。', 'wpdocs' ),
-			'icon'  => 'sparkle',
+			'icon'  => 'link',
 		),
 	)
 );
@@ -104,54 +104,8 @@ $redirects_on = ! empty( $s['redirects'] );
 	<?php endif; ?>
 
 	<section class="card">
-		<h2 class="section-title"><?php esc_html_e( '上线方式', 'wpdocs' ); ?></h2>
-		<p class="section-desc"><?php esc_html_e( '选择文档正文如何出现在品牌站。', 'wpdocs' ); ?></p>
-		<?php
-		View::field(
-			array(
-				'label'   => __( '模式', 'wpdocs' ),
-				'help'    => __( '试点适合先验证几篇；确认无误再开全部。', 'wpdocs' ),
-				'control' => $mode_ctl,
-			)
-		);
-		?>
-		<div class="field" data-wpdocs-when-mode="pilot"<?php echo Settings::MODE_PILOT === $mode ? '' : ' hidden'; ?>>
-			<label class="field-label" for="wpdocs-pilot"><?php esc_html_e( '试点文章 ID', 'wpdocs' ); ?></label>
-			<div class="field-ctl">
-				<input id="wpdocs-pilot" type="text" name="wpdocs[pilot_post_ids]" value="<?php echo esc_attr( implode( ', ', Settings::pilot_post_ids() ) ); ?>" />
-				<p class="hint"><?php esc_html_e( '逗号分隔的 WordPress 文章 ID。', 'wpdocs' ); ?></p>
-			</div>
-		</div>
-		<div class="simple-row is-action">
-			<div class="tile"><?php echo View::icon( 'chat' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-			<div>
-				<div class="t"><?php esc_html_e( '统一评论', 'wpdocs' ); ?></div>
-				<div class="d"><?php esc_html_e( '评论挂到 cocobook:page:{id}，与文档站、论坛同一帖。', 'wpdocs' ); ?></div>
-			</div>
-			<div class="r"><?php echo View::toggle_input( 'wpdocs[comments]', $comments_on ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-		</div>
-		<div class="field" data-wpdocs-when-on="comments"<?php echo $comments_on ? '' : ' hidden'; ?>>
-			<label class="field-label" for="wpdocs-bff"><?php esc_html_e( '评论服务地址', 'wpdocs' ); ?></label>
-			<div class="field-ctl">
-				<input id="wpdocs-bff" type="url" name="wpdocs[bff_url]" value="<?php echo esc_attr( (string) ( $s['bff_url'] ?? '' ) ); ?>" />
-				<p class="hint"><?php esc_html_e( '评论 BFF 根地址。关掉「统一评论」时仍会保存。', 'wpdocs' ); ?></p>
-			</div>
-		</div>
-		<div class="simple-row is-action">
-			<div class="tile"><?php echo View::icon( 'share' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-			<div>
-				<div class="t"><?php esc_html_e( '旧链接跳转', 'wpdocs' ); ?></div>
-				<div class="d"><?php esc_html_e( '映射表已匹配则 301；已下线则 410。', 'wpdocs' ); ?>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=redirects' ) ); ?>"><?php esc_html_e( '管理映射', 'wpdocs' ); ?></a>
-				</div>
-			</div>
-			<div class="r"><?php echo View::toggle_input( 'wpdocs[redirects]', $redirects_on ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-		</div>
-	</section>
-
-	<section class="card">
 		<h2 class="section-title"><?php esc_html_e( '连接与书目', 'wpdocs' ); ?></h2>
-		<p class="section-desc"><?php esc_html_e( '文档站地址在简单模式即可改；密钥与缓存细节在高级。', 'wpdocs' ); ?></p>
+		<p class="section-desc"><?php esc_html_e( '先填地址与 Token，再选书目。缓存与发布树在高级。', 'wpdocs' ); ?></p>
 		<?php
 		View::field(
 			array(
@@ -172,19 +126,18 @@ $redirects_on = ! empty( $s['redirects'] );
 		);
 		View::field(
 			array(
-				'for'      => 'wpdocs-token-id',
-				'label'    => __( 'Token ID', 'wpdocs' ),
-				'advanced' => true,
-				'control'  => $tid_ctl,
+				'for'     => 'wpdocs-token-id',
+				'label'   => __( 'Token ID', 'wpdocs' ),
+				'help'    => __( '文档站 API 只读 Token。也可在 wp-config.php 定义常量。', 'wpdocs' ),
+				'control' => $tid_ctl,
 			)
 		);
 		View::field(
 			array(
-				'for'      => 'wpdocs-token-secret',
-				'label'    => __( 'Token Secret', 'wpdocs' ),
-				'help'     => __( '只读 Token。也可在 wp-config.php 定义 WPDOCS_TOKEN_ID / WPDOCS_TOKEN_SECRET。', 'wpdocs' ),
-				'advanced' => true,
-				'control'  => $secret_ctl,
+				'for'     => 'wpdocs-token-secret',
+				'label'   => __( 'Token Secret', 'wpdocs' ),
+				'help'    => __( '密钥不回显；留空表示不修改。', 'wpdocs' ),
+				'control' => $secret_ctl,
 			)
 		);
 		View::field(
@@ -232,6 +185,52 @@ $redirects_on = ! empty( $s['redirects'] );
 		<div class="wenpai-actions">
 			<button type="submit" class="btn btn-primary"><?php esc_html_e( '保存设置', 'wpdocs' ); ?></button>
 			<a class="btn btn-ghost" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=sync' ) ); ?>"><?php esc_html_e( '去同步工具', 'wpdocs' ); ?></a>
+		</div>
+	</section>
+
+	<section class="card">
+		<h2 class="section-title"><?php esc_html_e( '上线方式', 'wpdocs' ); ?></h2>
+		<p class="section-desc"><?php esc_html_e( '选择文档正文如何出现在品牌站。', 'wpdocs' ); ?></p>
+		<?php
+		View::field(
+			array(
+				'label'   => __( '模式', 'wpdocs' ),
+				'help'    => __( '试点适合先验证几篇；确认无误再开全部。', 'wpdocs' ),
+				'control' => $mode_ctl,
+			)
+		);
+		?>
+		<div class="field" data-wpdocs-when-mode="pilot"<?php echo Settings::MODE_PILOT === $mode ? '' : ' hidden'; ?>>
+			<label class="field-label" for="wpdocs-pilot"><?php esc_html_e( '试点文章 ID', 'wpdocs' ); ?></label>
+			<div class="field-ctl">
+				<input id="wpdocs-pilot" type="text" name="wpdocs[pilot_post_ids]" value="<?php echo esc_attr( implode( ', ', Settings::pilot_post_ids() ) ); ?>" />
+				<p class="hint"><?php esc_html_e( '逗号分隔的 WordPress 文章 ID。', 'wpdocs' ); ?></p>
+			</div>
+		</div>
+		<div class="simple-row is-action">
+			<div class="tile"><?php echo View::icon( 'feedback' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+			<div>
+				<div class="t"><?php esc_html_e( '统一评论', 'wpdocs' ); ?></div>
+				<div class="d"><?php esc_html_e( '评论挂到 cocobook:page:{id}，与文档站、论坛同一帖。', 'wpdocs' ); ?></div>
+			</div>
+			<div class="r"><?php echo View::toggle_input( 'wpdocs[comments]', $comments_on ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+		</div>
+		<div class="field" data-wpdocs-when-on="comments"<?php echo $comments_on ? '' : ' hidden'; ?>>
+			<label class="field-label" for="wpdocs-bff"><?php esc_html_e( '评论服务地址', 'wpdocs' ); ?></label>
+			<div class="field-ctl">
+				<input id="wpdocs-bff" type="url" name="wpdocs[bff_url]" value="<?php echo esc_attr( (string) ( $s['bff_url'] ?? '' ) ); ?>" />
+				<p class="hint"><?php esc_html_e( '评论 BFF 根地址。关掉「统一评论」时仍会保存。', 'wpdocs' ); ?></p>
+			</div>
+		</div>
+		<div class="simple-row is-action">
+			<div class="tile"><?php echo View::icon( 'share' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+			<div>
+				<div class="t"><?php esc_html_e( '旧链接跳转', 'wpdocs' ); ?></div>
+				<div class="d"><?php esc_html_e( '映射表已匹配则 301；已下线则 410。', 'wpdocs' ); ?>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=redirects' ) ); ?>"><?php esc_html_e( '管理映射', 'wpdocs' ); ?></a>
+				</div>
+			</div>
+			<div class="r"><?php echo View::toggle_input( 'wpdocs[redirects]', $redirects_on ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
 		</div>
 	</section>
 </form>
