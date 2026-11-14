@@ -112,20 +112,12 @@ View::page_head(
 
 <section class="card">
 	<h2 class="section-title"><?php esc_html_e( '边界', 'wpdocs' ); ?></h2>
-	<div class="simple-row is-static">
-		<div class="tile accent"><?php echo View::icon( 'info' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-		<div>
-			<div class="t"><?php esc_html_e( '本插件做什么', 'wpdocs' ); ?></div>
-			<div class="d"><?php esc_html_e( '内容源切换、绑定、旧链跳转、CocoBook 只读探测，以及按源导入/拉取。', 'wpdocs' ); ?></div>
-		</div>
-	</div>
-	<div class="simple-row is-static">
-		<div class="tile"><?php echo View::icon( 'info' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-		<div>
-			<div class="t"><?php esc_html_e( '本插件不做什么', 'wpdocs' ); ?></div>
-			<div class="d"><?php esc_html_e( '不改 CocoBook 主题壳；不在「保留正文 / Git 写入」提供统一评论；不把正文写入站点选项；不做站内第二套导出。', 'wpdocs' ); ?></div>
-		</div>
-	</div>
+	<?php
+echo Wenpai_Admin_UI::row_html( array( 'icon_html' => View::icon( 'info' ), 'state' => 'accent', 'title' => __( '本插件做什么', 'wpdocs' ), 'desc' => __( '内容源切换、绑定、旧链跳转、CocoBook 只读探测，以及按源导入/拉取。', 'wpdocs' ) ) );
+?>
+	<?php
+echo Wenpai_Admin_UI::row_html( array( 'icon_html' => View::icon( 'info' ), 'title' => __( '本插件不做什么', 'wpdocs' ), 'desc' => __( '不改 CocoBook 主题壳；不在「保留正文 / Git 写入」提供统一评论；不把正文写入站点选项；不做站内第二套导出。', 'wpdocs' ) ) );
+?>
 </section>
 
 <section class="card">

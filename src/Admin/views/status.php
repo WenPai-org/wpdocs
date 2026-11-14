@@ -78,86 +78,51 @@ foreach ( $git_repos as $gr ) {
 if ( Settings::CONTENT_GIT === $content && '' === $git_url ) :
 	$show_next = true;
 	?>
-	<div class="next">
-		<div class="tile accent"><?php echo View::icon( 'settings' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-		<div>
-			<strong><?php esc_html_e( '还没配 Forgejo', 'wpdocs' ); ?></strong>
-			<p class="d"><?php esc_html_e( '当前是 Git 写入。先在设置填写 Forgejo 地址、Token 与仓库。', 'wpdocs' ); ?></p>
-		</div>
-		<a class="btn btn-primary" href="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'settings' ) ); ?>"><?php esc_html_e( '去设置', 'wpdocs' ); ?></a>
-	</div>
+	<?php
+		Wenpai_Admin_UI::next( array( 'icon_html' => View::icon( 'settings' ), 'state' => 'accent', 'title' => __( '还没配 Forgejo', 'wpdocs' ), 'desc' => __( '当前是 Git 写入。先在设置填写 Forgejo 地址、Token 与仓库。', 'wpdocs' ), 'actions' => array( array( 'label' => __( '去设置', 'wpdocs' ), 'variant' => 'primary', 'href' => \Wpdocs\Admin\Menu::url( 'settings' ) ) ) ) );
+		?>
 	<?php
 elseif ( Settings::CONTENT_GIT === $content && ! $git_has_repo && '' === (string) Settings::get( 'git_base_directory' ) ) :
 	$show_next = true;
 	?>
-	<div class="next">
-		<div class="tile accent"><?php echo View::icon( 'settings' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-		<div>
-			<strong><?php esc_html_e( '还没填仓库', 'wpdocs' ); ?></strong>
-			<p class="d"><?php esc_html_e( '填写 owner/name，再到工具 → 同步拉取。', 'wpdocs' ); ?></p>
-		</div>
-		<a class="btn btn-primary" href="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'settings' ) ); ?>"><?php esc_html_e( '去设置', 'wpdocs' ); ?></a>
-	</div>
+	<?php
+		Wenpai_Admin_UI::next( array( 'icon_html' => View::icon( 'settings' ), 'state' => 'accent', 'title' => __( '还没填仓库', 'wpdocs' ), 'desc' => __( '填写 owner/name，再到工具 → 同步拉取。', 'wpdocs' ), 'actions' => array( array( 'label' => __( '去设置', 'wpdocs' ), 'variant' => 'primary', 'href' => \Wpdocs\Admin\Menu::url( 'settings' ) ) ) ) );
+		?>
 	<?php
 elseif ( Settings::CONTENT_KEEP === $content && $empty_maps ) :
 	$show_next = true;
 	?>
-	<div class="next">
-		<div class="tile accent"><?php echo View::icon( 'link' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-		<div>
-			<strong><?php esc_html_e( '还没有绑定或跳转', 'wpdocs' ); ?></strong>
-			<p class="d"><?php esc_html_e( '保留正文时，绑定用于一次性导入；跳转处理旧路径。', 'wpdocs' ); ?></p>
-		</div>
-		<a class="btn btn-primary" href="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'tools', 'bindings' ) ); ?>"><?php esc_html_e( '去工具', 'wpdocs' ); ?></a>
-	</div>
+	<?php
+		Wenpai_Admin_UI::next( array( 'icon_html' => View::icon( 'link' ), 'state' => 'accent', 'title' => __( '还没有绑定或跳转', 'wpdocs' ), 'desc' => __( '保留正文时，绑定用于一次性导入；跳转处理旧路径。', 'wpdocs' ), 'actions' => array( array( 'label' => __( '去工具', 'wpdocs' ), 'variant' => 'primary', 'href' => \Wpdocs\Admin\Menu::url( 'tools', 'bindings' ) ) ) ) );
+		?>
 	<?php
 elseif ( Settings::CONTENT_COCOBOOK === $content && ! $configured ) :
 	$show_next = true;
 	?>
-	<div class="next">
-		<div class="tile accent"><?php echo View::icon( 'settings' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-		<div>
-			<strong><?php esc_html_e( '还没连上 CocoBook', 'wpdocs' ); ?></strong>
-			<p class="d"><?php esc_html_e( '当前是文档站读取。先在设置填写地址与 Token。', 'wpdocs' ); ?></p>
-		</div>
-		<a class="btn btn-primary" href="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'settings' ) ); ?>"><?php esc_html_e( '去设置', 'wpdocs' ); ?></a>
-	</div>
+	<?php
+		Wenpai_Admin_UI::next( array( 'icon_html' => View::icon( 'settings' ), 'state' => 'accent', 'title' => __( '还没连上 CocoBook', 'wpdocs' ), 'desc' => __( '当前是文档站读取。先在设置填写地址与 Token。', 'wpdocs' ), 'actions' => array( array( 'label' => __( '去设置', 'wpdocs' ), 'variant' => 'primary', 'href' => \Wpdocs\Admin\Menu::url( 'settings' ) ) ) ) );
+		?>
 	<?php
 elseif ( Settings::CONTENT_COCOBOOK === $content && $probe_failed ) :
 	$show_next = true;
 	?>
-	<div class="next">
-		<div class="tile bad"><?php echo View::icon( 'external' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-		<div>
-			<strong><?php esc_html_e( '暂时无法探测 CocoBook', 'wpdocs' ); ?></strong>
-			<p class="d"><?php esc_html_e( '请检查地址后重试。', 'wpdocs' ); ?></p>
-		</div>
-		<a class="btn btn-primary" href="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'overview', '', 'refresh=1' ) ); ?>"><?php esc_html_e( '重新探测', 'wpdocs' ); ?></a>
-	</div>
+	<?php
+		Wenpai_Admin_UI::next( array( 'icon_html' => View::icon( 'external' ), 'state' => 'bad', 'title' => __( '暂时无法探测 CocoBook', 'wpdocs' ), 'desc' => __( '请检查地址后重试。', 'wpdocs' ), 'actions' => array( array( 'label' => __( '重新探测', 'wpdocs' ), 'variant' => 'primary', 'href' => \Wpdocs\Admin\Menu::url( 'overview', '', 'refresh=1' ) ) ) ) );
+		?>
 	<?php
 elseif ( Settings::CONTENT_COCOBOOK === $content && $empty_maps ) :
 	$show_next = true;
 	?>
-	<div class="next">
-		<div class="tile accent"><?php echo View::icon( 'link' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-		<div>
-			<strong><?php esc_html_e( '还没有绑定或跳转', 'wpdocs' ); ?></strong>
-			<p class="d"><?php esc_html_e( '在工具里添加绑定，或同步书目后按标签对应文章。', 'wpdocs' ); ?></p>
-		</div>
-		<a class="btn btn-primary" href="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'tools', 'bindings' ) ); ?>"><?php esc_html_e( '去工具', 'wpdocs' ); ?></a>
-	</div>
+	<?php
+		Wenpai_Admin_UI::next( array( 'icon_html' => View::icon( 'link' ), 'state' => 'accent', 'title' => __( '还没有绑定或跳转', 'wpdocs' ), 'desc' => __( '在工具里添加绑定，或同步书目后按标签对应文章。', 'wpdocs' ), 'actions' => array( array( 'label' => __( '去工具', 'wpdocs' ), 'variant' => 'primary', 'href' => \Wpdocs\Admin\Menu::url( 'tools', 'bindings' ) ) ) ) );
+		?>
 	<?php
 elseif ( Settings::CONTENT_COCOBOOK === $content && ! Settings::is_configured() && '' !== $base_show ) :
 	$show_next = true;
 	?>
-	<div class="next">
-		<div class="tile warn"><?php echo View::icon( 'plug' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-		<div>
-			<strong><?php esc_html_e( '还没填 API Token', 'wpdocs' ); ?></strong>
-			<p class="d"><?php esc_html_e( '搜索、同步书目和接口探测需要 Token ID 与 Secret。', 'wpdocs' ); ?></p>
-		</div>
-		<a class="btn btn-primary" href="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'settings' ) ); ?>"><?php esc_html_e( '去设置', 'wpdocs' ); ?></a>
-	</div>
+	<?php
+		Wenpai_Admin_UI::next( array( 'icon_html' => View::icon( 'plug' ), 'state' => 'warn', 'title' => __( '还没填 API Token', 'wpdocs' ), 'desc' => __( '搜索、同步书目和接口探测需要 Token ID 与 Secret。', 'wpdocs' ), 'actions' => array( array( 'label' => __( '去设置', 'wpdocs' ), 'variant' => 'primary', 'href' => \Wpdocs\Admin\Menu::url( 'settings' ) ) ) ) );
+		?>
 	<?php
 endif;
 

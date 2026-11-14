@@ -39,10 +39,23 @@ final class View {
 		}
 		$simple   = Menu::url( $tab, $section, 'mode=simple' );
 		$advanced = Menu::url( $tab, $section, 'mode=advanced' );
-		echo '<div class="mode"><nav class="seg" aria-label="' . esc_attr__( '显示深度', 'wpdocs' ) . '">';
-		echo '<a class="' . ( $adv ? '' : 'on' ) . '" href="' . esc_url( $simple ) . '">' . esc_html__( '简单', 'wpdocs' ) . '</a>';
-		echo '<a class="' . ( $adv ? 'on' : '' ) . '" href="' . esc_url( $advanced ) . '">' . esc_html__( '高级', 'wpdocs' ) . '</a>';
-		echo '</nav></div>';
+		echo \Wenpai_Admin_UI::mode_switch_html(
+			array(
+				'label' => __( '显示深度', 'wpdocs' ),
+				'items' => array(
+					array(
+						'label'   => __( '简单', 'wpdocs' ),
+						'href'    => $simple,
+						'current' => ! $adv,
+					),
+					array(
+						'label'   => __( '高级', 'wpdocs' ),
+						'href'    => $advanced,
+						'current' => $adv,
+					),
+				),
+			)
+		);
 	}
 
 	public static function is_advanced(): bool {
@@ -95,22 +108,23 @@ final class View {
 		$detail = (string) ( $args['detail'] ?? '' );
 		$pill   = (string) ( $args['pill'] ?? '' );
 		$pcls   = (string) ( $args['pill_class'] ?? '' );
-		$is_url = ! empty( $args['url'] );
 		$icon   = (string) ( $args['icon'] ?? 'info' );
 		$tile   = (string) ( $args['tile_class'] ?? $pcls );
-		echo '<div class="simple-row is-static">';
-		echo '<div class="tile' . ( '' !== $tile ? ' ' . esc_attr( $tile ) : '' ) . '">';
-		echo self::icon( $icon ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- kit/local SVG.
-		echo '</div><div>';
-		echo '<div class="t">' . esc_html( $title ) . '</div>';
+		$row    = array(
+			'icon_html' => self::icon( $icon ),
+			'state'     => $tile,
+			'title'     => $title,
+		);
 		if ( '' !== $detail ) {
-			echo '<div class="d' . ( $is_url ? ' is-url' : '' ) . '">' . esc_html( $detail ) . '</div>';
+			$row['desc'] = $detail;
 		}
-		echo '</div><div class="r">';
 		if ( '' !== $pill ) {
-			echo '<span class="pill' . ( '' !== $pcls ? ' ' . esc_attr( $pcls ) : '' ) . '">' . esc_html( $pill ) . '</span>';
+			$row['pill'] = array(
+				'text'  => $pill,
+				'state' => $pcls,
+			);
 		}
-		echo '</div></div>';
+		echo \Wenpai_Admin_UI::row_html( $row );
 	}
 
 
@@ -169,15 +183,13 @@ final class View {
 	 * @param array<int,array{id:string,label:string,url:string}> $items Items.
 	 */
 	public static function subnav( string $current, array $items ): void {
-		echo '<nav class="wenpai-subnav" aria-label="' . esc_attr__( '本页分区', 'wpdocs' ) . '"><div class="seg">';
-		foreach ( $items as $it ) {
-			$id  = (string) ( $it['id'] ?? '' );
-			$on  = $id === $current;
-			$url = (string) ( $it['url'] ?? '#' );
-			$lab = (string) ( $it['label'] ?? '' );
-			echo '<a class="' . ( $on ? 'on' : '' ) . '"' . ( $on ? ' aria-current="page"' : '' ) . ' href="' . esc_url( $url ) . '">' . esc_html( $lab ) . '</a>';
-		}
-		echo '</div></nav>';
+		echo \Wenpai_Admin_UI::subnav_html(
+			array(
+				'current' => $current,
+				'label'   => __( '本页分区', 'wpdocs' ),
+				'items'   => $items,
+			)
+		);
 	}
 
 	/**

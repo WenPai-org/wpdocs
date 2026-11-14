@@ -43,17 +43,17 @@ $content_ctl = View::choice_cards(
 		Settings::CONTENT_KEEP => array(
 			'label' => __( '保留正文', 'wpdocs' ),
 			'desc'  => __( '品牌站自己管正文；可到工具一次性导入。', 'wpdocs' ),
-			'icon'  => 'info',
+			'icon_html'  => View::icon( 'info' ),
 		),
 		Settings::CONTENT_COCOBOOK => array(
 			'label' => __( '文档站读取', 'wpdocs' ),
 			'desc'  => __( '打开文章时读 CocoBook，不改正文库。', 'wpdocs' ),
-			'icon'  => 'link',
+			'icon_html'  => View::icon( 'link' ),
 		),
 		Settings::CONTENT_GIT => array(
 			'label' => __( 'Git 写入', 'wpdocs' ),
 			'desc'  => __( '把仓库 Markdown 写入文章。', 'wpdocs' ),
-			'icon'  => 'flash',
+			'icon_html'  => View::icon( 'flash' ),
 		),
 	)
 );
@@ -65,12 +65,12 @@ $rollout_ctl = View::choice_cards(
 		Settings::MODE_PILOT => array(
 			'label' => __( '试点', 'wpdocs' ),
 			'desc'  => __( '只换指定文章。', 'wpdocs' ),
-			'icon'  => 'flash',
+			'icon_html'  => View::icon( 'flash' ),
 		),
 		Settings::MODE_ALL   => array(
 			'label' => __( '全部', 'wpdocs' ),
 			'desc'  => __( '凡能对应到文档页的都换。', 'wpdocs' ),
-			'icon'  => 'link',
+			'icon_html'  => View::icon( 'link' ),
 		),
 	)
 );
@@ -169,16 +169,11 @@ $form_cls       = 'wpdocs-settings-form' . ( $adv ? '' : ' wpdocs-simple' );
 		?>
 
 		<div class="wpdocs-when-content" data-wpdocs-when-content="keep"<?php echo Settings::CONTENT_KEEP === $content_mode ? '' : ' hidden'; ?>>
-			<div class="simple-row is-static">
-				<div class="tile"><?php echo View::icon( 'info' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-				<div>
-					<div class="t"><?php esc_html_e( '前台不换正文', 'wpdocs' ); ?></div>
-					<div class="d"><?php esc_html_e( '需要把已绑定的 CocoBook 页写入文章时，到工具 → 同步。', 'wpdocs' ); ?></div>
-				</div>
-				<div class="r">
-					<a class="btn btn-ghost" href="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'tools', 'sync' ) ); ?>"><?php esc_html_e( '打开同步', 'wpdocs' ); ?></a>
-				</div>
-			</div>
+			<?php
+ob_start();
+?><a class="btn btn-ghost" href="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'tools', 'sync' ) ); ?>"><?php esc_html_e( '打开同步', 'wpdocs' ); ?></a><?php
+echo Wenpai_Admin_UI::row_html( array( 'icon_html' => View::icon( 'info' ), 'title' => __( '前台不换正文', 'wpdocs' ), 'desc' => __( '需要把已绑定的 CocoBook 页写入文章时，到工具 → 同步。', 'wpdocs' ), 'right_html' => (string) ob_get_clean() ) );
+?>
 			<?php if ( $adv ) : ?>
 				<?php
 				$base_ctl_keep = Settings::is_locked( 'base_url' )
@@ -278,14 +273,19 @@ $form_cls       = 'wpdocs-settings-form' . ( $adv ? '' : ' wpdocs-simple' );
 					<p class="hint"><?php esc_html_e( '逗号分隔。', 'wpdocs' ); ?></p>
 				</div>
 			</div>
-			<div class="simple-row is-action">
-				<div class="tile"><?php echo View::icon( 'feedback' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-				<div>
-					<div class="t"><?php esc_html_e( '统一评论', 'wpdocs' ); ?></div>
-					<div class="d"><?php esc_html_e( '与 CocoBook 同一帖。仅此路径提供。', 'wpdocs' ); ?></div>
-				</div>
-				<div class="r"><?php echo View::toggle_input( 'wpdocs[comments]', $comments_on ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-			</div>
+			<?php
+			ob_start();
+			echo View::toggle_input( 'wpdocs[comments]', $comments_on ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			$wpdocs_comments_ctl = (string) ob_get_clean();
+			echo Wenpai_Admin_UI::row_html(
+				array(
+					'icon_html'         => View::icon( 'feedback' ),
+					'title'        => __( '统一评论', 'wpdocs' ),
+					'desc'         => __( '与 CocoBook 同一帖。仅此路径提供。', 'wpdocs' ),
+					'control_html' => $wpdocs_comments_ctl,
+				)
+			);
+			?>
 			<div class="field" data-wpdocs-when-on="comments"<?php echo $comments_on ? '' : ' hidden'; ?>>
 				<label class="field-label" for="wpdocs-bff"><?php esc_html_e( '评论服务', 'wpdocs' ); ?></label>
 				<div class="field-ctl">
@@ -414,16 +414,19 @@ $form_cls       = 'wpdocs-settings-form' . ( $adv ? '' : ' wpdocs-simple' );
 			<input type="hidden" name="wpdocs[git_repo_last_publish]" value="<?php echo esc_attr( (string) (int) ( $primary['last_publish'] ?? 0 ) ); ?>" />
 		</div>
 
-		<div class="simple-row is-action">
-			<div class="tile"><?php echo View::icon( 'share' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-			<div>
-				<div class="t"><?php esc_html_e( '旧链接跳转', 'wpdocs' ); ?></div>
-				<div class="d"><?php esc_html_e( '旁路能力，与内容源无关。', 'wpdocs' ); ?>
-					<a href="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'tools', 'redirects' ) ); ?>"><?php esc_html_e( '管理映射', 'wpdocs' ); ?></a>
-				</div>
-			</div>
-			<div class="r"><?php echo View::toggle_input( 'wpdocs[redirects]', $redirects_on ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-		</div>
+		<?php
+		ob_start();
+		echo View::toggle_input( 'wpdocs[redirects]', $redirects_on ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		$wpdocs_redirects_ctl = (string) ob_get_clean();
+		echo Wenpai_Admin_UI::row_html(
+			array(
+				'icon_html'         => View::icon( 'share' ),
+				'title'        => __( '旧链接跳转', 'wpdocs' ),
+				'desc_html'    => __( '旁路能力，与内容源无关。', 'wpdocs' ) . ' <a href="' . esc_url( \Wpdocs\Admin\Menu::url( 'tools', 'redirects' ) ) . '">' . esc_html__( '管理映射', 'wpdocs' ) . '</a>',
+				'control_html' => $wpdocs_redirects_ctl,
+			)
+		);
+		?>
 
 		<div class="wenpai-actions">
 			<button type="submit" class="btn btn-primary"><?php esc_html_e( '保存设置', 'wpdocs' ); ?></button>

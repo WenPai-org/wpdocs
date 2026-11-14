@@ -156,14 +156,11 @@ if ( ! $embed ) {
 	<h2 class="section-title"><?php esc_html_e( '已有绑定', 'wpdocs' ); ?></h2>
 	<p class="section-desc"><?php esc_html_e( '点「编辑」回填上方表单。删除前先勾确认门。', 'wpdocs' ); ?></p>
 	<?php if ( array() === $items ) : ?>
-		<p class="empty"><?php esc_html_e( '还没有文章绑定到文档页。保存上方表单后会出现在这里。', 'wpdocs' ); ?></p>
+		<?php echo Wenpai_Admin_UI::empty_state_html( array( 'text' => __( '还没有文章绑定到文档页。保存上方表单后会出现在这里。', 'wpdocs' ) ) ); ?>
 	<?php else : ?>
-		<div class="wenpai-gate">
-			<label>
-				<input type="checkbox" />
-				<span><?php esc_html_e( '我确认要删除下方绑定行。', 'wpdocs' ); ?></span>
-			</label>
-		</div>
+		<?php
+echo Wenpai_Admin_UI::gate_html( array( 'label' => __( '我确认要删除下方绑定行。', 'wpdocs' ) ) );
+?>
 		<table class="tbl">
 			<thead>
 				<tr>
@@ -216,7 +213,7 @@ if ( ! $embed ) {
 						<?php if ( '' !== (string) ( $rmeta['title'] ?? '' ) ) : ?>
 							<div class="t"><?php echo esc_html( (string) $rmeta['title'] ); ?></div>
 						<?php endif; ?>
-						<span class="pill <?php echo esc_attr( $rpill['class'] ); ?>"><?php echo esc_html( $rpill['label'] ); ?></span>
+						<?php echo Wenpai_Admin_UI::pill_html( array( 'state' => $rpill['class'], 'text' => $rpill['label'] ) ); ?>
 						<?php if ( $adv && (int) ( $rmeta['attachments'] ?? 0 ) > 0 ) : ?>
 							<p class="hint"><?php echo esc_html( sprintf(
 								/* translators: %d: attachment count */
@@ -229,7 +226,7 @@ if ( ! $embed ) {
 						<td><?php echo '' !== $ext ? '<code>' . esc_html( $ext ) . '</code>' : '—'; ?></td>
 						<td><?php echo esc_html( View::bind_source_label( (string) $row->source ) ); ?></td>
 					<?php endif; ?>
-					<td><span class="pill <?php echo esc_attr( $pill['class'] ); ?>"><?php echo esc_html( $pill['label'] ); ?></span></td>
+					<td><?php echo Wenpai_Admin_UI::pill_html( array( 'state' => $pill['class'], 'text' => $pill['label'] ) ); ?></td>
 					<td class="wpdocs-row-actions">
 						<button type="button" class="btn btn-ghost" data-wpdocs-fill="<?php echo esc_attr( (string) $fill ); ?>"><?php esc_html_e( '编辑', 'wpdocs' ); ?></button>
 						<?php if ( 'disabled' === (string) ( $row->status ?? '' ) ) : ?>

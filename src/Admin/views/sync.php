@@ -66,7 +66,7 @@ $mode_lab = array(
 		$hook    = Engine::webhook_url();
 		?>
 		<?php if ( ! $loaded ) : ?>
-			<div class="empty"><p><?php esc_html_e( 'Git 核心未加载。', 'wpdocs' ); ?></p></div>
+			<?php echo Wenpai_Admin_UI::empty_state_html( array( 'text' => __( 'Git 核心未加载。', 'wpdocs' ) ) ); ?>
 		<?php else : ?>
 			<div class="wenpai-actions">
 				<form method="post" action="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'tools', 'sync' ) ); ?>" style="display:inline">
@@ -163,14 +163,17 @@ $mode_lab = array(
 		<p class="section-desc"><?php esc_html_e( '正文留在 WordPress。把已绑定的 CocoBook 页一次性写入文章会覆盖正文。', 'wpdocs' ); ?></p>
 		<form method="post" action="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'tools', 'sync' ) ); ?>" id="wpdocs-import-cb-form">
 			<?php wp_nonce_field( 'wpdocs_import_cb', 'wpdocs_import_cb_nonce' ); ?>
-			<div class="wenpai-gate">
-				<label class="chk">
-					<input type="checkbox" name="wpdocs_import_confirm" value="1" required <?php disabled( ! Settings::is_configured() ); ?> />
-					<?php esc_html_e( '我已核对绑定列表，确认覆盖这些文章的正文。', 'wpdocs' ); ?>
-				</label>
-				<div class="wenpai-actions">
-					<button type="submit" class="btn btn-danger" <?php disabled( ! Settings::is_configured() ); ?>><?php esc_html_e( '从 CocoBook 导入', 'wpdocs' ); ?></button>
-				</div>
+			<?php
+			echo Wenpai_Admin_UI::gate_html(
+				array(
+					'name'  => 'wpdocs_import_confirm',
+					'label' => __( '我已核对绑定列表，确认覆盖这些文章的正文。', 'wpdocs' ),
+					'attrs' => Settings::is_configured() ? array( 'required' => true ) : array( 'required' => true, 'disabled' => true ),
+				)
+			);
+			?>
+			<div class="wenpai-actions">
+				<button type="submit" class="btn btn-danger" <?php disabled( ! Settings::is_configured() ); ?>><?php esc_html_e( '从 CocoBook 导入', 'wpdocs' ); ?></button>
 			</div>
 		</form>
 		<form method="post" action="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'tools', 'sync' ) ); ?>" style="margin-top:12px">
@@ -189,13 +192,9 @@ $mode_lab = array(
 <section class="card">
 	<h2 class="section-title"><?php esc_html_e( '最近日志', 'wpdocs' ); ?></h2>
 	<?php foreach ( array_slice( $log, 0, 12 ) as $row ) : ?>
-		<div class="simple-row is-static">
-			<div class="tile"><?php echo View::icon( 'info' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-			<div>
-				<div class="t"><?php echo esc_html( (string) ( $row['m'] ?? '' ) ); ?></div>
-				<div class="d"><?php echo esc_html( wp_date( 'Y-m-d H:i', (int) ( $row['t'] ?? 0 ) ) ); ?></div>
-			</div>
-		</div>
+		<?php
+echo Wenpai_Admin_UI::row_html( array( 'icon_html' => View::icon( 'info' ), 'title' => (string) ( $row['m'] ?? '' ), 'desc' => wp_date( 'Y-m-d H:i', (int) ( $row['t'] ?? 0 ) ) ) );
+?>
 	<?php endforeach; ?>
 </section>
 <?php endif; ?>

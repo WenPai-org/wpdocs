@@ -218,6 +218,7 @@ if ( ! class_exists( 'Wenpai_Admin_UI', false ) ) {
 		 *
 		 *     @type string $state ok|warn|bad|accent|''. mute becomes ''.
 		 *     @type string $icon  Wenpai_Admin_Icons name; unknown → empty tile.
+		 *     @type string $icon_html Raw product SVG (kses svg), wins over $icon.
 		 *     @type string $class Extra classes.
 		 *     @type array  $attrs Extra attributes (id, data-*, aria-*, role, hidden).
 		 * }
@@ -227,6 +228,9 @@ if ( ! class_exists( 'Wenpai_Admin_UI', false ) ) {
 			$args  = self::args( $args, 'Wenpai_Admin_UI::tile' );
 			$state = self::state( isset( $args['state'] ) ? $args['state'] : '', self::$tile_states, '', 'Wenpai_Admin_UI::tile', true );
 			$icon  = self::icon_svg( isset( $args['icon'] ) ? $args['icon'] : '' );
+			if ( isset( $args['icon_html'] ) && '' !== (string) $args['icon_html'] ) {
+				$icon = self::kses( (string) $args['icon_html'], 'svg' );
+			}
 			$class = self::classes( array( 'tile', $state, self::extra_class( $args ) ) );
 			return '<span class="' . esc_attr( $class ) . '"' . self::extra_attrs( $args ) . '>' . $icon . '</span>';
 		}
@@ -360,8 +364,9 @@ if ( ! class_exists( 'Wenpai_Admin_UI', false ) ) {
 			$heading = self::heading( isset( $args['heading'] ) ? $args['heading'] : 2, 'Wenpai_Admin_UI::card_open' );
 			$tile    = self::tile_html(
 				array(
-					'icon'  => $icon,
-					'state' => isset( $args['state'] ) ? $args['state'] : '',
+					'icon'      => $icon,
+					'state'     => isset( $args['state'] ) ? $args['state'] : '',
+					'icon_html' => isset( $args['icon_html'] ) ? $args['icon_html'] : '',
 				)
 			);
 			$html   .= '<div class="card-head">' . $tile . '<div>';
@@ -496,6 +501,7 @@ if ( ! class_exists( 'Wenpai_Admin_UI', false ) ) {
 		 *
 		 *     @type string $title   Title.
 		 *     @type string $desc    Optional description.
+		 *     @type string $desc_html Optional description HTML (kses post), wins over $desc.
 		 *     @type int    $heading Level, default 2.
 		 *     @type string $class   Extra classes on the heading.
 		 *     @type array  $attrs   Extra attributes on the heading.
@@ -559,15 +565,18 @@ if ( ! class_exists( 'Wenpai_Admin_UI', false ) ) {
 			$class = self::classes( array( 'simple-row', $mod, self::extra_class( $args ) ) );
 			$tile  = self::tile_html(
 				array(
-					'icon'  => isset( $args['icon'] ) ? $args['icon'] : '',
-					'state' => isset( $args['state'] ) ? $args['state'] : '',
+					'icon'      => isset( $args['icon'] ) ? $args['icon'] : '',
+					'state'     => isset( $args['state'] ) ? $args['state'] : '',
+					'icon_html' => isset( $args['icon_html'] ) ? $args['icon_html'] : '',
 				)
 			);
 			$body  = '<div>';
 			if ( isset( $args['title'] ) && '' !== (string) $args['title'] ) {
 				$body .= '<div class="t"' . self::id_attr( $args, 'title_id' ) . '>' . esc_html( (string) $args['title'] ) . '</div>';
 			}
-			if ( isset( $args['desc'] ) && '' !== (string) $args['desc'] ) {
+			if ( array_key_exists( 'desc_html', $args ) && '' !== (string) $args['desc_html'] ) {
+				$body .= '<div class="d"' . self::id_attr( $args, 'desc_id' ) . '>' . self::kses( (string) $args['desc_html'], 'post' ) . '</div>';
+			} elseif ( isset( $args['desc'] ) && '' !== (string) $args['desc'] ) {
 				$body .= '<div class="d"' . self::id_attr( $args, 'desc_id' ) . '>' . esc_html( (string) $args['desc'] ) . '</div>';
 			}
 			$body .= '</div>';
@@ -621,8 +630,9 @@ if ( ! class_exists( 'Wenpai_Admin_UI', false ) ) {
 			$html  = '<div class="' . esc_attr( $class ) . '"' . self::extra_attrs( $args ) . '>';
 			$html .= self::tile_html(
 				array(
-					'icon'  => isset( $args['icon'] ) ? $args['icon'] : '',
-					'state' => isset( $args['state'] ) ? $args['state'] : '',
+					'icon'      => isset( $args['icon'] ) ? $args['icon'] : '',
+					'state'     => isset( $args['state'] ) ? $args['state'] : '',
+					'icon_html' => isset( $args['icon_html'] ) ? $args['icon_html'] : '',
 				)
 			);
 			$html .= '<div>';
@@ -676,8 +686,9 @@ if ( ! class_exists( 'Wenpai_Admin_UI', false ) ) {
 			if ( isset( $args['icon'] ) && '' !== (string) $args['icon'] ) {
 				$html .= self::tile_html(
 					array(
-						'icon'  => $args['icon'],
-						'state' => isset( $args['state'] ) ? $args['state'] : '',
+						'icon'      => $args['icon'],
+						'state'     => isset( $args['state'] ) ? $args['state'] : '',
+						'icon_html' => isset( $args['icon_html'] ) ? $args['icon_html'] : '',
 					)
 				);
 			}

@@ -127,14 +127,11 @@ endif;
 		</form>
 	</div>
 	<?php if ( array() === $items ) : ?>
-		<p class="empty"><?php esc_html_e( '还没有路径映射。保存上方表单后会出现在这里。', 'wpdocs' ); ?></p>
+		<?php echo Wenpai_Admin_UI::empty_state_html( array( 'text' => __( '还没有路径映射。保存上方表单后会出现在这里。', 'wpdocs' ) ) ); ?>
 	<?php else : ?>
-		<div class="wenpai-gate">
-			<label>
-				<input type="checkbox" />
-				<span><?php esc_html_e( '我确认要删除下方映射行。', 'wpdocs' ); ?></span>
-			</label>
-		</div>
+		<?php
+echo Wenpai_Admin_UI::gate_html( array( 'label' => __( '我确认要删除下方映射行。', 'wpdocs' ) ) );
+?>
 		<table class="tbl">
 			<thead>
 				<tr>
@@ -170,7 +167,7 @@ endif;
 						<td><?php echo '' !== $title ? esc_html( $title ) : '—'; ?></td>
 					<?php endif; ?>
 					<td><?php echo $page > 0 ? '#' . $page : '—'; ?></td>
-					<td><span class="pill <?php echo esc_attr( $pill['class'] ); ?>"><?php echo esc_html( $pill['label'] ); ?></span></td>
+					<td><?php echo Wenpai_Admin_UI::pill_html( array( 'state' => $pill['class'], 'text' => $pill['label'] ) ); ?></td>
 					<td class="wpdocs-row-actions">
 						<button type="button" class="btn btn-ghost" data-wpdocs-fill="<?php echo esc_attr( (string) $fill ); ?>"><?php esc_html_e( '编辑', 'wpdocs' ); ?></button>
 						<?php if ( 'matched' !== $st ) : ?>
