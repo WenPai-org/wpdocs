@@ -53,21 +53,21 @@ View::page_head(
 		array(
 			'label'   => __( '选路径并连接', 'wpdocs' ),
 			'control' => '<p class="hint d">' . esc_html__( '在「设置」先选内容从哪来，再填对应连接（CocoBook 或 Forgejo）。选「文档站读取」时再到「概览」确认探测正常。', 'wpdocs' ) . '</p>'
-				. '<div class="wenpai-actions"><a class="btn btn-ghost" href="' . esc_url( admin_url( 'admin.php?page=wpdocs-settings' ) ) . '">' . esc_html__( '打开设置', 'wpdocs' ) . '</a></div>',
+				. '<div class="wenpai-actions"><a class="btn btn-ghost" href="' . esc_url( \Wpdocs\Admin\Menu::url( 'settings' ) ) . '">' . esc_html__( '打开设置', 'wpdocs' ) . '</a></div>',
 		)
 	);
 	View::field(
 		array(
 			'label'   => __( '建绑定', 'wpdocs' ),
 			'control' => '<p class="hint d">' . esc_html__( '在「工具 → 绑定」填写文章 ID 与文档书册/页面别名。简单模式够用；高级可补文档页 ID、外部 ID 与来源。', 'wpdocs' ) . '</p>'
-				. '<div class="wenpai-actions"><a class="btn btn-ghost" href="' . esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=bindings' ) ) . '">' . esc_html__( '打开绑定', 'wpdocs' ) . '</a></div>',
+				. '<div class="wenpai-actions"><a class="btn btn-ghost" href="' . esc_url( \Wpdocs\Admin\Menu::url( 'tools', 'bindings' ) ) . '">' . esc_html__( '打开绑定', 'wpdocs' ) . '</a></div>',
 		)
 	);
 	View::field(
 		array(
 			'label'   => __( '配跳转', 'wpdocs' ),
 			'control' => '<p class="hint d">' . esc_html__( '在「工具 → 跳转」登记旧路径；已匹配为 301，已下线为 410。启用时若存在旧跳转表会一次性导入。', 'wpdocs' ) . '</p>'
-				. '<div class="wenpai-actions"><a class="btn btn-ghost" href="' . esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=redirects' ) ) . '">' . esc_html__( '打开跳转', 'wpdocs' ) . '</a></div>',
+				. '<div class="wenpai-actions"><a class="btn btn-ghost" href="' . esc_url( \Wpdocs\Admin\Menu::url( 'tools', 'redirects' ) ) . '">' . esc_html__( '打开跳转', 'wpdocs' ) . '</a></div>',
 		)
 	);
 	?>

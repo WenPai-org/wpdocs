@@ -20,6 +20,9 @@ fi
 echo "== Redirect unit tests (no WP) =="
 php tests/RedirectPathTest.php
 
+echo "== Admin canonical URL tests (no WP) =="
+php tests/AdminUrlTest.php
+
 echo "== Bind resolve-batch unit tests (no WP) =="
 php tests/BindResolveDraftTest.php
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased — Admin UI baseline
+
+- vendor 精确的 wenpai-admin-ui **0.3.2** tag；菜单迁到「设置 → 文派文档」，新链接统一 `options-general.php?page=wpdocs&tab=...`，保留旧深链回调与文档标题。
+- 概览 / 设置 / 工具 / 帮助共用一个页面路由；绑定、跳转、同步仍为工具内 subnav。设置保存与行动作保留 `updated/error/mode/filter` 状态，新增 `tests/AdminUrlTest.php`。
+- 保留并整理设置页现有修改：主选择单列、书目可滚动多选列表、预览整框状态色；后台颜色全部改走 token，字重 400，移除新增阴影。
+- 健康提示不再暴露 cURL / 主机错误详情；页脚和清除密钥文案统一中文。
+- 验收：`tests/run.sh` 全绿；Admin UI lint + `--strict-colors` 通过；Chrome 九个新旧入口 200、360px 无横向溢出、无 JS 错误；原值保存前后 option 完全一致。helper 迁移仍待包含 `Wenpai_Admin_UI` 的正式 kit 版本。
+
 ## 0.3.0 — 2026-11-03
 
 ### 三种内容模式 + Git

@@ -30,20 +30,15 @@ final class View {
 	 * Kit 简单/高级切换（URL ?mode=）。
 	 */
 	public static function mode_toggle( string $page ): void {
-		$adv = self::is_advanced();
-		$args = array( 'page' => $page );
+		$adv     = self::is_advanced();
+		$tab     = 'wpdocs-tools' === $page ? 'tools' : ( 'wpdocs-settings' === $page ? 'settings' : 'overview' );
+		$section = '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( isset( $_GET['section'] ) ) {
-			$args['section'] = sanitize_key( (string) wp_unslash( $_GET['section'] ) );
+			$section = sanitize_key( (string) wp_unslash( $_GET['section'] ) );
 		}
-		$simple = add_query_arg(
-			array_merge( $args, array( 'mode' => 'simple' ) ),
-			admin_url( 'admin.php' )
-		);
-		$advanced = add_query_arg(
-			array_merge( $args, array( 'mode' => 'advanced' ) ),
-			admin_url( 'admin.php' )
-		);
+		$simple   = Menu::url( $tab, $section, 'mode=simple' );
+		$advanced = Menu::url( $tab, $section, 'mode=advanced' );
 		echo '<div class="mode"><nav class="seg" aria-label="' . esc_attr__( '显示深度', 'wpdocs' ) . '">';
 		echo '<a class="' . ( $adv ? '' : 'on' ) . '" href="' . esc_url( $simple ) . '">' . esc_html__( '简单', 'wpdocs' ) . '</a>';
 		echo '<a class="' . ( $adv ? 'on' : '' ) . '" href="' . esc_url( $advanced ) . '">' . esc_html__( '高级', 'wpdocs' ) . '</a>';

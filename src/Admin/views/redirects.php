@@ -110,7 +110,8 @@ endif;
 			<p class="section-desc"><?php esc_html_e( '点「编辑」回填上方表单。删除前先勾确认门。', 'wpdocs' ); ?></p>
 		</div>
 		<form method="get" class="wpdocs-filter">
-			<input type="hidden" name="page" value="wpdocs-tools" />
+			<input type="hidden" name="page" value="wpdocs" />
+			<input type="hidden" name="tab" value="tools" />
 			<input type="hidden" name="section" value="redirects" />
 			<?php if ( $adv ) : ?>
 				<input type="hidden" name="mode" value="advanced" />

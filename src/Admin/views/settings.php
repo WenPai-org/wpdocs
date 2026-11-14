@@ -1,6 +1,7 @@
 <?php
 /**
- * Settings — 档 A 简单页：一张卡 = 主选择 + 该源连接 + 旁路开关。
+ * Settings — 档 A：主选择 choice 卡；该源连接；旁路。读取范围用 kit choice-cards cols-2，不是第二条主轴。
+ * 书目：可滚动单列 .chk 列表（多选），不用三列 chk-grid / choice-cards。
  *
  * @package Wpdocs
  *
@@ -82,7 +83,7 @@ if ( $token_locked ) {
 	$ph         = $token_saved ? esc_attr__( '留空表示不修改已保存的值', 'wpdocs' ) : '';
 	$secret_ctl = '<input id="wpdocs-token-secret" type="password" name="wpdocs[token_secret]" value="" autocomplete="new-password" placeholder="' . $ph . '" />';
 	if ( $token_saved ) {
-		$secret_ctl .= '<label class="chk" style="display:block;margin-top:8px"><input type="checkbox" name="wpdocs[token_secret_clear]" value="1" /> ' . esc_html__( '清除 Secret', 'wpdocs' ) . '</label>';
+		$secret_ctl .= '<label class="chk" style="display:block;margin-top:8px"><input type="checkbox" name="wpdocs[token_secret_clear]" value="1" /> ' . esc_html__( '清除密钥', 'wpdocs' ) . '</label>';
 	}
 }
 
@@ -104,8 +105,8 @@ if ( is_array( $books ) && ! is_wp_error( $books ) && ! empty( $books['data'] ) 
 		if ( $bid < 1 ) {
 			continue;
 		}
-		$books_ctl .= '<label><input type="checkbox" name="wpdocs[books][]" value="' . esc_attr( (string) $bid ) . '" ' . checked( in_array( $bid, $picked, true ), true, false ) . ' /> '
-			. esc_html( (string) ( $b['name'] ?? '' ) . ' (#' . $bid . ')' ) . '</label>';
+		$books_ctl .= '<label class="chk"><input type="checkbox" name="wpdocs[books][]" value="' . esc_attr( (string) $bid ) . '" ' . checked( in_array( $bid, $picked, true ), true, false ) . ' /> '
+			. esc_html( (string) ( $b['name'] ?? '' ) ) . ' <span class="hint">#' . esc_html( (string) $bid ) . '</span></label>';
 	}
 	$books_ctl .= '</div>';
 } else {
@@ -148,7 +149,7 @@ $redirects_on   = ! empty( $s['redirects'] );
 $giw_standalone = GitBoot::standalone_active();
 $form_cls       = 'wpdocs-settings-form' . ( $adv ? '' : ' wpdocs-simple' );
 ?>
-<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-settings' ) ); ?>" class="<?php echo esc_attr( $form_cls ); ?>" id="wpdocs-settings-form">
+<form method="post" action="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'settings' ) ); ?>" class="<?php echo esc_attr( $form_cls ); ?>" id="wpdocs-settings-form">
 	<?php wp_nonce_field( 'wpdocs_settings_full', 'wpdocs_settings_full_nonce' ); ?>
 	<?php if ( $adv ) : ?>
 		<input type="hidden" name="wpdocs_mode" value="advanced" />
@@ -175,53 +176,51 @@ $form_cls       = 'wpdocs-settings-form' . ( $adv ? '' : ' wpdocs-simple' );
 					<div class="d"><?php esc_html_e( '需要把已绑定的 CocoBook 页写入文章时，到工具 → 同步。', 'wpdocs' ); ?></div>
 				</div>
 				<div class="r">
-					<a class="btn btn-ghost" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=sync' ) ); ?>"><?php esc_html_e( '打开同步', 'wpdocs' ); ?></a>
+					<a class="btn btn-ghost" href="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'tools', 'sync' ) ); ?>"><?php esc_html_e( '打开同步', 'wpdocs' ); ?></a>
 				</div>
 			</div>
-			<?php
-			// Import Token：高级可见；隐藏面板由 JS disabled，避免与文档站读取撞 name。
-			$base_ctl_keep = Settings::is_locked( 'base_url' )
-				? '<code>' . esc_html( Settings::base_url() ) . '</code>'
-				: '<input id="wpdocs-base-url-keep" type="url" name="wpdocs[base_url]" value="' . esc_attr( (string) ( $s['base_url'] ?? '' ) ) . '" />';
-			$tid_ctl_keep  = Settings::is_locked( 'token_id' )
-				? '<code>' . esc_html( (string) Settings::get( 'token_id' ) ) . '</code>'
-				: '<input id="wpdocs-token-id-keep" type="text" name="wpdocs[token_id]" value="' . esc_attr( (string) ( $s['token_id'] ?? '' ) ) . '" autocomplete="off" />';
-			if ( $token_locked ) {
-				$secret_ctl_keep = '<code>' . esc_html__( '已由 wp-config.php 常量设置', 'wpdocs' ) . '</code>';
-			} else {
-				$ph_keep         = $token_saved ? esc_attr__( '留空表示不修改已保存的值', 'wpdocs' ) : '';
-				$secret_ctl_keep = '<input id="wpdocs-token-secret-keep" type="password" name="wpdocs[token_secret]" value="" autocomplete="new-password" placeholder="' . $ph_keep . '" />';
-				if ( $token_saved ) {
-					$secret_ctl_keep .= '<label class="chk" style="display:block;margin-top:8px"><input type="checkbox" name="wpdocs[token_secret_clear]" value="1" /> ' . esc_html__( '清除 Secret', 'wpdocs' ) . '</label>';
+			<?php if ( $adv ) : ?>
+				<?php
+				$base_ctl_keep = Settings::is_locked( 'base_url' )
+					? '<code>' . esc_html( Settings::base_url() ) . '</code>'
+					: '<input id="wpdocs-base-url-keep" type="url" name="wpdocs[base_url]" value="' . esc_attr( (string) ( $s['base_url'] ?? '' ) ) . '" />';
+				$tid_ctl_keep  = Settings::is_locked( 'token_id' )
+					? '<code>' . esc_html( (string) Settings::get( 'token_id' ) ) . '</code>'
+					: '<input id="wpdocs-token-id-keep" type="text" name="wpdocs[token_id]" value="' . esc_attr( (string) ( $s['token_id'] ?? '' ) ) . '" autocomplete="off" />';
+				if ( $token_locked ) {
+					$secret_ctl_keep = '<code>' . esc_html__( '已由 wp-config.php 常量设置', 'wpdocs' ) . '</code>';
+				} else {
+					$ph_keep         = $token_saved ? esc_attr__( '留空表示不修改已保存的值', 'wpdocs' ) : '';
+					$secret_ctl_keep = '<input id="wpdocs-token-secret-keep" type="password" name="wpdocs[token_secret]" value="" autocomplete="new-password" placeholder="' . $ph_keep . '" />';
+					if ( $token_saved ) {
+						$secret_ctl_keep .= '<label class="chk" style="display:block;margin-top:8px"><input type="checkbox" name="wpdocs[token_secret_clear]" value="1" /> ' . esc_html__( '清除密钥', 'wpdocs' ) . '</label>';
+					}
 				}
-			}
-			View::field(
-				array(
-					'for'      => 'wpdocs-base-url-keep',
-					'label'    => __( 'CocoBook 地址', 'wpdocs' ),
-					'help'     => __( '仅「从 CocoBook 导入」时需要。', 'wpdocs' ),
-					'advanced' => true,
-					'control'  => $base_ctl_keep,
-				)
-			);
-			View::field(
-				array(
-					'for'      => 'wpdocs-token-id-keep',
-					'label'    => __( 'Token ID', 'wpdocs' ),
-					'advanced' => true,
-					'control'  => $tid_ctl_keep,
-				)
-			);
-			View::field(
-				array(
-					'for'      => 'wpdocs-token-secret-keep',
-					'label'    => __( 'Token Secret', 'wpdocs' ),
-					'help'     => __( '留空表示不修改已保存的值。', 'wpdocs' ),
-					'advanced' => true,
-					'control'  => $secret_ctl_keep,
-				)
-			);
-			?>
+				View::field(
+					array(
+						'for'     => 'wpdocs-base-url-keep',
+						'label'   => __( 'CocoBook 地址', 'wpdocs' ),
+						'help'    => __( '仅「从 CocoBook 导入」时需要。', 'wpdocs' ),
+						'control' => $base_ctl_keep,
+					)
+				);
+				View::field(
+					array(
+						'for'     => 'wpdocs-token-id-keep',
+						'label'   => __( 'Token ID', 'wpdocs' ),
+						'control' => $tid_ctl_keep,
+					)
+				);
+				View::field(
+					array(
+						'for'     => 'wpdocs-token-secret-keep',
+						'label'   => __( 'Token Secret', 'wpdocs' ),
+						'help'    => __( '留空表示不修改已保存的值。', 'wpdocs' ),
+						'control' => $secret_ctl_keep,
+					)
+				);
+				?>
+			<?php endif; ?>
 		</div>
 
 		<div class="wpdocs-when-content" data-wpdocs-when-content="cocobook"<?php echo Settings::CONTENT_COCOBOOK === $content_mode ? '' : ' hidden'; ?>>
@@ -260,13 +259,14 @@ $form_cls       = 'wpdocs-settings-form' . ( $adv ? '' : ' wpdocs-simple' );
 			View::field(
 				array(
 					'label'   => __( '书目', 'wpdocs' ),
+					'help'    => __( '可多选。框内上下滑动查看全部书。', 'wpdocs' ),
 					'control' => $books_ctl,
 				)
 			);
 			View::field(
 				array(
 					'label'   => __( '读取范围', 'wpdocs' ),
-					'help'    => __( '只影响「文档站读取」，不是第二条主选择。', 'wpdocs' ),
+					'help'    => __( '只影响「文档站读取」路径下哪些文章换正文，不是第二条主选择。', 'wpdocs' ),
 					'control' => $rollout_ctl,
 				)
 			);
@@ -419,7 +419,7 @@ $form_cls       = 'wpdocs-settings-form' . ( $adv ? '' : ' wpdocs-simple' );
 			<div>
 				<div class="t"><?php esc_html_e( '旧链接跳转', 'wpdocs' ); ?></div>
 				<div class="d"><?php esc_html_e( '旁路能力，与内容源无关。', 'wpdocs' ); ?>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=redirects' ) ); ?>"><?php esc_html_e( '管理映射', 'wpdocs' ); ?></a>
+					<a href="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'tools', 'redirects' ) ); ?>"><?php esc_html_e( '管理映射', 'wpdocs' ); ?></a>
 				</div>
 			</div>
 			<div class="r"><?php echo View::toggle_input( 'wpdocs[redirects]', $redirects_on ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>

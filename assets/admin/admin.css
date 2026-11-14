@@ -29,7 +29,7 @@ body.wenpai-ui-page .wenpai-app .field .hint[hidden] {
 
 body.wenpai-ui-page .wenpai-app .field input.is-invalid,
 body.wenpai-ui-page .wenpai-app .field select.is-invalid {
-  border-color: var(--wenpai-bad, #d63638);
+  border-color: var(--wenpai-bad);
 }
 
 /* number/url also sit in kit `.field-ctl-row` (kit already covers text). */
@@ -58,13 +58,15 @@ body.wenpai-ui-page .wenpai-app .preview-out[hidden] {
 }
 
 body.wenpai-ui-page .wenpai-app .preview-out.is-ok {
-  background: #d4edda;
-  color: #155724;
+  background: var(--wenpai-ok-soft);
+  border-color: var(--wenpai-ok);
+  color: var(--wenpai-ok-ink);
 }
 
 body.wenpai-ui-page .wenpai-app .preview-out.is-bad {
-  background: #f8d7da;
-  color: #d63638;
+  background: var(--wenpai-bad-soft);
+  border-color: var(--wenpai-bad);
+  color: var(--wenpai-bad-ink);
 }
 
 /* Status rows: kit owns .simple-row + .tile; no product kv override. */
@@ -80,7 +82,7 @@ body.wenpai-ui-page .wenpai-main > .wenpai-stack {
 }
 
 body.wenpai-ui-page .wenpai-app .section-title {
-  font-weight: 600;
+  font-weight: 400;
   font-size: 16px;
   line-height: 24px;
 }
@@ -252,11 +254,29 @@ body.wenpai-ui-page .wenpai-app .sr-only {
 .wenpai-app .wenpai-page-head .wenpai-subnav { margin: 0; }
 .wenpai-app .wenpai-subnav .seg { display: inline-flex; }
 
-/* Settings books list — kit chk-grid, capped height. */
-.wenpai-app .wpdocs-books {
-  max-height: 16em;
-  overflow: auto;
+/* Settings books: kit .chk-grid in a visible scroll box. */
+.wenpai-app .wpdocs-books.chk-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--wenpai-space-2) 0;
+  max-height: 14em;
+  overflow-y: auto;
+  overflow-x: hidden;
   max-width: 36em;
+  padding: var(--wenpai-space-3);
+  border: 1px solid var(--wenpai-line);
+  border-radius: var(--wenpai-radius-md);
+  background: var(--wenpai-card);
+}
+
+.wenpai-app .wpdocs-books.chk-grid > .chk {
+  margin: 0;
+  padding: 2px 0;
+  align-items: flex-start;
+}
+
+.wenpai-app .wpdocs-books.chk-grid > .chk .hint {
+  margin-left: var(--wenpai-space-2);
+  color: var(--wenpai-ink-3);
 }
 
 /* Choice cards on settings — full width; simple page stacks label above cards. */
@@ -295,11 +315,13 @@ body.wenpai-ui-page .wenpai-app .sr-only {
 /* Preview-out ok/bad (tools dry-run / suggest). */
 .wenpai-app .preview-out.is-ok,
 .wenpai-app .wpdocs-suggest-out.is-ok {
-  background: #d4edda;
-  color: #155724;
+  background: var(--wenpai-ok-soft);
+  border-color: var(--wenpai-ok);
+  color: var(--wenpai-ok-ink);
 }
 .wenpai-app .preview-out.is-bad,
 .wenpai-app .wpdocs-suggest-out.is-bad {
-  background: #f8d7da;
-  color: #d63638;
+  background: var(--wenpai-bad-soft);
+  border-color: var(--wenpai-bad);
+  color: var(--wenpai-bad-ink);
 }

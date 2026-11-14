@@ -69,17 +69,17 @@ $mode_lab = array(
 			<div class="empty"><p><?php esc_html_e( 'Git 核心未加载。', 'wpdocs' ); ?></p></div>
 		<?php else : ?>
 			<div class="wenpai-actions">
-				<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=sync' ) ); ?>" style="display:inline">
+				<form method="post" action="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'tools', 'sync' ) ); ?>" style="display:inline">
 					<?php wp_nonce_field( 'wpdocs_git_pull', 'wpdocs_git_pull_nonce' ); ?>
 					<button type="submit" class="btn btn-primary"><?php esc_html_e( '拉取仓库', 'wpdocs' ); ?></button>
 				</form>
-				<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=sync' ) ); ?>" style="display:inline">
+				<form method="post" action="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'tools', 'sync' ) ); ?>" style="display:inline">
 					<?php wp_nonce_field( 'wpdocs_git_pull', 'wpdocs_git_pull_nonce' ); ?>
 					<input type="hidden" name="wpdocs_git_force" value="1" />
 					<button type="submit" class="btn btn-ghost"><?php esc_html_e( '强制全量', 'wpdocs' ); ?></button>
 				</form>
 				<?php if ( ! empty( $general['base_directory'] ) ) : ?>
-					<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=sync' ) ); ?>" style="display:inline">
+					<form method="post" action="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'tools', 'sync' ) ); ?>" style="display:inline">
 						<?php wp_nonce_field( 'wpdocs_git_sync_local', 'wpdocs_git_sync_local_nonce' ); ?>
 						<button type="submit" class="btn btn-ghost"><?php esc_html_e( '同步本地目录', 'wpdocs' ); ?></button>
 					</form>
@@ -98,7 +98,7 @@ $mode_lab = array(
 				<p class="hint"><?php echo esc_html( (string) $general['base_directory'] ); ?></p>
 			<?php elseif ( empty( $repos ) ) : ?>
 				<p class="hint"><?php esc_html_e( '还没配仓库。', 'wpdocs' ); ?>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-settings' ) ); ?>"><?php esc_html_e( '去设置', 'wpdocs' ); ?></a>
+					<a href="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'settings' ) ); ?>"><?php esc_html_e( '去设置', 'wpdocs' ); ?></a>
 				</p>
 			<?php else : ?>
 				<ul class="wpdocs-git-repo-list">
@@ -122,11 +122,11 @@ $mode_lab = array(
 
 	<?php elseif ( Settings::CONTENT_COCOBOOK === $content ) : ?>
 		<div class="wenpai-actions">
-			<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=sync' ) ); ?>" style="display:inline">
+			<form method="post" action="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'tools', 'sync' ) ); ?>" style="display:inline">
 				<?php wp_nonce_field( 'wpdocs_test', 'wpdocs_test_nonce' ); ?>
 				<button type="submit" class="btn btn-ghost"><?php esc_html_e( '测试连接', 'wpdocs' ); ?></button>
 			</form>
-			<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=sync' ) ); ?>" style="display:inline">
+			<form method="post" action="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'tools', 'sync' ) ); ?>" style="display:inline">
 				<?php wp_nonce_field( 'wpdocs_sync', 'wpdocs_sync_nonce' ); ?>
 				<button type="submit" class="btn btn-primary"><?php esc_html_e( '更新索引', 'wpdocs' ); ?></button>
 			</form>
@@ -142,7 +142,7 @@ $mode_lab = array(
 			<p class="hint is-bad"><?php echo esc_html( $cat->get_error_message() ); ?></p>
 		<?php elseif ( ! Settings::is_configured() ) : ?>
 			<p class="hint"><?php esc_html_e( '还没配 Token。', 'wpdocs' ); ?>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-settings' ) ); ?>"><?php esc_html_e( '去设置', 'wpdocs' ); ?></a>
+				<a href="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'settings' ) ); ?>"><?php esc_html_e( '去设置', 'wpdocs' ); ?></a>
 			</p>
 		<?php endif; ?>
 		<?php
@@ -161,7 +161,7 @@ $mode_lab = array(
 
 	<?php else : /* keep */ ?>
 		<p class="section-desc"><?php esc_html_e( '正文留在 WordPress。把已绑定的 CocoBook 页一次性写入文章会覆盖正文。', 'wpdocs' ); ?></p>
-		<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=sync' ) ); ?>" id="wpdocs-import-cb-form">
+		<form method="post" action="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'tools', 'sync' ) ); ?>" id="wpdocs-import-cb-form">
 			<?php wp_nonce_field( 'wpdocs_import_cb', 'wpdocs_import_cb_nonce' ); ?>
 			<div class="wenpai-gate">
 				<label class="chk">
@@ -173,13 +173,13 @@ $mode_lab = array(
 				</div>
 			</div>
 		</form>
-		<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=sync' ) ); ?>" style="margin-top:12px">
+		<form method="post" action="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'tools', 'sync' ) ); ?>" style="margin-top:12px">
 			<?php wp_nonce_field( 'wpdocs_test', 'wpdocs_test_nonce' ); ?>
 			<button type="submit" class="btn btn-ghost" <?php disabled( ! Settings::is_configured() ); ?>><?php esc_html_e( '测试连接', 'wpdocs' ); ?></button>
 		</form>
 		<?php if ( ! Settings::is_configured() ) : ?>
 			<p class="hint"><?php esc_html_e( '导入需要 Token：设置 → 保留正文 → 开「高级」填 CocoBook 地址。', 'wpdocs' ); ?>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-settings&mode=advanced' ) ); ?>"><?php esc_html_e( '去设置', 'wpdocs' ); ?></a>
+				<a href="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'settings', '', 'mode=advanced' ) ); ?>"><?php esc_html_e( '去设置', 'wpdocs' ); ?></a>
 			</p>
 		<?php endif; ?>
 	<?php endif; ?>
