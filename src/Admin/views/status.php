@@ -1,6 +1,7 @@
 <?php
 /**
  * Overview (档 A：概览 = 现在怎样).
+ * 两卡：内容从哪来；探测与健康。配置去设置；动作去工具。
  *
  * @package Wpdocs
  * @var array<string,mixed> $st
@@ -50,11 +51,11 @@ $fmt_probe = static function ( array $p ) use ( $base_show ): string {
 	return sprintf( '%d · %dms', $code, $ms );
 };
 
-$refresh = '<a class="btn btn-ghost" href="' . esc_url( admin_url( 'admin.php?page=wpdocs&refresh=1' ) ) . '">' . esc_html__( '重新探测', 'wpdocs' ) . '</a>';
+$refresh = '<a class="btn btn-ghost" href="' . esc_url( \Wpdocs\Admin\Menu::url( 'overview', '', 'refresh=1' ) ) . '">' . esc_html__( '重新探测', 'wpdocs' ) . '</a>';
 
 View::page_head(
 	__( '概览', 'wpdocs' ),
-	__( '看现在怎样：内容从哪来、CocoBook 探测、绑定与跳转。配置去设置；动作去工具。', 'wpdocs' ),
+	__( '内容从哪来、连接是否通、绑定与跳转。配置去设置；动作去工具。', 'wpdocs' ),
 	$refresh
 );
 View::saved_notice();
@@ -77,86 +78,51 @@ foreach ( $git_repos as $gr ) {
 if ( Settings::CONTENT_GIT === $content && '' === $git_url ) :
 	$show_next = true;
 	?>
-	<div class="next">
-		<div class="tile accent"><?php echo View::icon( 'settings' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-		<div>
-			<strong><?php esc_html_e( '还没配 Forgejo', 'wpdocs' ); ?></strong>
-			<p class="d"><?php esc_html_e( '当前是 Git 写入。先在设置填写 Forgejo 地址、Token 与仓库。', 'wpdocs' ); ?></p>
-		</div>
-		<a class="btn btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-settings' ) ); ?>"><?php esc_html_e( '去设置', 'wpdocs' ); ?></a>
-	</div>
+	<?php
+		Wenpai_Admin_UI::next( array( 'icon_html' => View::icon( 'settings' ), 'state' => 'accent', 'title' => __( '还没配 Forgejo', 'wpdocs' ), 'desc' => __( '当前是 Git 写入。先在设置填写 Forgejo 地址、Token 与仓库。', 'wpdocs' ), 'actions' => array( array( 'label' => __( '去设置', 'wpdocs' ), 'variant' => 'primary', 'href' => \Wpdocs\Admin\Menu::url( 'settings' ) ) ) ) );
+		?>
 	<?php
 elseif ( Settings::CONTENT_GIT === $content && ! $git_has_repo && '' === (string) Settings::get( 'git_base_directory' ) ) :
 	$show_next = true;
 	?>
-	<div class="next">
-		<div class="tile accent"><?php echo View::icon( 'settings' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-		<div>
-			<strong><?php esc_html_e( '还没填仓库', 'wpdocs' ); ?></strong>
-			<p class="d"><?php esc_html_e( '填写 owner/name，再到工具 → 同步拉取。', 'wpdocs' ); ?></p>
-		</div>
-		<a class="btn btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-settings' ) ); ?>"><?php esc_html_e( '去设置', 'wpdocs' ); ?></a>
-	</div>
+	<?php
+		Wenpai_Admin_UI::next( array( 'icon_html' => View::icon( 'settings' ), 'state' => 'accent', 'title' => __( '还没填仓库', 'wpdocs' ), 'desc' => __( '填写 owner/name，再到工具 → 同步拉取。', 'wpdocs' ), 'actions' => array( array( 'label' => __( '去设置', 'wpdocs' ), 'variant' => 'primary', 'href' => \Wpdocs\Admin\Menu::url( 'settings' ) ) ) ) );
+		?>
 	<?php
 elseif ( Settings::CONTENT_KEEP === $content && $empty_maps ) :
 	$show_next = true;
 	?>
-	<div class="next">
-		<div class="tile accent"><?php echo View::icon( 'link' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-		<div>
-			<strong><?php esc_html_e( '还没有绑定或跳转', 'wpdocs' ); ?></strong>
-			<p class="d"><?php esc_html_e( '保留正文时，绑定用于一次性导入；跳转处理旧路径。', 'wpdocs' ); ?></p>
-		</div>
-		<a class="btn btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=bindings' ) ); ?>"><?php esc_html_e( '去工具', 'wpdocs' ); ?></a>
-	</div>
+	<?php
+		Wenpai_Admin_UI::next( array( 'icon_html' => View::icon( 'link' ), 'state' => 'accent', 'title' => __( '还没有绑定或跳转', 'wpdocs' ), 'desc' => __( '保留正文时，绑定用于一次性导入；跳转处理旧路径。', 'wpdocs' ), 'actions' => array( array( 'label' => __( '去工具', 'wpdocs' ), 'variant' => 'primary', 'href' => \Wpdocs\Admin\Menu::url( 'tools', 'bindings' ) ) ) ) );
+		?>
 	<?php
 elseif ( Settings::CONTENT_COCOBOOK === $content && ! $configured ) :
 	$show_next = true;
 	?>
-	<div class="next">
-		<div class="tile accent"><?php echo View::icon( 'settings' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-		<div>
-			<strong><?php esc_html_e( '还没连上 CocoBook', 'wpdocs' ); ?></strong>
-			<p class="d"><?php esc_html_e( '当前是文档站读取。先在设置填写地址与 Token。', 'wpdocs' ); ?></p>
-		</div>
-		<a class="btn btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-settings' ) ); ?>"><?php esc_html_e( '去设置', 'wpdocs' ); ?></a>
-	</div>
+	<?php
+		Wenpai_Admin_UI::next( array( 'icon_html' => View::icon( 'settings' ), 'state' => 'accent', 'title' => __( '还没连上 CocoBook', 'wpdocs' ), 'desc' => __( '当前是文档站读取。先在设置填写地址与 Token。', 'wpdocs' ), 'actions' => array( array( 'label' => __( '去设置', 'wpdocs' ), 'variant' => 'primary', 'href' => \Wpdocs\Admin\Menu::url( 'settings' ) ) ) ) );
+		?>
 	<?php
 elseif ( Settings::CONTENT_COCOBOOK === $content && $probe_failed ) :
 	$show_next = true;
 	?>
-	<div class="next">
-		<div class="tile bad"><?php echo View::icon( 'external' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-		<div>
-			<strong><?php esc_html_e( '暂时无法探测 CocoBook', 'wpdocs' ); ?></strong>
-			<p class="d"><?php esc_html_e( '请检查地址后重试。', 'wpdocs' ); ?></p>
-		</div>
-		<a class="btn btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs&refresh=1' ) ); ?>"><?php esc_html_e( '重新探测', 'wpdocs' ); ?></a>
-	</div>
+	<?php
+		Wenpai_Admin_UI::next( array( 'icon_html' => View::icon( 'external' ), 'state' => 'bad', 'title' => __( '暂时无法探测 CocoBook', 'wpdocs' ), 'desc' => __( '请检查地址后重试。', 'wpdocs' ), 'actions' => array( array( 'label' => __( '重新探测', 'wpdocs' ), 'variant' => 'primary', 'href' => \Wpdocs\Admin\Menu::url( 'overview', '', 'refresh=1' ) ) ) ) );
+		?>
 	<?php
 elseif ( Settings::CONTENT_COCOBOOK === $content && $empty_maps ) :
 	$show_next = true;
 	?>
-	<div class="next">
-		<div class="tile accent"><?php echo View::icon( 'link' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-		<div>
-			<strong><?php esc_html_e( '还没有绑定或跳转', 'wpdocs' ); ?></strong>
-			<p class="d"><?php esc_html_e( '在工具里添加绑定，或同步书目后按标签对应文章。', 'wpdocs' ); ?></p>
-		</div>
-		<a class="btn btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=bindings' ) ); ?>"><?php esc_html_e( '去工具', 'wpdocs' ); ?></a>
-	</div>
+	<?php
+		Wenpai_Admin_UI::next( array( 'icon_html' => View::icon( 'link' ), 'state' => 'accent', 'title' => __( '还没有绑定或跳转', 'wpdocs' ), 'desc' => __( '在工具里添加绑定，或同步书目后按标签对应文章。', 'wpdocs' ), 'actions' => array( array( 'label' => __( '去工具', 'wpdocs' ), 'variant' => 'primary', 'href' => \Wpdocs\Admin\Menu::url( 'tools', 'bindings' ) ) ) ) );
+		?>
 	<?php
 elseif ( Settings::CONTENT_COCOBOOK === $content && ! Settings::is_configured() && '' !== $base_show ) :
 	$show_next = true;
 	?>
-	<div class="next">
-		<div class="tile warn"><?php echo View::icon( 'plug' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-		<div>
-			<strong><?php esc_html_e( '还没填 API Token', 'wpdocs' ); ?></strong>
-			<p class="d"><?php esc_html_e( '搜索、同步书目和接口探测需要 Token ID 与 Secret。', 'wpdocs' ); ?></p>
-		</div>
-		<a class="btn btn-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-settings' ) ); ?>"><?php esc_html_e( '去设置', 'wpdocs' ); ?></a>
-	</div>
+	<?php
+		Wenpai_Admin_UI::next( array( 'icon_html' => View::icon( 'plug' ), 'state' => 'warn', 'title' => __( '还没填 API Token', 'wpdocs' ), 'desc' => __( '搜索、同步书目和接口探测需要 Token ID 与 Secret。', 'wpdocs' ), 'actions' => array( array( 'label' => __( '去设置', 'wpdocs' ), 'variant' => 'primary', 'href' => \Wpdocs\Admin\Menu::url( 'settings' ) ) ) ) );
+		?>
 	<?php
 endif;
 
@@ -181,27 +147,166 @@ if ( $drift_bad > 0 ) :
 			)
 		);
 	?></span>
-		<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpdocs-tools&section=bindings' ) ); ?>"><?php esc_html_e( '打开绑定', 'wpdocs' ); ?></a>
+		<a href="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'tools', 'bindings' ) ); ?>"><?php esc_html_e( '打开绑定', 'wpdocs' ); ?></a>
 	</div>
 	<?php
 endif;
+
+$mx  = \Wpdocs\Metrics::snapshot( $st );
+$cov = isset( $mx['bindings'] ) && is_array( $mx['bindings'] ) ? $mx['bindings'] : array();
+$ratio = $cov['ratio'] ?? null;
+$cov_detail = sprintf(
+	'%d / %d',
+	(int) ( $cov['active'] ?? 0 ),
+	(int) ( $cov['eligible'] ?? 0 )
+);
+if ( null !== $ratio ) {
+	$cov_detail .= ' · ' . (string) round( (float) $ratio * 100, 1 ) . '%';
+}
+$unm    = (int) ( $mx['redirects']['unmatched'] ?? 0 );
+$hist_n = (int) ( $mx['history']['days'] ?? 0 );
+$fail_r = $mx['probe']['fail_rate_14d'] ?? null;
+$samp   = (int) ( $mx['probe']['samples'] ?? 0 );
+$fail_detail = $samp > 0 && null !== $fail_r
+	? sprintf(
+		/* translators: 1: percent, 2: sample days */
+		__( '%1$s%% · %2$d 日样本', 'wpdocs' ),
+		(string) round( (float) $fail_r * 100, 1 ),
+		$samp
+	)
+	: __( '尚无日检样本', 'wpdocs' );
+
+$api = isset( $st['api'] ) && is_array( $st['api'] ) ? $st['api'] : array( 'skipped' => true );
+$show_coco_health = ( Settings::CONTENT_COCOBOOK === $content || Settings::CONTENT_KEEP === $content || '' !== $base_show );
+
+$api_skipped   = empty( $api ) || ! empty( $api['skipped'] ) || empty( $api['configured'] );
+$api_bad       = ! $api_skipped && empty( $api['ok'] );
+$probe_bad_n   = 0;
+$probe_skip_n  = 0;
+if ( '' !== $base_show && ! $home_ok ) {
+	++$probe_bad_n;
+}
+if ( '' !== $base_show && ! $site_ok ) {
+	++$probe_bad_n;
+}
+if ( $tree_skip ) {
+	++$probe_skip_n;
+} elseif ( '' !== $base_show && ! $tree_ok ) {
+	++$probe_bad_n;
+}
+if ( $api_skipped ) {
+	++$probe_skip_n;
+} elseif ( $api_bad ) {
+	++$probe_bad_n;
+}
+$probe_sum = sprintf( __( '逐项探测 · %d 项', 'wpdocs' ), 4 );
+if ( $probe_bad_n > 0 ) {
+	$probe_sum .= ' · ' . sprintf( __( '%d 异常', 'wpdocs' ), $probe_bad_n );
+} elseif ( $probe_skip_n > 0 ) {
+	$probe_sum .= ' · ' . sprintf( __( '%d 跳过', 'wpdocs' ), $probe_skip_n );
+}
 ?>
 
 <section class="card">
-	<h2 class="section-title"><?php esc_html_e( '现在怎样', 'wpdocs' ); ?></h2>
-	<p class="section-desc"><?php echo esc_html( sprintf( __( '版本 %s。发布树只读，不写 CocoBook。', 'wpdocs' ), WPDOCS_VERSION ) ); ?></p>
+	<h2 class="section-title"><?php esc_html_e( '内容从哪来', 'wpdocs' ); ?></h2>
+	<p class="section-desc"><?php echo esc_html( sprintf( __( '版本 %s。主路径只走一条。', 'wpdocs' ), WPDOCS_VERSION ) ); ?></p>
 	<?php
 	View::status_row(
 		array(
-			'title'      => __( 'CocoBook', 'wpdocs' ),
-			'detail'     => '' !== $base_show ? $base_show : __( '未填写', 'wpdocs' ),
-			'url'        => '' !== $base_show,
-			'icon'       => 'external',
-			'pill'       => $home_ok ? __( '已连接', 'wpdocs' ) : ( '' !== $base_show ? __( '探测失败', 'wpdocs' ) : __( '未连接', 'wpdocs' ) ),
-			'pill_class' => $home_ok ? 'ok' : ( '' !== $base_show ? 'bad' : 'warn' ),
-			'tile_class' => $home_ok ? 'ok' : ( '' !== $base_show ? 'bad' : 'warn' ),
+			'title'      => __( '主选择', 'wpdocs' ),
+			'detail'     => $mode_txt,
+			'icon'       => 'flash',
+			'pill'       => Settings::CONTENT_KEEP === $content ? __( '不换正文', 'wpdocs' ) : __( '已选用', 'wpdocs' ),
+			'pill_class' => Settings::CONTENT_KEEP === $content ? 'warn' : 'ok',
+			'tile_class' => Settings::CONTENT_KEEP === $content ? 'warn' : 'ok',
 		)
 	);
+	if ( Settings::CONTENT_GIT === $content ) {
+		$git_detail = '' !== $git_url ? $git_url : __( '未填写 Forgejo', 'wpdocs' );
+		if ( $git_has_repo ) {
+			foreach ( $git_repos as $gr ) {
+				if ( is_array( $gr ) && '' !== (string) ( $gr['username'] ?? '' ) && '' !== (string) ( $gr['repository'] ?? '' ) ) {
+					$git_detail = (string) $gr['username'] . '/' . (string) $gr['repository'];
+					break;
+				}
+			}
+		}
+		View::status_row(
+			array(
+				'title'      => __( '仓库', 'wpdocs' ),
+				'detail'     => $git_detail,
+				'icon'       => 'server',
+				'pill'       => $git_has_repo || '' !== (string) Settings::get( 'git_base_directory' ) ? __( '已配', 'wpdocs' ) : __( '待填', 'wpdocs' ),
+				'pill_class' => $git_has_repo || '' !== (string) Settings::get( 'git_base_directory' ) ? 'ok' : 'warn',
+				'tile_class' => $git_has_repo || '' !== (string) Settings::get( 'git_base_directory' ) ? 'ok' : 'warn',
+			)
+		);
+	} elseif ( '' !== $base_show || Settings::CONTENT_COCOBOOK === $content ) {
+		View::status_row(
+			array(
+				'title'      => __( 'CocoBook', 'wpdocs' ),
+				'detail'     => '' !== $base_show ? $base_show : __( '未填写', 'wpdocs' ),
+				'url'        => '' !== $base_show,
+				'icon'       => 'external',
+				'pill'       => $home_ok ? __( '已连接', 'wpdocs' ) : ( '' !== $base_show ? __( '探测失败', 'wpdocs' ) : __( '未连接', 'wpdocs' ) ),
+				'pill_class' => $home_ok ? 'ok' : ( '' !== $base_show ? 'bad' : 'warn' ),
+				'tile_class' => $home_ok ? 'ok' : ( '' !== $base_show ? 'bad' : 'warn' ),
+			)
+		);
+	}
+	View::status_row(
+		array(
+			'title'      => __( '绑定', 'wpdocs' ),
+			'detail'     => $cov_detail,
+			'icon'       => 'link',
+			'pill'       => $bind_n > 0 ? __( '已有', 'wpdocs' ) : __( '空', 'wpdocs' ),
+			'pill_class' => $bind_n > 0 ? 'ok' : 'warn',
+			'tile_class' => $bind_n > 0 ? 'ok' : 'warn',
+		)
+	);
+	View::status_row(
+		array(
+			'title'      => __( '跳转', 'wpdocs' ),
+			'detail'     => $hist_n > 0
+				? sprintf(
+					/* translators: 1: redirect count, 2: unmatched */
+					__( '%1$d 条 · 未匹配 %2$d', 'wpdocs' ),
+					$redir_n,
+					$unm
+				)
+				: (string) $redir_n,
+			'icon'       => 'share',
+			'pill'       => $redir_n > 0 ? ( $unm > 0 ? __( '有缺口', 'wpdocs' ) : __( '已有', 'wpdocs' ) ) : __( '空', 'wpdocs' ),
+			'pill_class' => $redir_n > 0 && $unm <= 0 ? 'ok' : 'warn',
+			'tile_class' => $redir_n > 0 && $unm <= 0 ? 'ok' : 'warn',
+		)
+	);
+	?>
+	<div class="wenpai-actions">
+		<a class="btn btn-ghost" href="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'settings' ) ); ?>"><?php esc_html_e( '打开设置', 'wpdocs' ); ?></a>
+		<a class="btn btn-ghost" href="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'tools' ) ); ?>"><?php esc_html_e( '打开工具', 'wpdocs' ); ?></a>
+	</div>
+</section>
+
+<?php if ( $show_coco_health ) : ?>
+<section class="card wpdocs-status-stack">
+	<h2 class="section-title"><?php esc_html_e( '探测与健康', 'wpdocs' ); ?></h2>
+	<p class="section-desc"><?php esc_html_e( '发布树只读，不写 CocoBook。', 'wpdocs' ); ?></p>
+	<?php
+	View::status_row(
+		array(
+			'title'      => __( '探测失败率', 'wpdocs' ),
+			'detail'     => $fail_detail,
+			'icon'       => 'server',
+			'pill'       => null !== $fail_r && (float) $fail_r > 0.2 ? __( '偏高', 'wpdocs' ) : ( $samp > 0 ? __( '正常', 'wpdocs' ) : __( '等待', 'wpdocs' ) ),
+			'pill_class' => null !== $fail_r && (float) $fail_r > 0.2 ? 'bad' : ( $samp > 0 ? 'ok' : 'warn' ),
+			'tile_class' => null !== $fail_r && (float) $fail_r > 0.2 ? 'bad' : ( $samp > 0 ? 'ok' : 'warn' ),
+		)
+	);
+	?>
+	<details<?php echo $probe_bad_n > 0 ? ' open' : ''; ?>>
+		<summary><?php echo esc_html( $probe_sum ); ?></summary>
+	<?php
 	View::status_row(
 		array(
 			'title'      => __( '首页', 'wpdocs' ),
@@ -245,11 +350,10 @@ endif;
 			)
 		);
 	}
-	$api = isset( $st['api'] ) && is_array( $st['api'] ) ? $st['api'] : array( 'skipped' => true );
-	if ( empty( $api ) || ! empty( $api['skipped'] ) || empty( $api['configured'] ) ) {
+	if ( $api_skipped ) {
 		View::status_row(
 			array(
-				'title'      => __( 'CocoBook 接口', 'wpdocs' ),
+				'title'      => __( '接口', 'wpdocs' ),
 				'detail'     => __( '未配置 Token，搜索与同步不可用', 'wpdocs' ),
 				'icon'       => 'plug',
 				'pill'       => __( '已跳过', 'wpdocs' ),
@@ -267,7 +371,7 @@ endif;
 			: ( '' !== $api_err ? sprintf( '%s · %dms', $api_err, $api_ms ) : sprintf( '%dms', $api_ms ) );
 		View::status_row(
 			array(
-				'title'      => __( 'CocoBook 接口', 'wpdocs' ),
+				'title'      => __( '接口', 'wpdocs' ),
 				'detail'     => $detail,
 				'icon'       => 'plug',
 				'pill'       => $api_ok ? __( '已连接', 'wpdocs' ) : __( '探测失败', 'wpdocs' ),
@@ -276,95 +380,7 @@ endif;
 			)
 		);
 	}
-	View::status_row(
-		array(
-			'title'      => __( '内容从哪来', 'wpdocs' ),
-			'detail'     => $mode_txt,
-			'icon'       => 'flash',
-			'pill'       => Settings::CONTENT_KEEP === $content ? __( '不换正文', 'wpdocs' ) : __( '已选用', 'wpdocs' ),
-			'pill_class' => Settings::CONTENT_KEEP === $content ? 'warn' : 'ok',
-			'tile_class' => Settings::CONTENT_KEEP === $content ? 'warn' : 'ok',
-		)
-	);
-	View::status_row(
-		array(
-			'title'      => __( '绑定', 'wpdocs' ),
-			'detail'     => (string) $bind_n,
-			'icon'       => 'link',
-			'pill'       => $bind_n > 0 ? __( '已有', 'wpdocs' ) : __( '空', 'wpdocs' ),
-			'pill_class' => $bind_n > 0 ? 'ok' : 'warn',
-			'tile_class' => $bind_n > 0 ? 'ok' : 'warn',
-		)
-	);
-	View::status_row(
-		array(
-			'title'      => __( '跳转', 'wpdocs' ),
-			'detail'     => (string) $redir_n,
-			'icon'       => 'share',
-			'pill'       => $redir_n > 0 ? __( '已有', 'wpdocs' ) : __( '空', 'wpdocs' ),
-			'pill_class' => $redir_n > 0 ? 'ok' : 'warn',
-			'tile_class' => $redir_n > 0 ? 'ok' : 'warn',
-		)
-	);
-	$mx = \Wpdocs\Metrics::snapshot( $st );
-	$cov = isset( $mx['bindings'] ) && is_array( $mx['bindings'] ) ? $mx['bindings'] : array();
-	$ratio = $cov['ratio'] ?? null;
-	$cov_detail = sprintf(
-		'%d / %d',
-		(int) ( $cov['active'] ?? 0 ),
-		(int) ( $cov['eligible'] ?? 0 )
-	);
-	if ( null !== $ratio ) {
-		$cov_detail .= ' · ' . (string) round( (float) $ratio * 100, 1 ) . '%';
-	}
-	View::status_row(
-		array(
-			'title'      => __( '绑定覆盖', 'wpdocs' ),
-			'detail'     => $cov_detail,
-			'icon'       => 'link',
-			'pill'       => null !== $ratio && (float) $ratio >= 0.5 ? __( '过半', 'wpdocs' ) : __( '偏低', 'wpdocs' ),
-			'pill_class' => null !== $ratio && (float) $ratio >= 0.5 ? 'ok' : 'warn',
-			'tile_class' => null !== $ratio && (float) $ratio >= 0.5 ? 'ok' : 'warn',
-		)
-	);
-	$unm = (int) ( $mx['redirects']['unmatched'] ?? 0 );
-	$hist_n = (int) ( $mx['history']['days'] ?? 0 );
-	View::status_row(
-		array(
-			'title'      => __( '未匹配 404', 'wpdocs' ),
-			'detail'     => $hist_n > 0
-				? sprintf(
-					/* translators: 1: unmatched count, 2: history days */
-					__( '%1$d 条 · 已记 %2$d 日', 'wpdocs' ),
-					$unm,
-					$hist_n
-				)
-				: (string) $unm,
-			'icon'       => 'share',
-			'pill'       => $unm > 0 ? __( '待处理', 'wpdocs' ) : __( '干净', 'wpdocs' ),
-			'pill_class' => $unm > 0 ? 'warn' : 'ok',
-			'tile_class' => $unm > 0 ? 'warn' : 'ok',
-		)
-	);
-	$fail_r = $mx['probe']['fail_rate_14d'] ?? null;
-	$samp   = (int) ( $mx['probe']['samples'] ?? 0 );
-	$fail_detail = $samp > 0 && null !== $fail_r
-		? sprintf(
-			/* translators: 1: percent, 2: sample days */
-			__( '%1$s%% · %2$d 日样本', 'wpdocs' ),
-			(string) round( (float) $fail_r * 100, 1 ),
-			$samp
-		)
-		: __( '尚无日检样本', 'wpdocs' );
-	View::status_row(
-		array(
-			'title'      => __( '探测失败率', 'wpdocs' ),
-			'detail'     => $fail_detail,
-			'icon'       => 'server',
-			'pill'       => null !== $fail_r && (float) $fail_r > 0.2 ? __( '偏高', 'wpdocs' ) : ( $samp > 0 ? __( '正常', 'wpdocs' ) : __( '等待', 'wpdocs' ) ),
-			'pill_class' => null !== $fail_r && (float) $fail_r > 0.2 ? 'bad' : ( $samp > 0 ? 'ok' : 'warn' ),
-			'tile_class' => null !== $fail_r && (float) $fail_r > 0.2 ? 'bad' : ( $samp > 0 ? 'ok' : 'warn' ),
-		)
-	);
 	?>
+	</details>
 </section>
+<?php endif; ?>

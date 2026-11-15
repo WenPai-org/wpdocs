@@ -26,6 +26,31 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class Menu {
 
+	/**
+	 * Build a canonical URL for the single settings page.
+	 *
+	 * Legacy page slugs remain registered as hidden callbacks, but new links
+	 * always use the wpdocs page with tab/section arguments.
+	 */
+	public static function url( string $tab = 'overview', string $section = '', string $query = '' ): string {
+		$args = array();
+		if ( '' !== $tab && 'overview' !== $tab ) {
+			$args['tab'] = $tab;
+		}
+		if ( '' !== $section ) {
+			$args['section'] = $section;
+		}
+		if ( '' !== $query ) {
+			$extra = array();
+			parse_str( ltrim( $query, '&' ), $extra );
+			$args = array_merge( $args, $extra );
+		}
+		if ( class_exists( \Wenpai_Admin_Menu::class, false ) ) {
+			return \Wenpai_Admin_Menu::url( 'wpdocs', $args );
+		}
+		return add_query_arg( array_merge( array( 'page' => 'wpdocs' ), $args ), admin_url( 'options-general.php' ) );
+	}
+
 	public static function register(): void {
 		add_action( 'admin_menu', array( self::class, 'menu' ) );
 		add_action( 'admin_enqueue_scripts', array( self::class, 'assets' ) );
@@ -36,39 +61,68 @@ final class Menu {
 	}
 
 	/**
-	 * null-parent 帮助页没有 submenu 标题；补进 document title。
+	 * Null-parent legacy pages have no submenu title; restore the document title.
 	 *
 	 * @param string $admin_title Full title (already includes site name).
 	 * @param string $title       Page title segment (may be empty).
 	 */
 	public static function help_admin_title( $admin_title, $title ) {
-		if ( ! isset( $_GET['page'] ) || 'wpdocs-help' !== $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			return $admin_title;
-		}
 		if ( is_string( $title ) && '' !== $title ) {
 			return $admin_title;
 		}
-		$help = __( '帮助', 'wpdocs' );
-		return is_string( $admin_title ) ? ( $help . $admin_title ) : $help;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only page slug.
+		$page = isset( $_GET['page'] ) ? sanitize_key( (string) wp_unslash( $_GET['page'] ) ) : '';
+		$labels = array(
+			'wpdocs-settings'  => __( '设置', 'wpdocs' ),
+			'wpdocs-tools'     => __( '工具', 'wpdocs' ),
+			'wpdocs-bindings'  => __( '绑定', 'wpdocs' ),
+			'wpdocs-redirects' => __( '跳转', 'wpdocs' ),
+			'wpdocs-help'      => __( '帮助', 'wpdocs' ),
+		);
+		if ( ! isset( $labels[ $page ] ) ) {
+			return $admin_title;
+		}
+		return is_string( $admin_title ) ? ( $labels[ $page ] . $admin_title ) : $labels[ $page ];
 	}
 
 	public static function menu(): void {
-		add_menu_page(
-			__( '文派文档', 'wpdocs' ),
-			__( '文派文档', 'wpdocs' ),
-			'manage_options',
-			'wpdocs',
-			array( self::class, 'render_status' ),
-			'dashicons-book-alt',
-			58
-		);
-		add_submenu_page( 'wpdocs', __( '概览', 'wpdocs' ), __( '概览', 'wpdocs' ), 'manage_options', 'wpdocs', array( self::class, 'render_status' ) );
-		add_submenu_page( 'wpdocs', __( '设置', 'wpdocs' ), __( '设置', 'wpdocs' ), 'manage_options', 'wpdocs-settings', array( self::class, 'render_settings' ) );
-		add_submenu_page( 'wpdocs', __( '工具', 'wpdocs' ), __( '工具', 'wpdocs' ), 'manage_options', 'wpdocs-tools', array( self::class, 'render_tools' ) );
-		// Deep links keep working; not listed under parent (档 A：横 Tab 只有概览/设置/工具).
+		if ( class_exists( \Wenpai_Admin_Menu::class, false ) ) {
+			\Wenpai_Admin_Menu::register(
+				array(
+					'slug'   => 'wpdocs',
+					'label'  => __( '文档', 'wpdocs' ),
+					'title'  => __( '文派文档', 'wpdocs' ),
+					'render' => array( self::class, 'render_page' ),
+				)
+			);
+		} else {
+			add_options_page( __( '文派文档', 'wpdocs' ), __( '文档', 'wpdocs' ), 'manage_options', 'wpdocs', array( self::class, 'render_page' ) );
+		}
+
+		// Legacy deep links keep working without adding visible menu entries.
+		add_submenu_page( '', __( '设置', 'wpdocs' ), __( '设置', 'wpdocs' ), 'manage_options', 'wpdocs-settings', array( self::class, 'render_settings' ) );
+		add_submenu_page( '', __( '工具', 'wpdocs' ), __( '工具', 'wpdocs' ), 'manage_options', 'wpdocs-tools', array( self::class, 'render_tools' ) );
 		add_submenu_page( '', __( '绑定', 'wpdocs' ), __( '绑定', 'wpdocs' ), 'manage_options', 'wpdocs-bindings', array( self::class, 'render_bindings' ) );
 		add_submenu_page( '', __( '跳转', 'wpdocs' ), __( '跳转', 'wpdocs' ), 'manage_options', 'wpdocs-redirects', array( self::class, 'render_redirects' ) );
 		add_submenu_page( '', __( '帮助', 'wpdocs' ), __( '帮助', 'wpdocs' ), 'manage_options', 'wpdocs-help', array( self::class, 'render_help' ) );
+	}
+
+	public static function render_page(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only route.
+		$tab = isset( $_GET['tab'] ) ? sanitize_key( (string) wp_unslash( $_GET['tab'] ) ) : 'overview';
+		if ( 'settings' === $tab ) {
+			self::render_settings();
+			return;
+		}
+		if ( 'tools' === $tab ) {
+			self::render_tools();
+			return;
+		}
+		if ( 'help' === $tab ) {
+			self::render_help();
+			return;
+		}
+		self::render_status();
 	}
 
 	public static function assets( string $hook ): void {
@@ -114,35 +168,35 @@ final class Menu {
 			'slug'               => 'wpdocs',
 			'name'               => __( '文派文档', 'wpdocs' ),
 			'mark_html'          => $mark,
-			'home_url'           => admin_url( 'admin.php?page=wpdocs' ),
+			'home_url'           => self::url( 'overview' ),
 			'current'            => $current,
 			'tabs'               => array(
 				array(
 					'id'        => 'overview',
 					'label'     => __( '概览', 'wpdocs' ),
-					'url'       => admin_url( 'admin.php?page=wpdocs' ),
+					'url'       => self::url( 'overview' ),
 					'icon_html' => $icon( 'status' ),
 				),
 				array(
 					'id'        => 'settings',
 					'label'     => __( '设置', 'wpdocs' ),
-					'url'       => admin_url( 'admin.php?page=wpdocs-settings' ),
+					'url'       => self::url( 'settings' ),
 					'icon_html' => $icon( 'settings' ),
 				),
 				array(
 					'id'        => 'tools',
 					'label'     => __( '工具', 'wpdocs' ),
-					'url'       => admin_url( 'admin.php?page=wpdocs-tools' ),
+					'url'       => self::url( 'tools' ),
 					'icon_html' => $icon( 'tools' ),
 				),
 			),
-			'help_url'           => admin_url( 'admin.php?page=wpdocs-help' ),
+			'help_url'           => self::url( 'help' ),
 			'help_label'         => __( '帮助', 'wpdocs' ),
 			'help_icon_html'     => $icon( 'help' ),
 			'feedback_url'       => 'https://wpcy.com/support',
 			'feedback_label'     => __( '反馈', 'wpdocs' ),
 			'feedback_icon_html' => $icon( 'feedback' ),
-			'version'            => 'wpdocs ' . WPDOCS_VERSION,
+			'version'            => __( '文派文档', 'wpdocs' ) . ' ' . WPDOCS_VERSION,
 			'doc_url'            => 'https://wpcy.com/document',
 			'doc_label'          => __( '文档', 'wpdocs' ),
 		);
@@ -176,26 +230,27 @@ final class Menu {
 			$input = isset( $_POST['wpdocs'] ) && is_array( $_POST['wpdocs'] ) ? wp_unslash( $_POST['wpdocs'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			Settings::save( is_array( $input ) ? $input : array() );
 			\Wpdocs\Publish\HttpSource::bust_status_cache();
+			Client::mark_stale( 'admin-books' );
 			$mode = isset( $_POST['wpdocs_mode'] ) && 'advanced' === sanitize_key( (string) wp_unslash( $_POST['wpdocs_mode'] ) ) ? '&mode=advanced' : '';
-			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-settings&updated=1' . $mode ) );
+			wp_safe_redirect( self::url( 'settings', '', 'updated=1' . $mode ) );
 			exit;
 		}
 		if ( isset( $_POST['wpdocs_test_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_test_nonce'] ) ), 'wpdocs_test' ) ) {
 			Client::$force = true;
 			$res = Client::get( 'system' );
 			$ok  = ! is_wp_error( $res );
-			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-tools&section=sync&msg=' . ( $ok ? 'test_ok' : 'test_error' ) ) );
+			wp_safe_redirect( self::url( 'tools', 'sync', 'msg=' . ( $ok ? 'test_ok' : 'test_error' ) ) );
 			exit;
 		}
 		if ( isset( $_POST['wpdocs_sync_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_sync_nonce'] ) ), 'wpdocs_sync' ) ) {
 			$cat = Core::sync_now();
 			$ok  = ! is_wp_error( $cat );
-			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-tools&section=sync&msg=' . ( $ok ? 'synced' : 'sync_error' ) ) );
+			wp_safe_redirect( self::url( 'tools', 'sync', 'msg=' . ( $ok ? 'synced' : 'sync_error' ) ) );
 			exit;
 		}
 		if ( isset( $_POST['wpdocs_import_cb_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_import_cb_nonce'] ) ), 'wpdocs_import_cb' ) ) {
 			if ( empty( $_POST['wpdocs_import_confirm'] ) ) {
-				wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-tools&section=sync&msg=import_error' ) );
+				wp_safe_redirect( self::url( 'tools', 'sync', 'msg=import_error' ) );
 				exit;
 			}
 			$stats = CocoBookImport::run();
@@ -213,7 +268,7 @@ final class Menu {
 					)
 				)
 			);
-			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-tools&section=sync&msg=' . ( $ok ? 'imported' : ( $stats['ok'] > 0 ? 'imported_partial' : 'import_error' ) ) ) );
+			wp_safe_redirect( self::url( 'tools', 'sync', 'msg=' . ( $ok ? 'imported' : ( $stats['ok'] > 0 ? 'imported_partial' : 'import_error' ) ) ) );
 			exit;
 		}
 		if ( isset( $_POST['wpdocs_git_pull_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_git_pull_nonce'] ) ), 'wpdocs_git_pull' ) ) {
@@ -235,13 +290,13 @@ final class Menu {
 					$ok = false;
 				}
 			}
-			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-tools&section=sync&msg=' . ( $ok ? 'git_ok' : 'git_error' ) ) );
+			wp_safe_redirect( self::url( 'tools', 'sync', 'msg=' . ( $ok ? 'git_ok' : 'git_error' ) ) );
 			exit;
 		}
 		if ( isset( $_POST['wpdocs_git_sync_local_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_git_sync_local_nonce'] ) ), 'wpdocs_git_sync_local' ) ) {
 			$res = GitEngine::sync_local( ! empty( $_POST['wpdocs_git_force'] ) );
 			$ok  = ! is_wp_error( $res );
-			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-tools&section=sync&msg=' . ( $ok ? 'git_local' : 'git_error' ) ) );
+			wp_safe_redirect( self::url( 'tools', 'sync', 'msg=' . ( $ok ? 'git_local' : 'git_error' ) ) );
 			exit;
 		}
 
@@ -258,7 +313,7 @@ final class Menu {
 			}
 			$q    = $ok ? 'updated=1' : 'error=1';
 			$mode = isset( $_POST['wpdocs_mode'] ) && 'advanced' === sanitize_key( (string) wp_unslash( $_POST['wpdocs_mode'] ) ) ? '&mode=advanced' : '';
-			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-tools&section=bindings&' . $q . $mode ) );
+			wp_safe_redirect( self::url( 'tools', 'bindings', $q . $mode ) );
 			exit;
 		}
 
@@ -288,7 +343,7 @@ final class Menu {
 			if ( $filt && in_array( $filt, RedirectRepo::statuses(), true ) ) {
 				$q .= '&status=' . rawurlencode( $filt );
 			}
-			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-tools&section=redirects&' . $q . $mode ) );
+			wp_safe_redirect( self::url( 'tools', 'redirects', $q . $mode ) );
 			exit;
 		}
 
@@ -313,7 +368,7 @@ final class Menu {
 				if ( $client ) {
 					$probe = $client->page( $page_id );
 					if ( empty( $probe['ok'] ) ) {
-						wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-tools&section=bindings&error=1' . $mode ) );
+						wp_safe_redirect( self::url( 'tools', 'bindings', 'error=1' . $mode ) );
 						exit;
 					}
 					$data = isset( $probe['data'] ) && is_array( $probe['data'] ) ? $probe['data'] : array();
@@ -341,7 +396,7 @@ final class Menu {
 				RemoteMeta::bust( $page_id );
 			}
 			$q = $id ? 'updated=1' : 'error=1';
-			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-tools&section=bindings&' . $q . $mode ) );
+			wp_safe_redirect( self::url( 'tools', 'bindings', $q . $mode ) );
 			exit;
 		}
 		if ( isset( $_POST['wpdocs_redir_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_redir_nonce'] ) ), 'wpdocs_redir' ) ) {
@@ -361,7 +416,7 @@ final class Menu {
 			if ( isset( $_POST['wpdocs_mode'] ) && 'advanced' === sanitize_key( (string) wp_unslash( $_POST['wpdocs_mode'] ) ) ) {
 				$mode = '&mode=advanced';
 			}
-			wp_safe_redirect( admin_url( 'admin.php?page=wpdocs-tools&section=redirects&' . $q . $mode ) );
+			wp_safe_redirect( self::url( 'tools', 'redirects', $q . $mode ) );
 			exit;
 		}
 	}
@@ -429,9 +484,8 @@ final class Menu {
 			$filter = isset( $_GET['filter'] ) ? sanitize_key( (string) wp_unslash( $_GET['filter'] ) ) : '';
 			$items  = RedirectRepo::list( $filter );
 		} elseif ( 'sync' === $section ) {
-			$s     = Settings::raw();
-			$books = Settings::is_configured() ? Client::get( 'books', array( 'count' => 500, 'sort' => 'name' ) ) : null;
-			$cat   = Settings::is_configured() ? Catalog::get() : null;
+			$s   = Settings::raw();
+			$cat = Settings::is_configured() ? Catalog::get() : null;
 			$log   = Legacy::get_option( 'wpdocs_log', array() );
 			$log   = is_array( $log ) ? array_reverse( $log ) : array();
 		}
@@ -443,17 +497,17 @@ final class Menu {
 				array(
 					'id'    => 'bindings',
 					'label' => __( '绑定', 'wpdocs' ),
-					'url'   => admin_url( 'admin.php?page=wpdocs-tools&section=bindings' ),
+					'url'   => self::url( 'tools', 'bindings' ),
 				),
 				array(
 					'id'    => 'redirects',
 					'label' => __( '跳转', 'wpdocs' ),
-					'url'   => admin_url( 'admin.php?page=wpdocs-tools&section=redirects' ),
+					'url'   => self::url( 'tools', 'redirects' ),
 				),
 				array(
 					'id'    => 'sync',
 					'label' => __( '同步', 'wpdocs' ),
-					'url'   => admin_url( 'admin.php?page=wpdocs-tools&section=sync' ),
+					'url'   => self::url( 'tools', 'sync' ),
 				),
 			)
 		);
@@ -488,10 +542,29 @@ final class Menu {
 			return;
 		}
 		$s     = Settings::raw();
-		$books = Settings::is_configured() ? Client::get( 'books', array( 'count' => 500, 'sort' => 'name' ) ) : null;
+		$books = self::books_list();
 		self::open_shell( 'settings' );
 		include WPDOCS_DIR . 'src/Admin/views/settings.php';
 		self::close_shell( 'settings' );
+	}
+
+	/**
+	 * Books list for settings checkgroup — cached; remote fetch only on miss/expiry.
+	 * Books change rarely, so the TTL is long; a settings save marks it stale.
+	 *
+	 * @return array<string,mixed>|\WP_Error|null
+	 */
+	private static function books_list() {
+		if ( ! Settings::is_configured() ) {
+			return null;
+		}
+		return Client::remember(
+			'admin-books',
+			3600,
+			static function () {
+				return Client::get( 'books', array( 'count' => 500, 'sort' => 'name' ) );
+			}
+		);
 	}
 
 	public static function render_help(): void {

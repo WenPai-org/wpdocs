@@ -32,7 +32,7 @@ if ( ! $embed ) {
 }
 if ( $adv ) :
 	?>
-	<div class="notice info" data-for-mode="advanced"><span><?php esc_html_e( '启用时若跳转表为空且存在旧跳转表，会一次性导入。目标用文档页 ID，不写死网址。', 'wpdocs' ); ?></span></div>
+	<div class="notice info"><span><?php esc_html_e( '启用时若跳转表为空且存在旧跳转表，会一次性导入。目标用文档页 ID，不写死网址。', 'wpdocs' ); ?></span></div>
 	<?php
 endif;
 ?>
@@ -89,7 +89,15 @@ endif;
 		$dry_ctl .= '<input id="dry-run-path" type="text" placeholder="/old-post/" autocomplete="off" />';
 		$dry_ctl .= '<button type="button" class="btn btn-ghost" data-wpdocs-dry-run>' . View::icon( 'eye' ) . esc_html__( '试一下', 'wpdocs' ) . '</button>';
 		$dry_ctl .= '</div><p class="hint d">' . esc_html__( '只告诉你会不会跳、跳到哪。不真跳、不改表。', 'wpdocs' ) . '</p>';
-		$dry_ctl .= '<div class="preview-out" data-dry-run-out hidden></div>';
+		$dry_ctl .= Wenpai_Admin_UI::preview_html(
+			array(
+				'variant' => 'line',
+				'attrs'   => array(
+					'hidden'             => true,
+					'data-dry-run-out'   => '',
+				),
+			)
+		);
 		View::field(
 			array(
 				'for'      => 'dry-run-path',
@@ -109,31 +117,42 @@ endif;
 			<h2 class="section-title"><?php esc_html_e( '已有映射', 'wpdocs' ); ?></h2>
 			<p class="section-desc"><?php esc_html_e( '点「编辑」回填上方表单。删除前先勾确认门。', 'wpdocs' ); ?></p>
 		</div>
-		<form method="get" class="wpdocs-filter">
-			<input type="hidden" name="page" value="wpdocs-tools" />
-			<input type="hidden" name="section" value="redirects" />
-			<?php if ( $adv ) : ?>
-				<input type="hidden" name="mode" value="advanced" />
-			<?php endif; ?>
-			<label class="sr-only" for="redir-filter"><?php esc_html_e( '按状态筛选', 'wpdocs' ); ?></label>
-			<select id="redir-filter" name="filter" onchange="this.form.submit()">
-				<option value="" <?php selected( $filter, '' ); ?>><?php esc_html_e( '全部', 'wpdocs' ); ?></option>
-				<option value="matched" <?php selected( $filter, 'matched' ); ?>><?php esc_html_e( '已匹配', 'wpdocs' ); ?></option>
-				<option value="gone" <?php selected( $filter, 'gone' ); ?>><?php esc_html_e( '已下线', 'wpdocs' ); ?></option>
-				<option value="unmatched" <?php selected( $filter, 'unmatched' ); ?>><?php esc_html_e( '未匹配', 'wpdocs' ); ?></option>
-				<option value="pending" <?php selected( $filter, 'pending' ); ?>><?php esc_html_e( '待处理', 'wpdocs' ); ?></option>
-			</select>
-		</form>
+		<?php
+		$redir_hidden = array(
+			'tab'     => 'tools',
+			'section' => 'redirects',
+		);
+		if ( $adv ) {
+			$redir_hidden['mode'] = 'advanced';
+		}
+		echo Wenpai_Admin_UI::list_bar_html(
+			array(
+				'page'    => 'wpdocs',
+				'hidden'  => $redir_hidden,
+				'filters' => array(
+					array(
+						'name'    => 'filter',
+						'label'   => __( '按状态筛选', 'wpdocs' ),
+						'current' => $filter,
+						'options' => array(
+							''          => __( '全部', 'wpdocs' ),
+							'matched'   => __( '已匹配', 'wpdocs' ),
+							'gone'      => __( '已下线', 'wpdocs' ),
+							'unmatched' => __( '未匹配', 'wpdocs' ),
+							'pending'   => __( '待处理', 'wpdocs' ),
+						),
+					),
+				),
+			)
+		); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- kit-escaped.
+		?>
 	</div>
 	<?php if ( array() === $items ) : ?>
-		<p class="empty"><?php esc_html_e( '还没有路径映射。保存上方表单后会出现在这里。', 'wpdocs' ); ?></p>
+		<?php echo Wenpai_Admin_UI::empty_state_html( array( 'text' => __( '还没有路径映射。保存上方表单后会出现在这里。', 'wpdocs' ) ) ); ?>
 	<?php else : ?>
-		<div class="wenpai-gate">
-			<label>
-				<input type="checkbox" />
-				<span><?php esc_html_e( '我确认要删除下方映射行。', 'wpdocs' ); ?></span>
-			</label>
-		</div>
+		<?php
+echo Wenpai_Admin_UI::gate_html( array( 'label' => __( '我确认要删除下方映射行。', 'wpdocs' ) ) );
+?>
 		<table class="tbl">
 			<thead>
 				<tr>
@@ -169,36 +188,30 @@ endif;
 						<td><?php echo '' !== $title ? esc_html( $title ) : '—'; ?></td>
 					<?php endif; ?>
 					<td><?php echo $page > 0 ? '#' . $page : '—'; ?></td>
-					<td><span class="pill <?php echo esc_attr( $pill['class'] ); ?>"><?php echo esc_html( $pill['label'] ); ?></span></td>
-					<td class="wpdocs-row-actions">
-						<button type="button" class="btn btn-ghost" data-wpdocs-fill="<?php echo esc_attr( (string) $fill ); ?>"><?php esc_html_e( '编辑', 'wpdocs' ); ?></button>
-						<?php if ( 'matched' !== $st ) : ?>
-							<form method="post" class="wpdocs-inline-form">
-								<?php wp_nonce_field( 'wpdocs_redir_row', 'wpdocs_redir_row_nonce' ); ?>
-								<input type="hidden" name="wpdocs_redir_row_id" value="<?php echo $row_id; ?>" />
-								<input type="hidden" name="wpdocs_redir_row_action" value="matched" />
-								<?php if ( $adv ) : ?><input type="hidden" name="wpdocs_mode" value="advanced" /><?php endif; ?>
-								<?php if ( '' !== $filter ) : ?><input type="hidden" name="wpdocs_redir_filter" value="<?php echo esc_attr( $filter ); ?>" /><?php endif; ?>
-								<button type="submit" class="btn btn-ghost"><?php esc_html_e( '启用', 'wpdocs' ); ?></button>
-							</form>
-						<?php else : ?>
-							<form method="post" class="wpdocs-inline-form">
-								<?php wp_nonce_field( 'wpdocs_redir_row', 'wpdocs_redir_row_nonce' ); ?>
-								<input type="hidden" name="wpdocs_redir_row_id" value="<?php echo $row_id; ?>" />
-								<input type="hidden" name="wpdocs_redir_row_action" value="gone" />
-								<?php if ( $adv ) : ?><input type="hidden" name="wpdocs_mode" value="advanced" /><?php endif; ?>
-								<?php if ( '' !== $filter ) : ?><input type="hidden" name="wpdocs_redir_filter" value="<?php echo esc_attr( $filter ); ?>" /><?php endif; ?>
-								<button type="submit" class="btn btn-ghost"><?php esc_html_e( '下线', 'wpdocs' ); ?></button>
-							</form>
-						<?php endif; ?>
-						<form method="post" class="wpdocs-inline-form">
-							<?php wp_nonce_field( 'wpdocs_redir_row', 'wpdocs_redir_row_nonce' ); ?>
-							<input type="hidden" name="wpdocs_redir_row_id" value="<?php echo $row_id; ?>" />
-							<input type="hidden" name="wpdocs_redir_row_action" value="delete" />
+					<td><?php echo Wenpai_Admin_UI::pill_html( array( 'state' => $pill['class'], 'text' => $pill['label'] ) ); ?></td>
+					<td>
+						<?php
+						$redir_row_form = static function ( $action, $label ) use ( $row_id, $adv, $filter ) {
+							ob_start();
+							wp_nonce_field( 'wpdocs_redir_row', 'wpdocs_redir_row_nonce' );
+							?>
+							<input type="hidden" name="wpdocs_redir_row_id" value="<?php echo (int) $row_id; ?>" />
+							<input type="hidden" name="wpdocs_redir_row_action" value="<?php echo esc_attr( $action ); ?>" />
 							<?php if ( $adv ) : ?><input type="hidden" name="wpdocs_mode" value="advanced" /><?php endif; ?>
 							<?php if ( '' !== $filter ) : ?><input type="hidden" name="wpdocs_redir_filter" value="<?php echo esc_attr( $filter ); ?>" /><?php endif; ?>
-							<button type="submit" class="btn btn-ghost" data-wenpai-need-apply disabled><?php esc_html_e( '删除', 'wpdocs' ); ?></button>
-						</form>
+							<button type="submit" class="btn btn-ghost"<?php echo 'delete' === $action ? ' data-wenpai-need-apply disabled' : ''; ?>><?php echo esc_html( $label ); ?></button>
+							<?php
+							return '<form method="post" class="wpdocs-inline-form">' . (string) ob_get_clean() . '</form>';
+						};
+						$redir_actions    = array(
+							array(
+								'html' => '<button type="button" class="btn btn-ghost" data-wpdocs-fill="' . esc_attr( (string) $fill ) . '">' . esc_html__( '编辑', 'wpdocs' ) . '</button>',
+							),
+							array( 'html' => $redir_row_form( 'matched' === $st ? 'gone' : 'matched', 'matched' === $st ? __( '下线', 'wpdocs' ) : __( '启用', 'wpdocs' ) ) ),
+							array( 'html' => $redir_row_form( 'delete', __( '删除', 'wpdocs' ) ) ),
+						);
+						echo Wenpai_Admin_UI::row_actions_html( array( 'items' => $redir_actions ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- kit-escaped.
+						?>
 					</td>
 				</tr>
 			<?php endforeach; ?>

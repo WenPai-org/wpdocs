@@ -66,13 +66,8 @@ final class Core {
 			return;
 		}
 		$h = Client::health();
-		$msg = sprintf(
-			/* translators: 1: time, 2: error */
-			__( '文派文档：从 %1$s 起无法从文档站拉取内容（%2$s）。前台继续显示上次成功同步的文档，请检查 API Token。', 'wpdocs' ),
-			wp_date( 'Y-m-d H:i', $h['err_since'] ? $h['err_since'] : $h['err_at'] ),
-			$h['err']
-		);
-		echo '<div class="notice notice-error"><p>' . esc_html( $msg ) . ' <a href="' . esc_url( admin_url( 'admin.php?page=wpdocs-settings' ) ) . '">' . esc_html__( '打开设置', 'wpdocs' ) . '</a></p></div>';
+		$msg = __( '文派文档：暂时无法从文档站读取内容。前台继续显示上次成功同步的文档，请检查地址和 API Token。', 'wpdocs' );
+		echo '<div class="notice notice-error"><p>' . esc_html( $msg ) . ' <a href="' . esc_url( \Wpdocs\Admin\Menu::url( 'settings' ) ) . '">' . esc_html__( '打开设置', 'wpdocs' ) . '</a></p></div>';
 	}
 
 	/** Make sure only the daily check is scheduled (drops the old hourly job). */

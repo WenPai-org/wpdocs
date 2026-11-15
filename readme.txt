@@ -29,6 +29,9 @@ License: GPLv2 or later
 
 == Changelog ==
 
+= Unreleased =
+* 后台 UI 对齐 wenpai-admin-ui 0.8.1；设置简单/高级分组重排；后台菜单名「文档」；页面加载不再每次请求文档站书目列表
+
 = 0.3.0 =
 * 主选择：保留正文 / 文档站读取 / Git 写入；评论仅文档站读取
 * 改名文派文档 / wpdocs，新表与 REST 契约

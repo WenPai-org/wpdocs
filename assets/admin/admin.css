@@ -1,4 +1,4 @@
-/* Product-only; kit owns chrome / field / tbl / pill / preview-out / is-busy.
+/* Product-only; kit owns chrome / field / tbl / pill / wenpai-preview / wenpai-suggest / is-busy.
  * APPROVAL: stacked fields; kv status rows. Spacing follows standards §3b overlay. */
 
 body.wenpai-ui-page .wenpai-app .wenpai-mark svg {
@@ -29,7 +29,7 @@ body.wenpai-ui-page .wenpai-app .field .hint[hidden] {
 
 body.wenpai-ui-page .wenpai-app .field input.is-invalid,
 body.wenpai-ui-page .wenpai-app .field select.is-invalid {
-  border-color: var(--wenpai-bad, #d63638);
+  border-color: var(--wenpai-bad);
 }
 
 /* number/url also sit in kit `.field-ctl-row` (kit already covers text). */
@@ -48,25 +48,6 @@ body.wenpai-ui-page .wenpai-app .field-ctl-row .btn .wenpai-ico {
   margin-right: 6px;
 }
 
-/* preview result colors (kit is gray; product paints ok/bad) */
-body.wenpai-ui-page .wenpai-app .preview-out {
-  margin-top: 2px;
-}
-
-body.wenpai-ui-page .wenpai-app .preview-out[hidden] {
-  display: none;
-}
-
-body.wenpai-ui-page .wenpai-app .preview-out.is-ok {
-  background: #d4edda;
-  color: #155724;
-}
-
-body.wenpai-ui-page .wenpai-app .preview-out.is-bad {
-  background: #f8d7da;
-  color: #d63638;
-}
-
 /* Status rows: kit owns .simple-row + .tile; no product kv override. */
 
 /* —— chrome density (overlay numbers) —— */
@@ -80,7 +61,7 @@ body.wenpai-ui-page .wenpai-main > .wenpai-stack {
 }
 
 body.wenpai-ui-page .wenpai-app .section-title {
-  font-weight: 600;
+  font-weight: 400;
   font-size: 16px;
   line-height: 24px;
 }
@@ -160,37 +141,6 @@ body.wenpai-ui-page .wenpai-app .field.is-note .field-ctl .hint {
   margin-top: 0;
 }
 
-/* bind suggest results */
-body.wenpai-ui-page .wenpai-app .wpdocs-suggest-out {
-  margin-top: 8px;
-}
-
-body.wenpai-ui-page .wenpai-app .wpdocs-suggest-out[hidden] {
-  display: none;
-}
-
-body.wenpai-ui-page .wenpai-app .wpdocs-suggest-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  max-width: 36rem;
-}
-
-body.wenpai-ui-page .wenpai-app .wpdocs-suggest-list .btn {
-  width: 100%;
-  justify-content: flex-start;
-  height: auto;
-  min-height: 32px;
-  padding: 6px 10px;
-  white-space: normal;
-  text-align: left;
-  font-size: 13px;
-  line-height: 18px;
-}
-
 /* delete confirm gate sits above the list table */
 body.wenpai-ui-page .wenpai-app .card > .wenpai-gate {
   margin: 8px 0 12px;
@@ -209,29 +159,9 @@ body.wenpai-ui-page .wenpai-app .wpdocs-list-head .section-title {
   margin: 0;
 }
 
-body.wenpai-ui-page .wenpai-app .wpdocs-filter {
-  flex: none;
-  margin: 4px 0 0;
-}
-
-body.wenpai-ui-page .wenpai-app .wpdocs-row-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px;
-  white-space: nowrap;
-}
-
 body.wenpai-ui-page .wenpai-app .wpdocs-inline-form {
   display: inline;
   margin: 0;
-}
-
-body.wenpai-ui-page .wenpai-app .wpdocs-row-actions .btn {
-  height: 28px;
-  min-height: 28px;
-  padding: 0 8px;
-  font-size: 12px;
 }
 
 body.wenpai-ui-page .wenpai-app .sr-only {
@@ -252,18 +182,12 @@ body.wenpai-ui-page .wenpai-app .sr-only {
 .wenpai-app .wenpai-page-head .wenpai-subnav { margin: 0; }
 .wenpai-app .wenpai-subnav .seg { display: inline-flex; }
 
-/* Settings books list — kit chk-grid, capped height. */
-.wenpai-app .wpdocs-books {
-  max-height: 16em;
-  overflow: auto;
-  max-width: 36em;
-}
-
 /* Choice cards on settings — full width; simple page stacks label above cards. */
 .wenpai-app .wpdocs-settings-form .choice-cards {
   width: 100%;
 }
 
+.wenpai-app .wpdocs-settings-form .field.is-hero,
 .wenpai-app .wpdocs-settings-form.wpdocs-simple .field {
   display: flex;
   flex-direction: column;
@@ -271,35 +195,13 @@ body.wenpai-ui-page .wenpai-app .sr-only {
   gap: 8px;
 }
 
+.wenpai-app .wpdocs-settings-form .field.is-hero .field-label,
 .wenpai-app .wpdocs-settings-form.wpdocs-simple .field .field-label {
   width: auto;
   max-width: none;
 }
 
-.wenpai-app .wpdocs-settings-form .wpdocs-when-content[hidden] {
+.wenpai-app .wpdocs-settings-form .wpdocs-when-content[hidden],
+.wenpai-app .wpdocs-settings-form .field[hidden] {
   display: none;
-}
-
-/* Screen-reader checkbox driving kit toggle. */
-.wenpai-app .wpdocs-toggle-cb.screen-reader-text {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  border: 0;
-}
-
-/* Preview-out ok/bad (tools dry-run / suggest). */
-.wenpai-app .preview-out.is-ok,
-.wenpai-app .wpdocs-suggest-out.is-ok {
-  background: #d4edda;
-  color: #155724;
-}
-.wenpai-app .preview-out.is-bad,
-.wenpai-app .wpdocs-suggest-out.is-bad {
-  background: #f8d7da;
-  color: #d63638;
 }

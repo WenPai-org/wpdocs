@@ -20,20 +20,33 @@
     }
   }
 
+  /* Kit .wenpai-preview line variant: state classes on the frame, text in
+     .wenpai-preview__text. Products fill the slot; kit owns the look. */
+  function previewText(out) {
+    var t = out.querySelector(".wenpai-preview__text");
+    if (!t) {
+      t = document.createElement("p");
+      t.className = "wenpai-preview__text";
+      out.appendChild(t);
+    }
+    return t;
+  }
+
   function showPreview(out, msg, kind) {
     if (!out) return;
     out.hidden = false;
-    out.textContent = msg;
     out.classList.remove("is-ok", "is-bad");
     if (kind === "ok") out.classList.add("is-ok");
     if (kind === "bad") out.classList.add("is-bad");
+    previewText(out).textContent = msg;
   }
 
   function clearPreview(out) {
     if (!out) return;
     out.hidden = true;
-    out.textContent = "";
     out.classList.remove("is-ok", "is-bad");
+    var t = out.querySelector(".wenpai-preview__text");
+    if (t) t.textContent = "";
   }
 
   function setFieldBad(input, on) {
@@ -323,35 +336,52 @@
     var btn = document.querySelector("[data-wpdocs-suggest]");
     var input = document.getElementById("wpdocs-suggest-q");
     var out = document.querySelector("[data-suggest-out]");
+    var msg = document.querySelector("[data-suggest-msg]");
     if (!btn || !input || !out) return;
 
+    /* Kit .wenpai-suggest contract: ul.wenpai-suggest__list > li >
+       button.wenpai-suggest__item (+ .wenpai-suggest__meta). Kit JS owns
+       ArrowUp/Down .is-active, Enter-to-pick and Esc; we only fill items. */
     function renderItems(items) {
-      out.innerHTML = "";
+      var list = out.querySelector(".wenpai-suggest__list");
+      if (list) {
+        list.innerHTML = "";
+      } else {
+        out.innerHTML = "";
+        list = document.createElement("ul");
+        list.className = "wenpai-suggest__list";
+        out.appendChild(list);
+      }
       if (!items || !items.length) {
-        showPreview(out, "没有匹配的文档页。", "bad");
+        out.hidden = true;
+        showPreview(msg, "没有匹配的文档页。", "bad");
         return;
       }
       out.hidden = false;
-      out.classList.remove("is-ok", "is-bad");
-      out.textContent = "";
-      var list = document.createElement("ul");
-      list.className = "wpdocs-suggest-list";
+      clearPreview(msg);
       for (var i = 0; i < items.length; i++) {
         (function (item) {
           var li = document.createElement("li");
           var pick = document.createElement("button");
           pick.type = "button";
-          pick.className = "btn btn-ghost";
+          pick.className = "wenpai-suggest__item";
           var book = item.docs_book_slug || "";
           var slug = item.docs_page_slug || "";
           var title = item.title || slug || "#" + (item.docs_page_id || 0);
-          pick.textContent =
-            title +
-            " · " +
-            (book ? book + "/" : "") +
-            slug +
-            " · #" +
-            (item.docs_page_id || 0);
+          pick.appendChild(
+            document.createTextNode(
+              title +
+                " · " +
+                (book ? book + "/" : "") +
+                slug +
+                " · #" +
+                (item.docs_page_id || 0)
+            )
+          );
+          var meta = document.createElement("span");
+          meta.className = "wenpai-suggest__meta";
+          meta.textContent = book ? book + "/" + slug : slug;
+          pick.appendChild(meta);
           pick.addEventListener("click", function () {
             if (item.docs_page_id != null) {
               setInputValue("docs_page_id", item.docs_page_id);
@@ -362,8 +392,9 @@
             if (item.docs_page_slug) {
               setInputValue("docs_page_slug", item.docs_page_slug);
             }
+            out.hidden = true;
             showPreview(
-              out,
+              msg,
               "已填入 #" +
                 (item.docs_page_id || 0) +
                 " · " +
@@ -377,21 +408,21 @@
           list.appendChild(li);
         })(items[i]);
       }
-      out.appendChild(list);
     }
 
     function run() {
       var v = String(input.value || "").trim();
       if (!v) {
-        showPreview(out, "请填写搜索关键词。", "bad");
+        showPreview(msg, "请填写搜索关键词。", "bad");
         setFieldBad(input, true);
         input.focus();
         return;
       }
       setFieldBad(input, false);
       setBusy(btn, true);
-      clearPreview(out);
-      showPreview(out, "搜索中…", "");
+      out.hidden = true;
+      clearPreview(msg);
+      showPreview(msg, "搜索中…", "");
       fetch(
         root +
           "/suggest?q=" +
@@ -412,19 +443,19 @@
             var code = (res.data && (res.data.code || res.data.error)) || "";
             if (res.status === 503 || code === "wpdocs_no_token") {
               showPreview(
-                out,
+                msg,
                 "未配置 Token（WPDOCS_TOKEN_ID / SECRET），无法搜索。",
                 "bad"
               );
               return;
             }
-            showPreview(out, "搜索失败，请稍后重试。", "bad");
+            showPreview(msg, "搜索失败，请稍后重试。", "bad");
             return;
           }
           renderItems((res.data && res.data.items) || []);
         })
         .catch(function () {
-          showPreview(out, "暂时无法搜索，请稍后重试。", "bad");
+          showPreview(msg, "暂时无法搜索，请稍后重试。", "bad");
         })
         .finally(function () {
           setBusy(btn, false);
@@ -434,6 +465,12 @@
     btn.addEventListener("click", run);
     input.addEventListener("keydown", function (e) {
       if (e.key === "Enter") {
+        /* Kit JS picks the .is-active suggestion on Enter; only search when
+           the dropdown has no active item. */
+        var active = out.querySelector(".wenpai-suggest__list li.is-active");
+        if (active && !out.hidden) {
+          return;
+        }
         e.preventDefault();
         run();
       }
@@ -449,115 +486,28 @@
   bindDryRun();
   bindFormValidate();
 
-  function syncToggle(btn) {
-    var row = btn.closest(".simple-row, .field, form, .card");
-    if (!row) return;
-    var cb = row.querySelector("[data-wpdocs-toggle-cb]");
-    if (!cb) return;
-    var on = !!cb.checked;
-    btn.classList.toggle("on", on);
-    var label = on ? btn.getAttribute("data-on") : btn.getAttribute("data-off");
-    // Keep <i></i> then text
-    var ico = btn.querySelector("i");
-    btn.textContent = "";
-    if (ico) btn.appendChild(ico);
-    else {
-      var i = document.createElement("i");
-      btn.appendChild(i);
-    }
-    btn.appendChild(document.createTextNode(label || (on ? "已开启" : "未开启")));
+  /* Kit depends_on (disable mode) marks inactive panels with
+     data-wenpai-dep-disabled; mirror that to `hidden` so they collapse.
+     Kit keeps their controls disabled, so duplicate field names
+     (wpdocs[base_url] etc.) never submit. */
+  function syncDepPanels() {
+    document
+      .querySelectorAll(
+        '#wpdocs-settings-form [data-wenpai-depends-mode="disable"]'
+      )
+      .forEach(function (el) {
+        el.hidden = el.hasAttribute("data-wenpai-dep-disabled");
+      });
   }
 
-  /** Hidden content panels must not submit (duplicate name=wpdocs[base_url] etc.). */
-  function setPanelEnabled(panel, on) {
-    if (!panel) return;
-    panel.querySelectorAll("input, select, textarea").forEach(function (el) {
-      if (on) {
-        if (el.dataset.wpdocsPanelDisable === "1") {
-          el.disabled = false;
-          delete el.dataset.wpdocsPanelDisable;
-        }
-      } else if (!el.disabled) {
-        el.disabled = true;
-        el.dataset.wpdocsPanelDisable = "1";
-      }
+  var depForm = document.getElementById("wpdocs-settings-form");
+  if (depForm && "MutationObserver" in window) {
+    new MutationObserver(syncDepPanels).observe(depForm, {
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["data-wenpai-dep-disabled"],
     });
   }
-
-  function refreshDisclosure() {
-    var form = document.getElementById("wpdocs-settings-form");
-    if (!form) return;
-    var content =
-      (form.querySelector('input[name="wpdocs[content_mode]"]:checked') || {})
-        .value || "cocobook";
-    form.querySelectorAll("[data-wpdocs-when-content]").forEach(function (el) {
-      var need = (el.getAttribute("data-wpdocs-when-content") || "")
-        .split(",")
-        .map(function (s) {
-          return s.trim();
-        })
-        .filter(Boolean);
-      var show = need.indexOf(content) !== -1;
-      el.hidden = !show;
-      // Hidden panels must not submit (duplicate name=wpdocs[base_url] etc.).
-      setPanelEnabled(el, show);
-    });
-    var mode =
-      (form.querySelector('input[name="wpdocs[mode]"]:checked') || {}).value ||
-      "off";
-    form.querySelectorAll("[data-wpdocs-when-mode]").forEach(function (el) {
-      var need = el.getAttribute("data-wpdocs-when-mode");
-      var show = need === mode;
-      el.hidden = !show;
-      setPanelEnabled(el, show && !el.closest("[data-wpdocs-when-content][hidden]"));
-    });
-    var commentsOn = false;
-    var ccb = form.querySelector(
-      '[data-wpdocs-toggle-cb][name="wpdocs[comments]"]'
-    );
-    if (ccb && !ccb.disabled) commentsOn = !!ccb.checked;
-    form.querySelectorAll('[data-wpdocs-when-on="comments"]').forEach(function (
-      el
-    ) {
-      var parentHidden = !!el.closest("[data-wpdocs-when-content][hidden]");
-      var show = commentsOn && !parentHidden;
-      el.hidden = !show;
-      setPanelEnabled(el, show);
-    });
-    // choice is-on class
-    form.querySelectorAll(".choice-cards .choice").forEach(function (lab) {
-      var r = lab.querySelector('input[type="radio"]');
-      lab.classList.toggle("is-on", !!(r && r.checked));
-    });
-  }
-
-  document.addEventListener("click", function (e) {
-    var btn = e.target && e.target.closest ? e.target.closest("[data-wpdocs-toggle]") : null;
-    if (!btn) return;
-    e.preventDefault();
-    var row = btn.closest(".simple-row, .field, form, .card");
-    var cb = row && row.querySelector("[data-wpdocs-toggle-cb]");
-    if (!cb) return;
-    cb.checked = !cb.checked;
-    syncToggle(btn);
-    refreshDisclosure();
-  });
-
-  document.addEventListener("change", function (e) {
-    var t = e.target;
-    if (!t) return;
-    if (
-      t.matches &&
-      (t.matches('input[name="wpdocs[mode]"]') ||
-        t.matches('input[name="wpdocs[content_mode]"]'))
-    ) {
-      refreshDisclosure();
-    }
-  });
-
-  document.addEventListener("DOMContentLoaded", function () {
-    document.querySelectorAll("[data-wpdocs-toggle]").forEach(syncToggle);
-    refreshDisclosure();
-  });
+  syncDepPanels();
 
 })();

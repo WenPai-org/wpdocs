@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased — Admin UI kit 0.9.0 + IA 收敛
+
+- vendor wenpai-admin-ui **0.6.2 → 0.9.0**：书目 `chk-grid` → kit `checkgroup`；文档页搜索/试解析/别名预览 → kit `suggest` + `preview`；跳转筛选 → `list_bar`；表格行操作 → `row_actions`；帮助页 → `help_page` 骨架；内容源显隐 → kit `depends_on`。
+- 简单/高级与分组改用 kit 0.9 合同：`mode()`/`mode_attrs()`/`section()`/`group_attrs()` + `[data-wenpai-groups]`，私有 `data-for-mode`/`data-adv-group` 全部移除；同步页 Webhook 改 `code_inline()`。
+- 概览（比对稿 `prototypes/wpdocs/compare-ia.html` 已审）：仍两卡；「探测与健康」只留探测失败率结论行，四条端点明细收进 `details`，**有异常自动展开**。
+- 工具·同步：CocoBook / Forgejo Webhook 改为行内 code + kit `copy_button`，hint 合并为一条。
+- 设置简单模式收敛为「主选择 + 连接状态行 + 开关 + 保存」，连接明细全部进高级；高级模式按内容源分 subnav 组（文档站读取：连接/书目与范围/评论/同步与缓存；Git：仓库/同步与缓存；保留正文：连接），非当前组 `hidden` 但值照常提交。
+- 主选择字段 `is-hero` 通栏（简单/高级一致）。
+- 性能：设置页书目列表走 `Client::remember` 缓存（TTL 1h，保存设置时失效）；同步页删除未使用的 books 远程请求。后台各页 ≈ WP 基线。
+- 左侧菜单名「文派文档」→「文档」（浏览器标题不变）。
+
+## Unreleased — Admin UI baseline
+
+- vendor 精确的 wenpai-admin-ui **0.3.2** tag；菜单迁到「设置 → 文派文档」，新链接统一 `options-general.php?page=wpdocs&tab=...`，保留旧深链回调与文档标题。
+- 概览 / 设置 / 工具 / 帮助共用一个页面路由；绑定、跳转、同步仍为工具内 subnav。设置保存与行动作保留 `updated/error/mode/filter` 状态，新增 `tests/AdminUrlTest.php`。
+- 保留并整理设置页现有修改：主选择单列、书目可滚动多选列表、预览整框状态色；后台颜色全部改走 token，字重 400，移除新增阴影。
+- 健康提示不再暴露 cURL / 主机错误详情；页脚和清除密钥文案统一中文。
+- 验收：`tests/run.sh` 全绿；Admin UI lint + `--strict-colors` 通过；Chrome 九个新旧入口 200、360px 无横向溢出、无 JS 错误；原值保存前后 option 完全一致。helper 迁移仍待包含 `Wenpai_Admin_UI` 的正式 kit 版本。
+
 ## 0.3.0 — 2026-11-03
 
 ### 三种内容模式 + Git

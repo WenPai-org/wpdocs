@@ -82,10 +82,27 @@ if ( ! $embed ) {
 				'control'  => '<input id="docs_page_id" type="number" name="docs_page_id" min="0" value="0" />',
 			)
 		);
-		$suggest_ctl  = '<div class="field-ctl-row">';
+		$suggest_ctl  = '<div class="wenpai-suggest">';
+		$suggest_ctl .= '<div class="field-ctl-row">';
 		$suggest_ctl .= '<input id="wpdocs-suggest-q" type="search" placeholder="' . esc_attr__( '关键词或别名', 'wpdocs' ) . '" autocomplete="off" />';
 		$suggest_ctl .= '<button type="button" class="btn btn-ghost" data-wpdocs-suggest>' . View::icon( 'eye' ) . esc_html__( '搜索', 'wpdocs' ) . '</button>';
-		$suggest_ctl .= '</div><div class="wpdocs-suggest-out" data-suggest-out hidden></div>';
+		$suggest_ctl .= '</div>';
+		$suggest_ctl .= Wenpai_Admin_UI::suggest_out_html(
+			array(
+				'hidden' => true,
+				'attrs'  => array( 'data-suggest-out' => '' ),
+			)
+		);
+		$suggest_ctl .= Wenpai_Admin_UI::preview_html(
+			array(
+				'variant' => 'line',
+				'attrs'   => array(
+					'hidden'        => true,
+					'data-suggest-msg' => '',
+				),
+			)
+		);
+		$suggest_ctl .= '</div>';
 		View::field(
 			array(
 				'for'      => 'wpdocs-suggest-q',
@@ -132,7 +149,15 @@ if ( ! $embed ) {
 		$resolve_ctl .= '<input id="resolve-post" type="number" min="1" placeholder="' . esc_attr__( '文章 ID 或文档页 ID', 'wpdocs' ) . '" autocomplete="off" />';
 		$resolve_ctl .= '<button type="button" class="btn btn-ghost" data-wpdocs-resolve>' . View::icon( 'eye' ) . esc_html__( '反查', 'wpdocs' ) . '</button>';
 		$resolve_ctl .= '</div><p class="hint d">' . esc_html__( '按文章 ID 或文档页 ID 查已有绑定。不写命中、不改表。', 'wpdocs' ) . '</p>';
-		$resolve_ctl .= '<div class="preview-out" data-resolve-out hidden></div>';
+		$resolve_ctl .= Wenpai_Admin_UI::preview_html(
+			array(
+				'variant' => 'line',
+				'attrs'   => array(
+					'hidden'          => true,
+					'data-resolve-out' => '',
+				),
+			)
+		);
 		View::field(
 			array(
 				'for'      => 'resolve-post',
@@ -143,7 +168,7 @@ if ( ! $embed ) {
 		);
 		?>
 		<?php if ( $adv ) : ?>
-			<div class="field is-note" data-for-mode="advanced">
+			<div class="field is-note">
 				<div class="field-label"><?php esc_html_e( '文章列表', 'wpdocs' ); ?></div>
 				<div class="field-ctl"><p class="hint"><?php esc_html_e( '文章列表会多一列「文档绑定」，显示书册/页面别名。该列不套本页顶栏。', 'wpdocs' ); ?></p></div>
 			</div>
@@ -156,14 +181,11 @@ if ( ! $embed ) {
 	<h2 class="section-title"><?php esc_html_e( '已有绑定', 'wpdocs' ); ?></h2>
 	<p class="section-desc"><?php esc_html_e( '点「编辑」回填上方表单。删除前先勾确认门。', 'wpdocs' ); ?></p>
 	<?php if ( array() === $items ) : ?>
-		<p class="empty"><?php esc_html_e( '还没有文章绑定到文档页。保存上方表单后会出现在这里。', 'wpdocs' ); ?></p>
+		<?php echo Wenpai_Admin_UI::empty_state_html( array( 'text' => __( '还没有文章绑定到文档页。保存上方表单后会出现在这里。', 'wpdocs' ) ) ); ?>
 	<?php else : ?>
-		<div class="wenpai-gate">
-			<label>
-				<input type="checkbox" />
-				<span><?php esc_html_e( '我确认要删除下方绑定行。', 'wpdocs' ); ?></span>
-			</label>
-		</div>
+		<?php
+echo Wenpai_Admin_UI::gate_html( array( 'label' => __( '我确认要删除下方绑定行。', 'wpdocs' ) ) );
+?>
 		<table class="tbl">
 			<thead>
 				<tr>
@@ -216,7 +238,7 @@ if ( ! $embed ) {
 						<?php if ( '' !== (string) ( $rmeta['title'] ?? '' ) ) : ?>
 							<div class="t"><?php echo esc_html( (string) $rmeta['title'] ); ?></div>
 						<?php endif; ?>
-						<span class="pill <?php echo esc_attr( $rpill['class'] ); ?>"><?php echo esc_html( $rpill['label'] ); ?></span>
+						<?php echo Wenpai_Admin_UI::pill_html( array( 'state' => $rpill['class'], 'text' => $rpill['label'] ) ); ?>
 						<?php if ( $adv && (int) ( $rmeta['attachments'] ?? 0 ) > 0 ) : ?>
 							<p class="hint"><?php echo esc_html( sprintf(
 								/* translators: %d: attachment count */
@@ -229,33 +251,29 @@ if ( ! $embed ) {
 						<td><?php echo '' !== $ext ? '<code>' . esc_html( $ext ) . '</code>' : '—'; ?></td>
 						<td><?php echo esc_html( View::bind_source_label( (string) $row->source ) ); ?></td>
 					<?php endif; ?>
-					<td><span class="pill <?php echo esc_attr( $pill['class'] ); ?>"><?php echo esc_html( $pill['label'] ); ?></span></td>
-					<td class="wpdocs-row-actions">
-						<button type="button" class="btn btn-ghost" data-wpdocs-fill="<?php echo esc_attr( (string) $fill ); ?>"><?php esc_html_e( '编辑', 'wpdocs' ); ?></button>
-						<?php if ( 'disabled' === (string) ( $row->status ?? '' ) ) : ?>
-							<form method="post" class="wpdocs-inline-form">
-								<?php wp_nonce_field( 'wpdocs_bind_row', 'wpdocs_bind_row_nonce' ); ?>
-								<input type="hidden" name="wpdocs_bind_row_id" value="<?php echo $row_id; ?>" />
-								<input type="hidden" name="wpdocs_bind_row_action" value="enable" />
-								<?php if ( $adv ) : ?><input type="hidden" name="wpdocs_mode" value="advanced" /><?php endif; ?>
-								<button type="submit" class="btn btn-ghost"><?php esc_html_e( '启用', 'wpdocs' ); ?></button>
-							</form>
-						<?php else : ?>
-							<form method="post" class="wpdocs-inline-form">
-								<?php wp_nonce_field( 'wpdocs_bind_row', 'wpdocs_bind_row_nonce' ); ?>
-								<input type="hidden" name="wpdocs_bind_row_id" value="<?php echo $row_id; ?>" />
-								<input type="hidden" name="wpdocs_bind_row_action" value="disable" />
-								<?php if ( $adv ) : ?><input type="hidden" name="wpdocs_mode" value="advanced" /><?php endif; ?>
-								<button type="submit" class="btn btn-ghost"><?php esc_html_e( '停用', 'wpdocs' ); ?></button>
-							</form>
-						<?php endif; ?>
-						<form method="post" class="wpdocs-inline-form">
-							<?php wp_nonce_field( 'wpdocs_bind_row', 'wpdocs_bind_row_nonce' ); ?>
-							<input type="hidden" name="wpdocs_bind_row_id" value="<?php echo $row_id; ?>" />
-							<input type="hidden" name="wpdocs_bind_row_action" value="delete" />
+					<td><?php echo Wenpai_Admin_UI::pill_html( array( 'state' => $pill['class'], 'text' => $pill['label'] ) ); ?></td>
+					<td>
+						<?php
+						$bind_row_form = static function ( $action, $label ) use ( $row_id, $adv ) {
+							ob_start();
+							wp_nonce_field( 'wpdocs_bind_row', 'wpdocs_bind_row_nonce' );
+							?>
+							<input type="hidden" name="wpdocs_bind_row_id" value="<?php echo (int) $row_id; ?>" />
+							<input type="hidden" name="wpdocs_bind_row_action" value="<?php echo esc_attr( $action ); ?>" />
 							<?php if ( $adv ) : ?><input type="hidden" name="wpdocs_mode" value="advanced" /><?php endif; ?>
-							<button type="submit" class="btn btn-ghost" data-wenpai-need-apply disabled><?php esc_html_e( '删除', 'wpdocs' ); ?></button>
-						</form>
+							<button type="submit" class="btn btn-ghost"<?php echo 'delete' === $action ? ' data-wenpai-need-apply disabled' : ''; ?>><?php echo esc_html( $label ); ?></button>
+							<?php
+							return '<form method="post" class="wpdocs-inline-form">' . (string) ob_get_clean() . '</form>';
+						};
+						$bind_actions    = array(
+							array(
+								'html' => '<button type="button" class="btn btn-ghost" data-wpdocs-fill="' . esc_attr( (string) $fill ) . '">' . esc_html__( '编辑', 'wpdocs' ) . '</button>',
+							),
+							array( 'html' => $bind_row_form( 'disabled' === (string) ( $row->status ?? '' ) ? 'enable' : 'disable', 'disabled' === (string) ( $row->status ?? '' ) ? __( '启用', 'wpdocs' ) : __( '停用', 'wpdocs' ) ) ),
+							array( 'html' => $bind_row_form( 'delete', __( '删除', 'wpdocs' ) ) ),
+						);
+						echo Wenpai_Admin_UI::row_actions_html( array( 'items' => $bind_actions ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- kit-escaped.
+						?>
 					</td>
 				</tr>
 			<?php endforeach; ?>
