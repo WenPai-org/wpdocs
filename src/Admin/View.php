@@ -59,8 +59,7 @@ final class View {
 	}
 
 	public static function is_advanced(): bool {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		return isset( $_GET['mode'] ) && 'advanced' === sanitize_key( (string) wp_unslash( $_GET['mode'] ) );
+		return 'advanced' === \Wenpai_Admin_UI::mode();
 	}
 
 	/**
@@ -76,10 +75,7 @@ final class View {
 		$ctl   = (string) ( $args['control'] ?? '' );
 		$extra = '';
 		if ( ! empty( $args['advanced'] ) ) {
-			$extra = ' data-for-mode="advanced"';
-			if ( ! self::is_advanced() ) {
-				$extra .= ' hidden';
-			}
+			$extra = \Wenpai_Admin_UI::mode_attrs( 'advanced' );
 		}
 		$cls = 'field' . ( isset( $args['class'] ) && '' !== (string) $args['class'] ? ' ' . (string) $args['class'] : '' );
 		echo '<div class="' . esc_attr( $cls ) . '"' . $extra . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped

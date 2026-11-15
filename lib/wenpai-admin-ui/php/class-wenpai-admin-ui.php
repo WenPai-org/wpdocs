@@ -1428,6 +1428,95 @@ if ( ! class_exists( 'Wenpai_Admin_UI', false ) ) {
 		}
 
 		/**
+		 * Current display mode from ?mode= (0.9). Only 「simple」 and
+		 * 「advanced」 exist; anything else (or no param) is 「simple」.
+		 *
+		 * @return string 'simple'|'advanced'
+		 */
+		public static function mode() {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$mode = isset( $_GET['mode'] ) ? sanitize_key( (string) wp_unslash( $_GET['mode'] ) ) : '';
+			return 'advanced' === $mode ? 'advanced' : 'simple';
+		}
+
+		/**
+		 * Attribute string for hand-written markup that belongs to one display
+		 * mode (0.9). Always prints data-wenpai-mode; when $mode is not the
+		 * current mode also prints data-wenpai-view-hidden + hidden, so the
+		 * block stays hidden without JS and kit JS keeps it hidden when
+		 * depends_on re-evaluates.
+		 *
+		 * Usage: <div class="x"<?php echo Wenpai_Admin_UI::mode_attrs( 'advanced' ); ?>>
+		 * The element still submits its inputs (hidden, not disabled).
+		 *
+		 * @param string $mode 'simple'|'advanced'.
+		 * @return string
+		 */
+		public static function mode_attrs( $mode ) {
+			$mode = 'advanced' === $mode ? 'advanced' : 'simple';
+			$out  = ' data-wenpai-mode="' . $mode . '"';
+			if ( self::mode() !== $mode ) {
+				$out .= ' data-wenpai-view-hidden hidden';
+			}
+			return $out;
+		}
+
+		/**
+		 * Resolve the current ?section= against a group's id list (0.9).
+		 *
+		 * With $groups (id => label map): an unknown or missing section falls
+		 * back to $fallback when it is a valid id, else the first key.
+		 * Without $groups: returns the sanitized raw section, or $fallback.
+		 *
+		 * @param array  $groups   Optional id => label map of valid sections.
+		 * @param string $fallback Fallback section id.
+		 * @return string
+		 */
+		public static function section( $groups = array(), $fallback = '' ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$raw = isset( $_GET['section'] ) ? sanitize_key( (string) wp_unslash( $_GET['section'] ) ) : '';
+			if ( ! is_array( $groups ) || array() === $groups ) {
+				return '' !== $raw ? $raw : (string) $fallback;
+			}
+			if ( isset( $groups[ $raw ] ) ) {
+				return $raw;
+			}
+			if ( '' !== (string) $fallback && isset( $groups[ (string) $fallback ] ) ) {
+				return (string) $fallback;
+			}
+			$ids = array_keys( $groups );
+			return (string) reset( $ids );
+		}
+
+		/**
+		 * Attribute string for one group panel inside a [data-wenpai-groups]
+		 * container (0.9). Pass the section id resolved by section(); when it
+		 * differs from $current the panel prints data-wenpai-view-hidden +
+		 * hidden (hidden without JS, kept hidden by kit JS). An empty $current
+		 * means "no constraint": the group attr prints without hiding.
+		 *
+		 * Usage:
+		 *   <div data-wenpai-groups data-wenpai-groups-default="connect">
+		 *     <div class="x"<?php echo Wenpai_Admin_UI::group_attrs( 'connect', $section ); ?>>…</div>
+		 *   </div>
+		 * Pair with subnav_html( array( 'slug' => …, 'current' => $section ) )
+		 * or explicit item urls carrying ?section=id.
+		 *
+		 * @param string $id      Group id (sanitized).
+		 * @param string $current Current section id from section().
+		 * @return string
+		 */
+		public static function group_attrs( $id, $current ) {
+			$id      = sanitize_key( (string) $id );
+			$current = sanitize_key( (string) $current );
+			$out     = ' data-wenpai-group="' . esc_attr( $id ) . '"';
+			if ( '' !== $current && $current !== $id ) {
+				$out .= ' data-wenpai-view-hidden hidden';
+			}
+			return $out;
+		}
+
+		/**
 		 * Echo in-tab secondary navigation (D-24 / Track A).
 		 *
 		 * Real links with ?section= (via Menu::url when slug is set). Not role=tablist.
@@ -2188,6 +2277,51 @@ if ( ! class_exists( 'Wenpai_Admin_UI', false ) ) {
 			}
 			$wrap .= self::extra_attrs( $args ) . '>';
 			return $wrap . $bar . '<pre><code' . $code_attr . '>' . esc_html( (string) $args['code'] ) . '</code></pre></div>';
+		}
+
+		/**
+		 * Echo a one-line code value with a copy button (0.9).
+		 *
+		 * For short inline values (webhook URL, key, command). Multi-line or
+		 * language-tagged content belongs to code_block.
+		 *
+		 * @param array $args Arguments.
+		 */
+		public static function code_inline( $args = array() ) {
+			self::emit( self::code_inline_html( $args ) );
+		}
+
+		/**
+		 * Return one-line code + copy markup.
+		 *
+		 * @param array $args {
+		 *     Helper arguments.
+		 *
+		 *     @type string $code    Code content (required; missing → doing_it_wrong + '').
+		 *     @type bool   $copy    Add a ghost copy_button with the literal text. Default true.
+		 *     @type array  $button  Extra copy_button args (label, done_label, variant…);
+		 *                           text is always the code value, variant defaults ghost.
+		 *     @type string $class   Extra classes on the .wenpai-code-row wrapper.
+		 *     @type array  $attrs   Extra attributes on the wrapper.
+		 * }
+		 * @return string
+		 */
+		public static function code_inline_html( $args = array() ) {
+			$args = self::args( $args, 'Wenpai_Admin_UI::code_inline' );
+			if ( ! array_key_exists( 'code', $args ) ) {
+				self::doing_it_wrong( 'code_inline needs code.', 'Wenpai_Admin_UI::code_inline' );
+				return '';
+			}
+			$code = (string) $args['code'];
+			$html = '<span class="' . esc_attr( self::classes( array( 'wenpai-code-row', self::extra_class( $args ) ) ) ) . '"' . self::extra_attrs( $args ) . '>'
+				. '<code class="wenpai-code">' . esc_html( $code ) . '</code>';
+			if ( ! array_key_exists( 'copy', $args ) || $args['copy'] ) {
+				$btn         = isset( $args['button'] ) && is_array( $args['button'] ) ? $args['button'] : array();
+				$btn         = array_merge( array( 'variant' => 'ghost' ), $btn );
+				$btn['text'] = $code;
+				$html       .= self::copy_button_html( $btn );
+			}
+			return $html . '</span>';
 		}
 
 		/**

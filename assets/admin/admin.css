@@ -205,19 +205,3 @@ body.wenpai-ui-page .wenpai-app .sr-only {
 .wenpai-app .wpdocs-settings-form .field[hidden] {
   display: none;
 }
-
-
-/* Inline code + copy button row (sync webhook URLs). */
-.wpdocs-code-row {
-  display: flex;
-  align-items: center;
-  gap: var(--wenpai-space-2, 8px);
-}
-
-.wpdocs-code-row .wenpai-code {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}

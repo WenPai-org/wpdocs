@@ -32,7 +32,7 @@ if ( ! $embed ) {
 }
 if ( $adv ) :
 	?>
-	<div class="notice info" data-for-mode="advanced"><span><?php esc_html_e( '启用时若跳转表为空且存在旧跳转表，会一次性导入。目标用文档页 ID，不写死网址。', 'wpdocs' ); ?></span></div>
+	<div class="notice info"><span><?php esc_html_e( '启用时若跳转表为空且存在旧跳转表，会一次性导入。目标用文档页 ID，不写死网址。', 'wpdocs' ); ?></span></div>
 	<?php
 endif;
 ?>

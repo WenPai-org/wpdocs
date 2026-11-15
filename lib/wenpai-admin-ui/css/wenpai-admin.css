@@ -1402,6 +1402,18 @@ fieldset.wenpai-group > legend { padding: 0; margin: 0 0 var(--wenpai-space-2); 
 .wenpai-code pre { margin: 0; padding: var(--wenpai-space-3) var(--wenpai-space-4); overflow: auto; font-family: var(--wenpai-font-mono); font-size: var(--wenpai-text-meta); line-height: 1.6; }
 .wenpai-code code { font-family: inherit; font-size: var(--wenpai-text-meta); }
 
+/* code_inline (0.9): one-line value + ghost copy on a single row. */
+.wenpai-code-row { display: inline-flex; align-items: center; gap: var(--wenpai-space-2); max-width: 100%; }
+.wenpai-code-row > .wenpai-code {
+  margin: 0;
+  padding: 4px 10px;
+  font-family: var(--wenpai-font-mono);
+  font-size: var(--wenpai-text-meta);
+  line-height: var(--wenpai-leading-meta);
+  color: var(--wenpai-ink-2);
+  overflow-wrap: anywhere;
+}
+
 /* status_list: dl rows, label column + value + state pill. */
 .wenpai-status-list { margin: 0; }
 .wenpai-status-list__row { display: flex; align-items: baseline; gap: var(--wenpai-space-3); padding: 8px 0; border-bottom: 1px solid var(--wenpai-line-soft); }

@@ -90,8 +90,7 @@ $mode_lab = array(
 				array(
 					'label'   => __( 'Webhook', 'wpdocs' ),
 					'help'    => __( 'Forgejo push → 此地址；Secret 在设置高级里。', 'wpdocs' ),
-					'control' => '<div class="wpdocs-code-row"><code class="wenpai-code">' . esc_html( $hook ) . '</code>'
-						. Wenpai_Admin_UI::copy_button_html( array( 'text' => $hook, 'variant' => 'ghost' ) ) . '</div>',
+					'control' => Wenpai_Admin_UI::code_inline_html( array( 'code' => $hook ) ),
 				)
 			);
 			?>
@@ -156,8 +155,7 @@ $mode_lab = array(
 					$state['checked'] ? wp_date( 'Y-m-d H:i', $state['checked'] ) : '—',
 					'' !== $state['result'] ? $state['result'] : '—'
 				),
-				'control' => '<div class="wpdocs-code-row"><code class="wenpai-code">' . esc_html( $refresh ) . '</code>'
-					. Wenpai_Admin_UI::copy_button_html( array( 'text' => $refresh, 'variant' => 'ghost' ) ) . '</div>',
+				'control' => Wenpai_Admin_UI::code_inline_html( array( 'code' => $refresh ) ),
 			)
 		);
 		?>

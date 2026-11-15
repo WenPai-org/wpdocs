@@ -1,8 +1,9 @@
 # Changelog
 
-## Unreleased — Admin UI kit 0.8.1 + IA 收敛
+## Unreleased — Admin UI kit 0.9.0 + IA 收敛
 
-- vendor wenpai-admin-ui **0.6.2 → 0.8.1**：书目 `chk-grid` → kit `checkgroup`；文档页搜索/试解析/别名预览 → kit `suggest` + `preview`；跳转筛选 → `list_bar`；表格行操作 → `row_actions`；帮助页 → `help_page` 骨架；内容源显隐 → kit `depends_on`。
+- vendor wenpai-admin-ui **0.6.2 → 0.9.0**：书目 `chk-grid` → kit `checkgroup`；文档页搜索/试解析/别名预览 → kit `suggest` + `preview`；跳转筛选 → `list_bar`；表格行操作 → `row_actions`；帮助页 → `help_page` 骨架；内容源显隐 → kit `depends_on`。
+- 简单/高级与分组改用 kit 0.9 合同：`mode()`/`mode_attrs()`/`section()`/`group_attrs()` + `[data-wenpai-groups]`，私有 `data-for-mode`/`data-adv-group` 全部移除；同步页 Webhook 改 `code_inline()`。
 - 概览（比对稿 `prototypes/wpdocs/compare-ia.html` 已审）：仍两卡；「探测与健康」只留探测失败率结论行，四条端点明细收进 `details`，**有异常自动展开**。
 - 工具·同步：CocoBook / Forgejo Webhook 改为行内 code + kit `copy_button`，hint 合并为一条。
 - 设置简单模式收敛为「主选择 + 连接状态行 + 开关 + 保存」，连接明细全部进高级；高级模式按内容源分 subnav 组（文档站读取：连接/书目与范围/评论/同步与缓存；Git：仓库/同步与缓存；保留正文：连接），非当前组 `hidden` 但值照常提交。

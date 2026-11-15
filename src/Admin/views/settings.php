@@ -166,8 +166,6 @@ $redirects_on   = ! empty( $s['redirects'] );
 $giw_standalone = GitBoot::standalone_active();
 $form_cls       = 'wpdocs-settings-form' . ( $adv ? '' : ' wpdocs-simple' );
 
-// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-$section = isset( $_GET['section'] ) ? sanitize_key( (string) wp_unslash( $_GET['section'] ) ) : '';
 if ( Settings::CONTENT_COCOBOOK === $content_mode ) {
 	$adv_groups = array(
 		'connect'  => __( '连接', 'wpdocs' ),
@@ -185,14 +183,13 @@ if ( Settings::CONTENT_COCOBOOK === $content_mode ) {
 		'connect' => __( '连接', 'wpdocs' ),
 	);
 }
-if ( ! isset( $adv_groups[ $section ] ) ) {
-	$section = (string) array_key_first( $adv_groups );
-}
-$group_open = static function ( string $gid ) use ( $adv, $section ): string {
-	return ( $adv && $gid !== $section ) ? ' hidden' : '';
-};
-$group_div  = static function ( string $gid, bool $close = false ) use ( $group_open ): string {
-	return $close ? '</div>' : '<div class="wpdocs-adv-group" data-adv-group="' . esc_attr( $gid ) . '"' . $group_open( $gid ) . '>';
+$section = Wenpai_Admin_UI::section( $adv_groups );
+$group_div = static function ( string $gid, bool $close = false ) use ( $adv, $section ): string {
+	if ( $close ) {
+		return '</div>';
+	}
+	// 简单模式不输出分组钩子：组内 advanced 字段各自隐藏，组保持展开。
+	return '<div class="wpdocs-adv-group"' . ( $adv ? Wenpai_Admin_UI::group_attrs( $gid, $section ) : '' ) . '>';
 };
 ?>
 <form method="post" action="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'settings' ) ); ?>" class="<?php echo esc_attr( $form_cls ); ?>" id="wpdocs-settings-form">
@@ -235,6 +232,7 @@ $group_div  = static function ( string $gid, bool $close = false ) use ( $group_
 			?>
 		<?php endif; ?>
 
+		<div data-wenpai-groups data-wenpai-groups-default="connect">
 		<div class="wpdocs-when-content" data-wenpai-depends-on="wpdocs[content_mode]" data-wenpai-depends-value="keep" data-wenpai-depends-mode="disable"<?php echo Settings::CONTENT_KEEP === $content_mode ? '' : ' hidden'; ?>>
 			<?php
 ob_start();
@@ -363,7 +361,7 @@ echo Wenpai_Admin_UI::row_html( array( 'icon_html' => View::icon( 'info' ), 'tit
 				)
 			);
 			?>
-			<div data-for-mode="advanced"<?php echo $adv ? '' : ' hidden'; ?>>
+			<div<?php echo Wenpai_Admin_UI::mode_attrs( 'advanced' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 			<div class="field" data-wenpai-depends-on="wpdocs[mode]" data-wenpai-depends-value="pilot" data-wenpai-depends-mode="disable"<?php echo Settings::MODE_PILOT === $rollout ? '' : ' hidden'; ?>>
 				<label class="field-label" for="wpdocs-pilot"><?php esc_html_e( '试点文章 ID', 'wpdocs' ); ?></label>
 				<div class="field-ctl">
@@ -387,7 +385,7 @@ echo Wenpai_Admin_UI::row_html( array( 'icon_html' => View::icon( 'info' ), 'tit
 				)
 			);
 			?>
-			<div data-for-mode="advanced"<?php echo $adv ? '' : ' hidden'; ?>>
+			<div<?php echo Wenpai_Admin_UI::mode_attrs( 'advanced' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 			<div class="field" data-wenpai-depends-on="wpdocs[comments]" data-wenpai-depends-value="1" data-wenpai-depends-mode="disable"<?php echo $comments_on ? '' : ' hidden'; ?>>
 				<label class="field-label" for="wpdocs-bff"><?php esc_html_e( '评论服务', 'wpdocs' ); ?></label>
 				<div class="field-ctl">
@@ -548,6 +546,7 @@ echo Wenpai_Admin_UI::row_html( array( 'icon_html' => View::icon( 'info' ), 'tit
 			<input type="hidden" name="wpdocs[git_repo_post_type]" value="<?php echo esc_attr( (string) ( $primary['post_type'] ?? 'post' ) ); ?>" />
 			<input type="hidden" name="wpdocs[git_repo_post_author]" value="<?php echo esc_attr( (string) (int) ( $primary['post_author'] ?? 1 ) ); ?>" />
 			<input type="hidden" name="wpdocs[git_repo_last_publish]" value="<?php echo esc_attr( (string) (int) ( $primary['last_publish'] ?? 0 ) ); ?>" />
+		</div>
 		</div>
 
 		<?php
