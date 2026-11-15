@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>wpdocs IA 比对稿 · 概览 / 同步 / 设置简单</title>
+<link rel="stylesheet" href="../../lib/wenpai-admin-ui/css/wenpai-tokens.css">
+<link rel="stylesheet" href="../../lib/wenpai-admin-ui/css/wenpai-admin.css">
+<link rel="stylesheet" href="../../lib/wenpai-admin-ui/css/wenpai-admin-wp.css">
+<style>
+	/* 比对稿脚手架：不进产品 CSS */
+	body { background:#f0f0f1; margin:0; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
+	.cmp { max-width:1180px; margin:0 auto; padding:24px 16px 64px; }
+	.cmp > h1 { font-size:20px; font-weight:400; margin:0 0 4px; }
+	.cmp > .lede { color:var(--wenpai-ink-3); font-size:13px; margin:0 0 28px; }
+	.cmp-sec { margin-bottom:48px; }
+	.cmp-sec > h2 { font-size:16px; font-weight:400; margin:0 0 4px; }
+	.cmp-sec > .why { color:var(--wenpai-ink-3); font-size:13px; margin:0 0 16px; }
+	.cmp-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start; }
+	@media (max-width:900px){ .cmp-grid{grid-template-columns:1fr;} }
+	.cmp-col > .tag { display:inline-block; font-size:12px; color:var(--wenpai-ink-3); border:1px solid var(--wenpai-line); border-radius:var(--wenpai-radius-xl); padding:2px 10px; margin-bottom:8px; }
+	.cmp-col > .tag.is-new { color:var(--wenpai-accent); border-color:var(--wenpai-accent); }
+	.wenpai-app { background:transparent; }
+	.demo-card { background:var(--wenpai-card); border:1px solid var(--wenpai-line-card); border-radius:var(--wenpai-radius); padding:20px 24px; }
+	.demo-card + .demo-card { margin-top:16px; }
+	.note { font-size:12px; color:var(--wenpai-ink-3); margin:8px 0 0; }
+	.trunc::after { content:"…"; }
+</style>
+</head>
+<body class="wenpai-ui-page">
+<div class="cmp">
+	<h1>wpdocs 信息架构比对稿</h1>
+	<p class="lede">左＝线上现状（贴 kit 类名）；右＝提案。提案只用 kit 已有原语，不改组件合同。审过再写 PHP。</p>
+
+	<!-- ============ ① 概览 ============ -->
+	<section class="cmp-sec">
+		<h2>① 概览 · 模块信息太密</h2>
+		<p class="why">现状：两张卡 9 条 simple-row。提案：仍两卡。第一卡 4 行都是「现在怎样」的必要状态，不动；第二卡只留「探测失败率」一个结论行，四条端点明细（首页/站点地图/发布树/接口）收进 details，默认不看。</p>
+		<div class="cmp-grid">
+			<div class="cmp-col">
+				<span class="tag">现状</span>
+				<div class="wenpai-app"><div class="demo-card">
+					<h2 class="section-title">内容从哪来</h2>
+					<p class="section-desc">版本 0.3.0。主路径只走一条。</p>
+					<div class="simple-row is-static"><span class="tile ok"><svg class="wenpai-ico" viewBox="0 0 24 24" fill="currentColor"><path d="M13 9H21L11 24V15H4L13 0V9Z"/></svg></span><div><div class="t">主选择</div><div class="d">文档站读取 · 全部</div></div><div class="r"><span class="pill ok">已选用</span></div></div>
+					<div class="simple-row is-static"><span class="tile ok"><svg class="wenpai-ico" viewBox="0 0 24 24" fill="currentColor"><path d="M18.3643 15.5353L16.95 14.1211L18.3643 12.7069C20.3169 10.7543 20.3169 7.58847 18.3643 5.63585C16.4116 3.68323 13.2458 3.68323 11.2932 5.63585L9.87898 7.05007L8.46477 5.63585L9.87898 4.22164C12.6127 1.48797 17.0448 1.48797 19.7785 4.22164C22.5121 6.95531 22.5121 11.3875 19.7785 14.1211L18.3643 15.5353Z"/></svg></span><div><div class="t">CocoBook</div><div class="d">https://docs.cocobook.com</div></div><div class="r"><span class="pill ok">已连接</span></div></div>
+					<div class="simple-row is-static"><span class="tile ok"><svg class="wenpai-ico" viewBox="0 0 24 24" fill="currentColor"><path d="M18.3643 15.5353L16.95 14.1211L18.3643 12.7069C20.3169 10.7543 20.3169 7.58847 18.3643 5.63585C16.4116 3.68323 13.2458 3.68323 11.2932 5.63585L9.87898 7.05007L8.46477 5.63585L9.87898 4.22164C12.6127 1.48797 17.0448 1.48797 19.7785 4.22164C22.5121 6.95531 22.5121 11.3875 19.7785 14.1211L18.3643 15.5353Z"/></svg></span><div><div class="t">绑定</div><div class="d">1 / 2 · 50%</div></div><div class="r"><span class="pill ok">已有</span></div></div>
+					<div class="simple-row is-static"><span class="tile warn"><svg class="wenpai-ico" viewBox="0 0 24 24" fill="currentColor"><path d="M13 14H11C7.54202 14 4.53953 15.9502 3.03239 18.8107C3.01093 18.5433 3 18.2729 3 18C3 12.4772 7.47715 8 13 8V2.5L23.5 11L13 19.5V14Z"/></svg></span><div><div class="t">跳转</div><div class="d">8 条 · 未匹配 6</div></div><div class="r"><span class="pill warn">有缺口</span></div></div>
+					<div class="wenpai-actions"><a class="btn btn-ghost" href="#">打开设置</a><a class="btn btn-ghost" href="#">打开工具</a></div>
+				</div>
+				<div class="demo-card">
+					<h2 class="section-title">探测与健康</h2>
+					<p class="section-desc">发布树只读，不写 CocoBook。</p>
+					<div class="simple-row is-static"><span class="tile ok"><svg class="wenpai-ico" viewBox="0 0 24 24" fill="currentColor"><path d="M3 10.5 12 3l9 7.5"/></svg></span><div><div class="t">首页</div><div class="d">200 · 2325ms</div></div><div class="r"><span class="pill ok">正常</span></div></div>
+					<div class="simple-row is-static"><span class="tile ok"><svg class="wenpai-ico" viewBox="0 0 24 24" fill="currentColor"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/></svg></span><div><div class="t">站点地图</div><div class="d">200 · 2325ms</div></div><div class="r"><span class="pill ok">正常</span></div></div>
+					<div class="simple-row is-static"><span class="tile warn"><svg class="wenpai-ico" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16v16H4z"/></svg></span><div><div class="t">发布树</div><div class="d">已跳过</div></div><div class="r"><span class="pill warn">已跳过</span></div></div>
+					<div class="simple-row is-static"><span class="tile ok"><svg class="wenpai-ico" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z"/></svg></span><div><div class="t">接口</div><div class="d">v26.09.3 · 529ms</div></div><div class="r"><span class="pill ok">已连接</span></div></div>
+					<div class="simple-row is-static"><span class="tile ok"><svg class="wenpai-ico" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z"/></svg></span><div><div class="t">探测失败率</div><div class="d">11.1% · 9 日样本</div></div><div class="r"><span class="pill ok">正常</span></div></div>
+				</div></div>
+			</div>
+			<div class="cmp-col">
+				<span class="tag is-new">提案 · 两卡 + 局部收起</span>
+				<div class="wenpai-app"><div class="demo-card">
+					<h2 class="section-title">内容从哪来</h2>
+					<p class="section-desc">版本 0.3.0。主路径只走一条。</p>
+					<div class="simple-row is-static"><span class="tile ok"><svg class="wenpai-ico" viewBox="0 0 24 24" fill="currentColor"><path d="M13 9H21L11 24V15H4L13 0V9Z"/></svg></span><div><div class="t">主选择</div><div class="d">文档站读取 · 全部</div></div><div class="r"><span class="pill ok">已选用</span></div></div>
+					<div class="simple-row is-static"><span class="tile ok"><svg class="wenpai-ico" viewBox="0 0 24 24" fill="currentColor"><path d="M18.3643 15.5353L16.95 14.1211L18.3643 12.7069C20.3169 10.7543 20.3169 7.58847 18.3643 5.63585C16.4116 3.68323 13.2458 3.68323 11.2932 5.63585L9.87898 7.05007L8.46477 5.63585L9.87898 4.22164C12.6127 1.48797 17.0448 1.48797 19.7785 4.22164C22.5121 6.95531 22.5121 11.3875 19.7785 14.1211L18.3643 15.5353Z"/></svg></span><div><div class="t">CocoBook</div><div class="d">https://docs.cocobook.com</div></div><div class="r"><span class="pill ok">已连接</span></div></div>
+					<div class="simple-row is-static"><span class="tile ok"><svg class="wenpai-ico" viewBox="0 0 24 24" fill="currentColor"><path d="M18.3643 15.5353L16.95 14.1211L18.3643 12.7069C20.3169 10.7543 20.3169 7.58847 18.3643 5.63585C16.4116 3.68323 13.2458 3.68323 11.2932 5.63585L9.87898 7.05007L8.46477 5.63585L9.87898 4.22164C12.6127 1.48797 17.0448 1.48797 19.7785 4.22164C22.5121 6.95531 22.5121 11.3875 19.7785 14.1211L18.3643 15.5353Z"/></svg></span><div><div class="t">绑定</div><div class="d">1 / 2 · 50%</div></div><div class="r"><span class="pill ok">已有</span></div></div>
+					<div class="simple-row is-static"><span class="tile warn"><svg class="wenpai-ico" viewBox="0 0 24 24" fill="currentColor"><path d="M13 14H11C7.54202 14 4.53953 15.9502 3.03239 18.8107C3.01093 18.5433 3 18.2729 3 18C3 12.4772 7.47715 8 13 8V2.5L23.5 11L13 19.5V14Z"/></svg></span><div><div class="t">跳转</div><div class="d">8 条 · 未匹配 6</div></div><div class="r"><span class="pill warn">有缺口</span></div></div>
+					<div class="wenpai-actions"><a class="btn btn-ghost" href="#">打开设置</a><a class="btn btn-ghost" href="#">打开工具</a></div>
+				</div>
+				<div class="demo-card">
+					<h2 class="section-title">探测与健康</h2>
+					<p class="section-desc">发布树只读，不写 CocoBook。</p>
+					<div class="simple-row is-static"><span class="tile ok"><svg class="wenpai-ico" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z"/></svg></span><div><div class="t">探测失败率</div><div class="d">11.1% · 9 日样本</div></div><div class="r"><span class="pill ok">正常</span></div></div>
+					<details>
+						<summary>逐项探测 · 4 项 · 1 跳过</summary>
+						<div class="simple-row is-static"><span class="tile ok"><svg class="wenpai-ico" viewBox="0 0 24 24" fill="currentColor"><path d="M3 10.5 12 3l9 7.5"/></svg></span><div><div class="t">首页</div><div class="d">200 · 2325ms</div></div><div class="r"><span class="pill ok">正常</span></div></div>
+						<div class="simple-row is-static"><span class="tile ok"><svg class="wenpai-ico" viewBox="0 0 24 24" fill="currentColor"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/></svg></span><div><div class="t">站点地图</div><div class="d">200 · 2325ms</div></div><div class="r"><span class="pill ok">正常</span></div></div>
+						<div class="simple-row is-static"><span class="tile warn"><svg class="wenpai-ico" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16v16H4z"/></svg></span><div><div class="t">发布树</div><div class="d">已跳过</div></div><div class="r"><span class="pill warn">已跳过</span></div></div>
+						<div class="simple-row is-static"><span class="tile ok"><svg class="wenpai-ico" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z"/></svg></span><div><div class="t">接口</div><div class="d">v26.09.3 · 529ms</div></div><div class="r"><span class="pill ok">已连接</span></div></div>
+					</details>
+				</div></div>
+			</div>
+		</div>
+		<p class="note">取舍逻辑：第一卡四行（主选择/连接/绑定/跳转）都是「现在怎样」的直接答案，且各带 pill 异常态，留；第二卡里四条端点是诊断证据——首页/站点地图/发布树/接口的成败已由第一卡「CocoBook 已连接/探测失败」pill 和顶部 .next/notice 承担。规则：<strong>全部正常 → details 收起；任一端点失败/异常 → PHP 输出 open 默认展开</strong>，summary 行同时带异常计数。「探测失败率」聚合结论留在外面。</p>
+	</section>
+
+	<!-- ============ ② 同步 webhook ============ -->
+	<section class="cmp-sec">
+		<h2>② 工具 · 同步 — CocoBook Webhook 挤成两节</h2>
+		<p class="why">现状：字段里 code + 两条 hint 上下叠，像两节。提案：合并成一条 hint；URL 后加 kit copy_button（0.8 已入库原语）。</p>
+		<div class="cmp-grid">
+			<div class="cmp-col">
+				<span class="tag">现状</span>
+				<div class="wenpai-app"><div class="demo-card">
+					<h2 class="section-title">同步</h2>
+					<p class="section-desc">当前内容从哪来：文档站读取。设置里可改。</p>
+					<div class="wenpai-actions"><button class="btn btn-ghost" type="button">测试连接</button><button class="btn btn-primary" type="button">更新索引</button></div>
+					<p class="hint">上次 2026-11-15T15:58:41+00:00 · 0 书 · 0 页</p>
+					<div class="field"><div class="field-label">CocoBook Webhook</div><div class="field-ctl">
+						<code class="wenpai-code">http://localhost:8899/wp-json/wpdocs/v1/refresh/i8ZQVcgtrTVub3b42XfZRNheJQUgHdXeV8WZzc4p</code>
+						<p class="hint">上次检查 2026-11-14 17:23（unchanged）</p>
+						<p class="hint">在 CocoBook 后台把 page 创建/更新/删除事件 POST 到此地址。密钥在路径里；保存设置时自动生成。</p>
+					</div></div>
+				</div></div>
+			</div>
+			<div class="cmp-col">
+				<span class="tag is-new">提案</span>
+				<div class="wenpai-app"><div class="demo-card">
+					<h2 class="section-title">同步</h2>
+					<p class="section-desc">当前内容从哪来：文档站读取。设置里可改。</p>
+					<div class="wenpai-actions"><button class="btn btn-ghost" type="button">测试连接</button><button class="btn btn-primary" type="button">更新索引</button></div>
+					<p class="hint">上次 2026-11-15T15:58:41+00:00 · 0 书 · 0 页</p>
+					<div class="field"><div class="field-label">CocoBook Webhook</div><div class="field-ctl">
+						<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+							<code class="wenpai-code" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">http://localhost:8899/wp-json/wpdocs/v1/refresh/i8ZQVcgtrTVub3b42XfZRNheJQUgHdXeV8WZzc4p</code>
+							<button type="button" class="btn btn-ghost wenpai-copy" data-wenpai-copy-text="http://localhost:8899/wp-json/wpdocs/v1/refresh/i8ZQVcgtrTVub3b42XfZRNheJQUgHdXeV8WZzc4p" data-label="复制" data-done-label="已复制">复制</button>
+						</div>
+						<p class="hint">上次检查 2026-11-14 17:23（unchanged）。在 CocoBook 后台把 page 创建/更新/删除事件 POST 到此地址；密钥在路径里，保存设置时自动生成。</p>
+					</div></div>
+				</div></div>
+			</div>
+		</div>
+		<p class="note">不引入 code_block（那是多行代码块）；短 URL 用行内 code + copy_button。两条 hint 合一。</p>
+	</section>
+
+	<!-- ============ ③ 设置简单 ============ -->
+	<section class="cmp-sec">
+		<h2>③ 设置 · 简单模式版式不合理</h2>
+		<p class="why">规范：简单 = 主选择 choice 卡 + 状态行 + 开关；密钥/明细归高级。现状简单页摊着 185 项书目清单 + 读取范围卡 + 评论服务。提案按 wpslug 同款收敛。</p>
+		<div class="cmp-grid">
+			<div class="cmp-col">
+				<span class="tag">现状</span>
+				<div class="wenpai-app"><div class="demo-card trunc">
+					<h2 class="section-title">内容从哪来</h2>
+					<p class="section-desc">三选一。只走一条路径；统一评论只在「文档站读取」。</p>
+					<div class="field"><div class="field-label">主选择</div><div class="field-ctl">
+						<div class="choice-cards">
+							<label class="choice"><input type="radio" name="cm" value="keep"><span><span class="t">保留正文</span><span class="d">品牌站自己管正文；可到工具一次性导入。</span></span></label>
+							<label class="choice is-on"><input type="radio" name="cm" value="cocobook" checked><span><span class="t">文档站读取</span><span class="d">打开文章时读 CocoBook，不改正文库。</span></span></label>
+							<label class="choice"><input type="radio" name="cm" value="git"><span><span class="t">Git 写入</span><span class="d">把仓库 Markdown 写入文章。</span></span></label>
+						</div>
+					</div></div>
+					<div class="field"><div class="field-label">CocoBook 地址</div><div class="field-ctl"><input type="url" value="https://docs.cocobook.com"><p class="hint">CocoBook / BookStack 根地址。</p></div></div>
+					<div class="field"><div class="field-label">Token ID</div><div class="field-ctl"><input type="text" value="yxqDPBGX…"></div></div>
+					<div class="field"><div class="field-label">Token Secret</div><div class="field-ctl"><input type="password" value=""><p class="hint">留空表示不修改已保存的值。</p></div></div>
+					<div class="field"><div class="field-label">站点标签</div><div class="field-ctl"><input type="text"><p class="hint">未勾选书目时，自动用带此标签的书。</p></div></div>
+					<div class="field"><div class="field-label">书目</div><div class="field-ctl">
+						<div class="wenpai-checkgroup"><div class="wenpai-checkgroup__head"><span class="wenpai-checkgroup__count">已选 0 / 185</span><span class="wenpai-checkgroup__acts"><button type="button">全选</button><button type="button">清空</button></span></div><ul class="wenpai-checkgroup__list"><li><label class="chk"><input type="checkbox"> <span class="wenpai-checkgroup__text">文档示例书</span></label></li><li><label class="chk"><input type="checkbox"> <span class="wenpai-checkgroup__text">另一本文档</span></label></li><li class="trunc"><label class="chk"><input type="checkbox"> <span class="wenpai-checkgroup__text">… 共 185 本</span></label></li></ul></div>
+						<p class="hint">可多选。框内上下滑动查看全部书。</p>
+					</div></div>
+					<div class="field"><div class="field-label">读取范围</div><div class="field-ctl">
+						<div class="choice-cards cols-2">
+							<label class="choice"><input type="radio" name="rm" value="pilot"><span><span class="t">试点</span><span class="d">只换指定文章。</span></span></label>
+							<label class="choice is-on"><input type="radio" name="rm" value="all" checked><span><span class="t">全部</span><span class="d">凡能对应到文档页的都换。</span></span></label>
+						</div>
+						<p class="hint">只影响「文档站读取」路径下哪些文章换正文，不是第二条主选择。</p>
+					</div></div>
+					<div class="simple-row"><span class="tile"><svg class="wenpai-ico" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z"/></svg></span><div><div class="t">统一评论</div><div class="d">与 CocoBook 同一帖。仅此路径提供。</div></div><div class="r"><span class="wenpai-switch"><input type="hidden" value="0"><input type="checkbox" class="wenpai-switch__input" checked><span class="wenpai-switch__track"></span><span class="wenpai-switch__state"><span class="wenpai-switch__on">已开启</span><span class="wenpai-switch__off" hidden>未开启</span></span></span></div></div>
+					<div class="field"><div class="field-label">评论服务</div><div class="field-ctl"><input type="url" value="https://comments.cyberforums.com"></div></div>
+					<div class="simple-row"><span class="tile"><svg class="wenpai-ico" viewBox="0 0 24 24" fill="currentColor"><path d="M13 14H11C7.54202 14 4.53953 15.9502 3.03239 18.8107C3.01093 18.5433 3 18.2729 3 18C3 12.4772 7.47715 8 13 8V2.5L23.5 11L13 19.5V14Z"/></svg></span><div><div class="t">旧链接跳转</div><div class="d"><a href="#">管理映射</a></div></div><div class="r"><span class="wenpai-switch"><input type="hidden" value="0"><input type="checkbox" class="wenpai-switch__input" checked><span class="wenpai-switch__track"></span><span class="wenpai-switch__state"><span class="wenpai-switch__on">已开启</span><span class="wenpai-switch__off" hidden>未开启</span></span></span></div></div>
+					<div class="wenpai-actions"><button class="btn btn-primary" type="button">保存设置</button></div>
+				</div></div>
+				<p class="note">实际页面更长：书目清单可滚动但占位仍高，Token/Secret/标签/范围/评论服务全摊开。</p>
+			</div>
+			<div class="cmp-col">
+				<span class="tag is-new">提案</span>
+				<div class="wenpai-app"><div class="demo-card">
+					<h2 class="section-title">内容从哪来</h2>
+					<p class="section-desc">三选一。只走一条路径；连接细节在高级。</p>
+					<div class="field"><div class="field-label">主选择</div><div class="field-ctl">
+						<div class="choice-cards">
+							<label class="choice"><input type="radio" name="cm2" value="keep"><span><span class="t">保留正文</span><span class="d">品牌站自己管正文；可到工具一次性导入。</span></span></label>
+							<label class="choice is-on"><input type="radio" name="cm2" value="cocobook" checked><span><span class="t">文档站读取</span><span class="d">打开文章时读 CocoBook，不改正文库。</span></span></label>
+							<label class="choice"><input type="radio" name="cm2" value="git"><span><span class="t">Git 写入</span><span class="d">把仓库 Markdown 写入文章。</span></span></label>
+						</div>
+					</div></div>
+					<div class="simple-row is-static"><span class="tile ok"><svg class="wenpai-ico" viewBox="0 0 24 24" fill="currentColor"><path d="M18.3643 15.5353L16.95 14.1211L18.3643 12.7069C20.3169 10.7543 20.3169 7.58847 18.3643 5.63585C16.4116 3.68323 13.2458 3.68323 11.2932 5.63585L9.87898 7.05007L8.46477 5.63585L9.87898 4.22164C12.6127 1.48797 17.0448 1.48797 19.7785 4.22164C22.5121 6.95531 22.5121 11.3875 19.7785 14.1211L18.3643 15.5353Z"/></svg></span><div><div class="t">CocoBook</div><div class="d">已连接 · 绑定 1/2 · 书目未筛选</div></div><div class="r"><span class="pill ok">已连接</span><a class="btn btn-ghost" href="?mode=advanced">高级里修改</a></div></div>
+					<div class="simple-row"><span class="tile"><svg class="wenpai-ico" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z"/></svg></span><div><div class="t">统一评论</div><div class="d">与 CocoBook 同一帖。仅此路径提供。</div></div><div class="r"><span class="wenpai-switch"><input type="hidden" value="0"><input type="checkbox" class="wenpai-switch__input" checked><span class="wenpai-switch__track"></span><span class="wenpai-switch__state"><span class="wenpai-switch__on">已开启</span><span class="wenpai-switch__off" hidden>未开启</span></span></span></div></div>
+					<div class="simple-row"><span class="tile"><svg class="wenpai-ico" viewBox="0 0 24 24" fill="currentColor"><path d="M13 14H11C7.54202 14 4.53953 15.9502 3.03239 18.8107C3.01093 18.5433 3 18.2729 3 18C3 12.4772 7.47715 8 13 8V2.5L23.5 11L13 19.5V14Z"/></svg></span><div><div class="t">旧链接跳转</div><div class="d"><a href="#">管理映射</a></div></div><div class="r"><span class="wenpai-switch"><input type="hidden" value="0"><input type="checkbox" class="wenpai-switch__input" checked><span class="wenpai-switch__track"></span><span class="wenpai-switch__state"><span class="wenpai-switch__on">已开启</span><span class="wenpai-switch__off" hidden>未开启</span></span></span></div></div>
+					<div class="wenpai-actions"><button class="btn btn-primary" type="button">保存设置</button></div>
+				</div></div>
+				<p class="note">地址 / Token / 标签 / 书目 / 读取范围 / 评论服务全部进「高级」。简单页对齐 wpslug：choice 卡 + 状态行 + 开关 + 保存。已存值照常提交（hidden 不 disabled）。</p>
+			</div>
+		</div>
+		<div class="cmp-col" style="margin-top:20px">
+			<span class="tag is-new">提案 · 高级模式（wpslug 式分组）</span>
+			<div class="wenpai-app"><div class="demo-card">
+				<div class="wenpai-subnav" role="tablist"><a class="is-current" href="#">连接</a><a href="#">书目与范围</a><a href="#">评论</a></div>
+				<h2 class="section-title">连接</h2>
+				<p class="section-desc">CocoBook 地址与令牌。</p>
+				<div class="field"><div class="field-label">CocoBook 地址</div><div class="field-ctl"><input type="url" value="https://docs.cocobook.com"></div></div>
+				<div class="field"><div class="field-label">Token ID</div><div class="field-ctl"><input type="text" value="yxqDPBGX…"></div></div>
+				<div class="field"><div class="field-label">Token Secret</div><div class="field-ctl"><input type="password" value=""><p class="hint">留空表示不修改已保存的值。</p></div></div>
+				<div class="field"><div class="field-label">站点标签</div><div class="field-ctl"><input type="text"></div></div>
+				<div class="wenpai-actions"><button class="btn btn-primary" type="button">保存</button></div>
+			</div>
+			<div class="demo-card" style="opacity:.55">
+				<h2 class="section-title">书目与范围</h2>
+				<p class="section-desc">书目清单、读取范围、试点文章。</p>
+				<div class="note" style="margin:0">（同版式，含 checkgroup 书目 + 读取范围 choice + 试点字段）</div>
+			</div>
+			<div class="demo-card" style="opacity:.55">
+				<h2 class="section-title">评论</h2>
+				<p class="section-desc">统一评论与评论服务地址。</p>
+				<div class="note" style="margin:0">（同版式，含评论服务 URL）</div>
+			</div></div>
+			<p class="note" style="max-width:640px">wpslug 高级模式就是这样：subnav 一次只看一组，每组一张卡各自保存。wpdocs 现在高级是单卡 450 行靠 depends_on 显隐，等同把三组摊在一页。拆分后每组字段少、版式和简单页一致。</p>
+		</div>
+	</section>
+</div>
+</body>
+</html>

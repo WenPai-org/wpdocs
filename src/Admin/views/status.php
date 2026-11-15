@@ -178,6 +178,33 @@ $fail_detail = $samp > 0 && null !== $fail_r
 
 $api = isset( $st['api'] ) && is_array( $st['api'] ) ? $st['api'] : array( 'skipped' => true );
 $show_coco_health = ( Settings::CONTENT_COCOBOOK === $content || Settings::CONTENT_KEEP === $content || '' !== $base_show );
+
+$api_skipped   = empty( $api ) || ! empty( $api['skipped'] ) || empty( $api['configured'] );
+$api_bad       = ! $api_skipped && empty( $api['ok'] );
+$probe_bad_n   = 0;
+$probe_skip_n  = 0;
+if ( '' !== $base_show && ! $home_ok ) {
+	++$probe_bad_n;
+}
+if ( '' !== $base_show && ! $site_ok ) {
+	++$probe_bad_n;
+}
+if ( $tree_skip ) {
+	++$probe_skip_n;
+} elseif ( '' !== $base_show && ! $tree_ok ) {
+	++$probe_bad_n;
+}
+if ( $api_skipped ) {
+	++$probe_skip_n;
+} elseif ( $api_bad ) {
+	++$probe_bad_n;
+}
+$probe_sum = sprintf( __( '逐项探测 · %d 项', 'wpdocs' ), 4 );
+if ( $probe_bad_n > 0 ) {
+	$probe_sum .= ' · ' . sprintf( __( '%d 异常', 'wpdocs' ), $probe_bad_n );
+} elseif ( $probe_skip_n > 0 ) {
+	$probe_sum .= ' · ' . sprintf( __( '%d 跳过', 'wpdocs' ), $probe_skip_n );
+}
 ?>
 
 <section class="card">
@@ -268,6 +295,20 @@ $show_coco_health = ( Settings::CONTENT_COCOBOOK === $content || Settings::CONTE
 	<?php
 	View::status_row(
 		array(
+			'title'      => __( '探测失败率', 'wpdocs' ),
+			'detail'     => $fail_detail,
+			'icon'       => 'server',
+			'pill'       => null !== $fail_r && (float) $fail_r > 0.2 ? __( '偏高', 'wpdocs' ) : ( $samp > 0 ? __( '正常', 'wpdocs' ) : __( '等待', 'wpdocs' ) ),
+			'pill_class' => null !== $fail_r && (float) $fail_r > 0.2 ? 'bad' : ( $samp > 0 ? 'ok' : 'warn' ),
+			'tile_class' => null !== $fail_r && (float) $fail_r > 0.2 ? 'bad' : ( $samp > 0 ? 'ok' : 'warn' ),
+		)
+	);
+	?>
+	<details<?php echo $probe_bad_n > 0 ? ' open' : ''; ?>>
+		<summary><?php echo esc_html( $probe_sum ); ?></summary>
+	<?php
+	View::status_row(
+		array(
 			'title'      => __( '首页', 'wpdocs' ),
 			'detail'     => $fmt_probe( (array) ( $st['home'] ?? array() ) ),
 			'icon'       => 'home',
@@ -309,7 +350,7 @@ $show_coco_health = ( Settings::CONTENT_COCOBOOK === $content || Settings::CONTE
 			)
 		);
 	}
-	if ( empty( $api ) || ! empty( $api['skipped'] ) || empty( $api['configured'] ) ) {
+	if ( $api_skipped ) {
 		View::status_row(
 			array(
 				'title'      => __( '接口', 'wpdocs' ),
@@ -339,16 +380,7 @@ $show_coco_health = ( Settings::CONTENT_COCOBOOK === $content || Settings::CONTE
 			)
 		);
 	}
-	View::status_row(
-		array(
-			'title'      => __( '探测失败率', 'wpdocs' ),
-			'detail'     => $fail_detail,
-			'icon'       => 'server',
-			'pill'       => null !== $fail_r && (float) $fail_r > 0.2 ? __( '偏高', 'wpdocs' ) : ( $samp > 0 ? __( '正常', 'wpdocs' ) : __( '等待', 'wpdocs' ) ),
-			'pill_class' => null !== $fail_r && (float) $fail_r > 0.2 ? 'bad' : ( $samp > 0 ? 'ok' : 'warn' ),
-			'tile_class' => null !== $fail_r && (float) $fail_r > 0.2 ? 'bad' : ( $samp > 0 ? 'ok' : 'warn' ),
-		)
-	);
 	?>
+	</details>
 </section>
 <?php endif; ?>

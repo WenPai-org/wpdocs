@@ -90,13 +90,13 @@ final class Menu {
 			\Wenpai_Admin_Menu::register(
 				array(
 					'slug'   => 'wpdocs',
-					'label'  => __( '文派文档', 'wpdocs' ),
+					'label'  => __( '文档', 'wpdocs' ),
 					'title'  => __( '文派文档', 'wpdocs' ),
 					'render' => array( self::class, 'render_page' ),
 				)
 			);
 		} else {
-			add_options_page( __( '文派文档', 'wpdocs' ), __( '文派文档', 'wpdocs' ), 'manage_options', 'wpdocs', array( self::class, 'render_page' ) );
+			add_options_page( __( '文派文档', 'wpdocs' ), __( '文档', 'wpdocs' ), 'manage_options', 'wpdocs', array( self::class, 'render_page' ) );
 		}
 
 		// Legacy deep links keep working without adding visible menu entries.
@@ -230,6 +230,7 @@ final class Menu {
 			$input = isset( $_POST['wpdocs'] ) && is_array( $_POST['wpdocs'] ) ? wp_unslash( $_POST['wpdocs'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			Settings::save( is_array( $input ) ? $input : array() );
 			\Wpdocs\Publish\HttpSource::bust_status_cache();
+			Client::mark_stale( 'admin-books' );
 			$mode = isset( $_POST['wpdocs_mode'] ) && 'advanced' === sanitize_key( (string) wp_unslash( $_POST['wpdocs_mode'] ) ) ? '&mode=advanced' : '';
 			wp_safe_redirect( self::url( 'settings', '', 'updated=1' . $mode ) );
 			exit;
@@ -483,9 +484,8 @@ final class Menu {
 			$filter = isset( $_GET['filter'] ) ? sanitize_key( (string) wp_unslash( $_GET['filter'] ) ) : '';
 			$items  = RedirectRepo::list( $filter );
 		} elseif ( 'sync' === $section ) {
-			$s     = Settings::raw();
-			$books = Settings::is_configured() ? Client::get( 'books', array( 'count' => 500, 'sort' => 'name' ) ) : null;
-			$cat   = Settings::is_configured() ? Catalog::get() : null;
+			$s   = Settings::raw();
+			$cat = Settings::is_configured() ? Catalog::get() : null;
 			$log   = Legacy::get_option( 'wpdocs_log', array() );
 			$log   = is_array( $log ) ? array_reverse( $log ) : array();
 		}
@@ -542,10 +542,29 @@ final class Menu {
 			return;
 		}
 		$s     = Settings::raw();
-		$books = Settings::is_configured() ? Client::get( 'books', array( 'count' => 500, 'sort' => 'name' ) ) : null;
+		$books = self::books_list();
 		self::open_shell( 'settings' );
 		include WPDOCS_DIR . 'src/Admin/views/settings.php';
 		self::close_shell( 'settings' );
+	}
+
+	/**
+	 * Books list for settings checkgroup — cached; remote fetch only on miss/expiry.
+	 * Books change rarely, so the TTL is long; a settings save marks it stale.
+	 *
+	 * @return array<string,mixed>|\WP_Error|null
+	 */
+	private static function books_list() {
+		if ( ! Settings::is_configured() ) {
+			return null;
+		}
+		return Client::remember(
+			'admin-books',
+			3600,
+			static function () {
+				return Client::get( 'books', array( 'count' => 500, 'sort' => 'name' ) );
+			}
+		);
 	}
 
 	public static function render_help(): void {

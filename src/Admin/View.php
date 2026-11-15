@@ -81,7 +81,8 @@ final class View {
 				$extra .= ' hidden';
 			}
 		}
-		echo '<div class="field"' . $extra . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		$cls = 'field' . ( isset( $args['class'] ) && '' !== (string) $args['class'] ? ' ' . (string) $args['class'] : '' );
+		echo '<div class="' . esc_attr( $cls ) . '"' . $extra . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		if ( '' !== $for ) {
 			echo '<label class="field-label" for="' . esc_attr( $for ) . '">' . esc_html( $label ) . '</label>';
 		} else {
@@ -159,20 +160,28 @@ final class View {
 	}
 
 	/**
-	 * Form-compatible kit toggle (hidden 0/1 + button).
+	 * Form-compatible kit switch (hidden 0/1 + .wenpai-switch checkbox).
 	 *
 	 * @param string $name  Input name (writes 0 then 1 when on).
 	 * @param bool   $on    Current.
-	 * @param string $label_on  data-on text.
-	 * @param string $label_off data-off text.
+	 * @param string $label_on  on-state text.
+	 * @param string $label_off off-state text.
 	 */
 	public static function toggle_input( string $name, bool $on, string $label_on = '', string $label_off = '' ): string {
 		$label_on  = '' !== $label_on ? $label_on : __( '已开启', 'wpdocs' );
 		$label_off = '' !== $label_off ? $label_off : __( '未开启', 'wpdocs' );
-		$txt       = $on ? $label_on : $label_off;
-		$html      = '<input type="hidden" name="' . esc_attr( $name ) . '" value="0" />';
-		$html     .= '<input type="checkbox" class="wpdocs-toggle-cb screen-reader-text" name="' . esc_attr( $name ) . '" value="1" ' . checked( $on, true, false ) . ' data-wpdocs-toggle-cb />';
-		$html     .= '<button type="button" class="toggle' . ( $on ? ' on' : '' ) . '" data-wpdocs-toggle data-on="' . esc_attr( $label_on ) . '" data-off="' . esc_attr( $label_off ) . '"><i></i>' . esc_html( $txt ) . '</button>';
+		if ( class_exists( 'Wenpai_Admin_Settings', false ) ) {
+			return \Wenpai_Admin_Settings::switch_html(
+				array(
+					'name'    => $name,
+					'checked' => $on,
+					'on'      => $label_on,
+					'off'     => $label_off,
+				)
+			);
+		}
+		$html  = '<input type="hidden" name="' . esc_attr( $name ) . '" value="0" />';
+		$html .= '<input type="checkbox" role="switch" name="' . esc_attr( $name ) . '" value="1" ' . checked( $on, true, false ) . ' />';
 		return $html;
 	}
 

@@ -90,7 +90,8 @@ $mode_lab = array(
 				array(
 					'label'   => __( 'Webhook', 'wpdocs' ),
 					'help'    => __( 'Forgejo push → 此地址；Secret 在设置高级里。', 'wpdocs' ),
-					'control' => '<code class="wenpai-code">' . esc_html( $hook ) . '</code>',
+					'control' => '<div class="wpdocs-code-row"><code class="wenpai-code">' . esc_html( $hook ) . '</code>'
+						. Wenpai_Admin_UI::copy_button_html( array( 'text' => $hook, 'variant' => 'ghost' ) ) . '</div>',
 				)
 			);
 			?>
@@ -149,12 +150,14 @@ $mode_lab = array(
 		View::field(
 			array(
 				'label'   => __( 'CocoBook Webhook', 'wpdocs' ),
-				'help'    => __( '在 CocoBook 后台把 page 创建/更新/删除事件 POST 到此地址。密钥在路径里；保存设置时自动生成。', 'wpdocs' ),
-				'control' => '<code class="wenpai-code">' . esc_html( $refresh ) . '</code><p class="hint">' . esc_html( sprintf(
-					__( '上次检查 %1$s（%2$s）', 'wpdocs' ),
+				'help'    => sprintf(
+					/* translators: 1: last check time, 2: last check result */
+					__( '上次检查 %1$s（%2$s）。在 CocoBook 后台把 page 创建/更新/删除事件 POST 到此地址。密钥在路径里；保存设置时自动生成。', 'wpdocs' ),
 					$state['checked'] ? wp_date( 'Y-m-d H:i', $state['checked'] ) : '—',
 					'' !== $state['result'] ? $state['result'] : '—'
-				) ) . '</p>',
+				),
+				'control' => '<div class="wpdocs-code-row"><code class="wenpai-code">' . esc_html( $refresh ) . '</code>'
+					. Wenpai_Admin_UI::copy_button_html( array( 'text' => $refresh, 'variant' => 'ghost' ) ) . '</div>',
 			)
 		);
 		?>
