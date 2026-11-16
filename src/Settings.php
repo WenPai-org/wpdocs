@@ -291,7 +291,7 @@ final class Settings {
 			if ( isset( $input['token_secret'] ) && '' !== trim( (string) $input['token_secret'] ) ) {
 				$out['token_secret'] = sanitize_text_field( (string) $input['token_secret'] );
 			}
-			if ( ! empty( $input['token_secret_clear'] ) ) {
+			if ( ! empty( $input['token_secret_clear'] ) || self::kit_cleared( $input, 'token_secret' ) ) {
 				$out['token_secret'] = '';
 			}
 		}
@@ -356,7 +356,7 @@ final class Settings {
 			if ( isset( $input['git_forgejo_token'] ) && '' !== trim( (string) $input['git_forgejo_token'] ) ) {
 				$out['git_forgejo_token'] = sanitize_text_field( (string) $input['git_forgejo_token'] );
 			}
-			if ( ! empty( $input['git_forgejo_token_clear'] ) ) {
+			if ( ! empty( $input['git_forgejo_token_clear'] ) || self::kit_cleared( $input, 'git_forgejo_token' ) ) {
 				$out['git_forgejo_token'] = '';
 			}
 		}
@@ -474,6 +474,17 @@ final class Settings {
 			);
 		}
 		return $out;
+	}
+
+	/**
+	 * Kit secret "clear" marker: {option}[__wenpai_clear][] lists field ids.
+	 *
+	 * @param array<string,mixed> $input Raw POST data.
+	 * @param string              $id    Field id.
+	 */
+	private static function kit_cleared( array $input, string $id ): bool {
+		$list = $input['__wenpai_clear'] ?? array();
+		return is_array( $list ) && in_array( $id, array_map( 'strval', $list ), true );
 	}
 
 	/**

@@ -227,7 +227,13 @@ final class Menu {
 
 		// Full settings (connection / books / rollout / comments).
 		if ( isset( $_POST['wpdocs_settings_full_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpdocs_settings_full_nonce'] ) ), 'wpdocs_settings_full' ) ) {
-			$input = isset( $_POST['wpdocs'] ) && is_array( $_POST['wpdocs'] ) ? wp_unslash( $_POST['wpdocs'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			$input = array();
+			foreach ( array( 'wpdocs_settings', 'wpdocs' ) as $key ) {
+				if ( isset( $_POST[ $key ] ) && is_array( $_POST[ $key ] ) ) {
+					$input = wp_unslash( $_POST[ $key ] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+					break;
+				}
+			}
 			Settings::save( is_array( $input ) ? $input : array() );
 			\Wpdocs\Publish\HttpSource::bust_status_cache();
 			Client::mark_stale( 'admin-books' );

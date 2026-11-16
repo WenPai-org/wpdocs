@@ -488,8 +488,8 @@
 
   /* Kit depends_on (disable mode) marks inactive panels with
      data-wenpai-dep-disabled; mirror that to `hidden` so they collapse.
-     Kit keeps their controls disabled, so duplicate field names
-     (wpdocs[base_url] etc.) never submit. */
+     Kit keeps their controls disabled, so inactive panels
+     never submit their fields. */
   function syncDepPanels() {
     document
       .querySelectorAll(

@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased — Settings schema 迁移（kit 0.10.3）
+
+- vendor wenpai-admin-ui **0.10.2 → 0.10.3**。
+- 设置页接入 `Wenpai_Admin_Settings` schema（`src/Admin/Schema.php`）：16 个叶子字段走 `field_html()`，声明 type/label/desc/mode/group/depends_on；`content_mode`/`mode`/`comments` 等自定义控件仍注册进 schema 供 depends_on 与服务端初始状态。
+- **连接字段合并**：CocoBook 地址 / Token ID / Token Secret 原来在「保留正文」「文档站读取」两面板各渲染一遍（同名输入靠 disable 防重复提交），现在合并为一组，keep/cocobook 共用，git 模式不显示。
+- 表单字段名前缀 `wpdocs[...]` → `wpdocs_settings[...]`（对齐 option 名）；`Settings::save()` 新增 `__wenpai_clear` 密钥清除标记，兼容旧 `*_clear` checkbox。
+- 密钥字段换 kit `secret` 类型：自带「已保存」态、「显示」开关、「清除已保存的值」。
+- wp-config 常量锁定字段保留 `<code>` 展示（包在带 mode/group 属性的包装里，分组显隐不受影响）。
+- 自定义件保留：主选择/读取范围 choice 卡、书目 checkgroup（远程数据）、试点/文章类型 CSV、Git 仓库组合字段、状态行、开关行。
+- 验证：`tests/run.sh` 全绿；lint PASS findings=0；Studio wpdocs-dev 实测——三内容源切换显隐正确、分组 section 显隐正确、保存往返 site_tag/git_repositories 正确、简单+keep 连接块无重复输入、零 JS 错误。
+
 ## Unreleased — Admin UI kit 0.9.0 + IA 收敛
 
 - vendor wenpai-admin-ui **0.6.2 → 0.9.0**：书目 `chk-grid` → kit `checkgroup`；文档页搜索/试解析/别名预览 → kit `suggest` + `preview`；跳转筛选 → `list_bar`；表格行操作 → `row_actions`；帮助页 → `help_page` 骨架；内容源显隐 → kit `depends_on`。

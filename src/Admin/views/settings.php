@@ -1,7 +1,12 @@
 <?php
 /**
- * Settings — 档 A：主选择 choice 卡；该源连接；旁路。读取范围用 kit choice-cards cols-2，不是第二条主轴。
- * 书目：kit .wenpai-checkgroup 勾选清单（计数 + 全选/清空）。
+ * Settings — kit 0.10 schema contract.
+ *
+ * Leaf fields render via Wenpai_Admin_Settings::field_html() (Schema::fields()).
+ * Product widgets stay custom but registered in the schema when they feed
+ * depends_on: content_mode / mode / comments cards+toggles, books checkgroup,
+ * git repo composite, wp-config-locked fields. Connection fields are ONE
+ * shared set for 保留正文/文档站读取 (was duplicated per panel before).
  *
  * @package Wpdocs
  *
@@ -9,6 +14,7 @@
  * @var array<string,mixed>|\WP_Error|null $books
  */
 
+use Wpdocs\Admin\Schema;
 use Wpdocs\Admin\View;
 use Wpdocs\Git\Bootstrap as GitBoot;
 use Wpdocs\Settings;
@@ -18,6 +24,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 $adv = View::is_advanced();
+$fw  = Schema::framework();
+$opt = Schema::OPTION;
+
 ob_start();
 View::mode_toggle( 'wpdocs-settings' );
 $mode_html = ob_get_clean();
@@ -37,7 +46,7 @@ $rollout      = in_array( $rollout_raw, array( Settings::MODE_PILOT, Settings::M
 	: Settings::MODE_PILOT;
 
 $content_ctl = View::choice_cards(
-	'wpdocs[content_mode]',
+	$opt . '[content_mode]',
 	$content_mode,
 	array(
 		Settings::CONTENT_KEEP => array(
@@ -59,7 +68,7 @@ $content_ctl = View::choice_cards(
 );
 
 $rollout_ctl = View::choice_cards(
-	'wpdocs[mode]',
+	$opt . '[mode]',
 	$rollout,
 	array(
 		Settings::MODE_PILOT => array(
@@ -75,26 +84,43 @@ $rollout_ctl = View::choice_cards(
 	)
 );
 
-$token_locked = Settings::is_locked( 'token_secret' );
-$token_saved  = '' !== (string) ( $s['token_secret'] ?? '' );
-if ( $token_locked ) {
-	$secret_ctl = '<code>' . esc_html__( '已由 wp-config.php 常量设置', 'wpdocs' ) . '</code>';
-} else {
-	$ph         = $token_saved ? esc_attr__( '留空表示不修改已保存的值', 'wpdocs' ) : '';
-	$secret_ctl = '<input id="wpdocs-token-secret" type="password" name="wpdocs[token_secret]" value="" autocomplete="new-password" placeholder="' . $ph . '" />';
-	if ( $token_saved ) {
-		$secret_ctl .= '<label class="chk" style="display:block;margin-top:8px"><input type="checkbox" name="wpdocs[token_secret_clear]" value="1" /> ' . esc_html__( '清除密钥', 'wpdocs' ) . '</label>';
+$groups  = Schema::groups();
+$section = Wenpai_Admin_UI::section( $groups );
+$group_div = static function ( string $gid, bool $close = false ) use ( $adv, $section ): string {
+	if ( $close ) {
+		return '</div>';
 	}
-}
+	// 简单模式不输出分组钩子：组内 advanced 字段各自隐藏，组保持展开。
+	return '<div class="wpdocs-adv-group"' . ( $adv ? Wenpai_Admin_UI::group_attrs( $gid, $section ) : '' ) . '>';
+};
+$dep_attr = static function ( string $mode_value, bool $disable = true ): string {
+	return ' data-wenpai-depends-on="' . esc_attr( Schema::OPTION . '[content_mode]' ) . '"'
+		. ' data-wenpai-depends-value="' . esc_attr( $mode_value ) . '"'
+		. ( $disable ? ' data-wenpai-depends-mode="disable"' : '' );
+};
+// Locked (wp-config) fields render a code chip inside a normal field row;
+// the wrapper carries the same mode/group attrs field_html() would print.
+$locked_field = static function ( string $gid, string $label, string $help, string $code ) use ( $adv, $section ): void {
+	echo '<div' . ( $adv ? Wenpai_Admin_UI::mode_attrs( 'advanced' ) . Wenpai_Admin_UI::group_attrs( $gid, $section ) : '' ) . '>';
+	View::field(
+		array(
+			'label'   => $label,
+			'help'    => $help,
+			'control' => '<code>' . esc_html( $code ) . '</code>',
+		)
+	);
+	echo '</div>';
+};
+$field = static function ( string $id ) use ( $fw ): string {
+	return $fw ? $fw->field_html( $id ) : '';
+};
 
-$tid_ctl = Settings::is_locked( 'token_id' )
-	? '<code>' . esc_html( (string) Settings::get( 'token_id' ) ) . '</code>'
-	: '<input id="wpdocs-token-id" type="text" name="wpdocs[token_id]" value="' . esc_attr( (string) ( $s['token_id'] ?? '' ) ) . '" autocomplete="off" />';
+$comments_on    = ! empty( $s['comments'] );
+$redirects_on   = ! empty( $s['redirects'] );
+$giw_standalone = GitBoot::standalone_active();
+$form_cls       = 'wpdocs-settings-form' . ( $adv ? '' : ' wpdocs-simple' );
 
-$base_ctl = Settings::is_locked( 'base_url' )
-	? '<code>' . esc_html( Settings::base_url() ) . '</code>'
-	: '<input id="wpdocs-base-url" type="url" name="wpdocs[base_url]" value="' . esc_attr( (string) ( $s['base_url'] ?? '' ) ) . '" placeholder="https://docs.example.test" />';
-
+// Custom widgets that stay hand-rendered.
 $books_ctl = '';
 if ( is_array( $books ) && ! is_wp_error( $books ) && ! empty( $books['data'] ) ) {
 	$picked     = Settings::books();
@@ -117,11 +143,11 @@ if ( is_array( $books ) && ! is_wp_error( $books ) && ! empty( $books['data'] ) 
 		. '<button type="button" data-wenpai-cg-all>' . esc_html__( '全选', 'wpdocs' ) . '</button>'
 		. '<button type="button" data-wenpai-cg-none>' . esc_html__( '清空', 'wpdocs' ) . '</button>'
 		. '</span></div>';
-	$books_ctl  .= '<input type="hidden" name="wpdocs[books][]" value="" />';
+	$books_ctl  .= '<input type="hidden" name="' . esc_attr( $opt ) . '[books][]" value="" />';
 	$books_ctl  .= '<ul class="wenpai-checkgroup__list">';
 	foreach ( $books_list as $b ) {
 		$bid = (int) $b['id'];
-		$books_ctl .= '<li><label class="chk"><input type="checkbox" name="wpdocs[books][]" value="' . esc_attr( (string) $bid ) . '" ' . checked( in_array( $bid, $picked, true ), true, false ) . ' /> '
+		$books_ctl .= '<li><label class="chk"><input type="checkbox" name="' . esc_attr( $opt ) . '[books][]" value="' . esc_attr( (string) $bid ) . '" ' . checked( in_array( $bid, $picked, true ), true, false ) . ' /> '
 			. '<span class="wenpai-checkgroup__text">' . esc_html( (string) ( $b['name'] ?? '' ) ) . '</span>'
 			. '<span class="wenpai-checkgroup__meta">#' . esc_html( (string) $bid ) . '</span></label></li>';
 	}
@@ -129,7 +155,7 @@ if ( is_array( $books ) && ! is_wp_error( $books ) && ! empty( $books['data'] ) 
 } else {
 	$books_ctl = '<p class="hint">' . esc_html__( '保存连接后列出可选书；也可只填站点标签。', 'wpdocs' ) . '</p>';
 	foreach ( Settings::books() as $bid ) {
-		$books_ctl .= '<input type="hidden" name="wpdocs[books][]" value="' . esc_attr( (string) $bid ) . '" />';
+		$books_ctl .= '<input type="hidden" name="' . esc_attr( $opt ) . '[books][]" value="' . esc_attr( (string) $bid ) . '" />';
 	}
 }
 
@@ -152,45 +178,6 @@ if ( empty( $primary ) ) {
 	);
 }
 $git_slug = trim( (string) ( $primary['username'] ?? '' ) . '/' . (string) ( $primary['repository'] ?? '' ), '/' );
-
-$git_token_saved = '' !== (string) ( $s['git_forgejo_token'] ?? '' );
-$git_token_ctl   = '<input id="wpdocs-git-token" type="password" name="wpdocs[git_forgejo_token]" value="" autocomplete="new-password" placeholder="'
-	. ( $git_token_saved ? esc_attr__( '留空表示不修改已保存的值', 'wpdocs' ) : '' ) . '" />';
-if ( $git_token_saved ) {
-	$git_token_ctl .= '<label class="chk" style="display:block;margin-top:8px"><input type="checkbox" name="wpdocs[git_forgejo_token_clear]" value="1" /> '
-		. esc_html__( '清除 Token', 'wpdocs' ) . '</label>';
-}
-
-$comments_on    = ! empty( $s['comments'] );
-$redirects_on   = ! empty( $s['redirects'] );
-$giw_standalone = GitBoot::standalone_active();
-$form_cls       = 'wpdocs-settings-form' . ( $adv ? '' : ' wpdocs-simple' );
-
-if ( Settings::CONTENT_COCOBOOK === $content_mode ) {
-	$adv_groups = array(
-		'connect'  => __( '连接', 'wpdocs' ),
-		'scope'    => __( '书目与范围', 'wpdocs' ),
-		'comments' => __( '评论', 'wpdocs' ),
-		'misc'     => __( '同步与缓存', 'wpdocs' ),
-	);
-} elseif ( Settings::CONTENT_GIT === $content_mode ) {
-	$adv_groups = array(
-		'connect' => __( '仓库', 'wpdocs' ),
-		'misc'    => __( '同步与缓存', 'wpdocs' ),
-	);
-} else {
-	$adv_groups = array(
-		'connect' => __( '连接', 'wpdocs' ),
-	);
-}
-$section = Wenpai_Admin_UI::section( $adv_groups );
-$group_div = static function ( string $gid, bool $close = false ) use ( $adv, $section ): string {
-	if ( $close ) {
-		return '</div>';
-	}
-	// 简单模式不输出分组钩子：组内 advanced 字段各自隐藏，组保持展开。
-	return '<div class="wpdocs-adv-group"' . ( $adv ? Wenpai_Admin_UI::group_attrs( $gid, $section ) : '' ) . '>';
-};
 ?>
 <form method="post" action="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'settings' ) ); ?>" class="<?php echo esc_attr( $form_cls ); ?>" id="wpdocs-settings-form">
 	<?php wp_nonce_field( 'wpdocs_settings_full', 'wpdocs_settings_full_nonce' ); ?>
@@ -212,10 +199,10 @@ $group_div = static function ( string $gid, bool $close = false ) use ( $adv, $s
 		);
 		?>
 
-		<?php if ( $adv && count( $adv_groups ) > 1 ) : ?>
+		<?php if ( $adv && count( $groups ) > 1 ) : ?>
 			<?php
 			$sub_items = array();
-			foreach ( $adv_groups as $gid => $glabel ) {
+			foreach ( $groups as $gid => $glabel ) {
 				$sub_items[] = array(
 					'id'    => $gid,
 					'label' => $glabel,
@@ -233,28 +220,55 @@ $group_div = static function ( string $gid, bool $close = false ) use ( $adv, $s
 		<?php endif; ?>
 
 		<div data-wenpai-groups data-wenpai-groups-default="connect">
-		<div class="wpdocs-when-content" data-wenpai-depends-on="wpdocs[content_mode]" data-wenpai-depends-value="keep" data-wenpai-depends-mode="disable"<?php echo Settings::CONTENT_KEEP === $content_mode ? '' : ' hidden'; ?>>
+
+		<?php if ( $adv ) : ?>
+			<?php // Shared CocoBook/keep connection — one field set for both modes. ?>
+			<div class="wpdocs-when-content"<?php echo $dep_attr( '["keep","cocobook"]' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php echo Settings::CONTENT_GIT === $content_mode ? ' hidden' : ''; ?>>
+				<?php echo $group_div( 'connect' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+				<?php
+				if ( Settings::is_locked( 'base_url' ) ) {
+					$locked_field( 'connect', __( 'CocoBook 地址', 'wpdocs' ), __( 'CocoBook / BookStack 根地址。', 'wpdocs' ), Settings::base_url() );
+				} else {
+					echo $field( 'base_url' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				}
+				if ( Settings::is_locked( 'token_id' ) ) {
+					$locked_field( 'connect', __( 'Token ID', 'wpdocs' ), '', (string) Settings::get( 'token_id' ) );
+				} else {
+					echo $field( 'token_id' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				}
+				if ( Settings::is_locked( 'token_secret' ) ) {
+					$locked_field( 'connect', __( 'Token Secret', 'wpdocs' ), __( '留空表示不修改已保存的值。', 'wpdocs' ), __( '已由 wp-config.php 常量设置', 'wpdocs' ) );
+				} else {
+					echo $field( 'token_secret' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				}
+				?>
+				<?php echo $group_div( 'connect', true ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+			</div>
+		<?php endif; ?>
+
+		<div class="wpdocs-when-content"<?php echo $dep_attr( 'keep' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php echo Settings::CONTENT_KEEP === $content_mode ? '' : ' hidden'; ?>>
 			<?php
 ob_start();
 ?><a class="btn btn-ghost" href="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'tools', 'sync' ) ); ?>"><?php esc_html_e( '打开同步', 'wpdocs' ); ?></a><?php
 echo Wenpai_Admin_UI::row_html( array( 'icon_html' => View::icon( 'info' ), 'title' => __( '前台不换正文', 'wpdocs' ), 'desc' => __( '需要把已绑定的 CocoBook 页写入文章时，到工具 → 同步。', 'wpdocs' ), 'right_html' => (string) ob_get_clean() ) );
 ?>
-			<?php if ( $adv ) : ?>
-				<?php echo $group_div( 'connect' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+			<?php if ( ! $adv ) : ?>
 				<?php
+				// 简单模式 + 保留正文：连接字段是唯一能配置 CocoBook 导入的入口，
+				// 用紧凑手写块（schema 字段在简单模式服务端隐藏，不重复输出）。
 				$base_ctl_keep = Settings::is_locked( 'base_url' )
 					? '<code>' . esc_html( Settings::base_url() ) . '</code>'
-					: '<input id="wpdocs-base-url-keep" type="url" name="wpdocs[base_url]" value="' . esc_attr( (string) ( $s['base_url'] ?? '' ) ) . '" />';
+					: '<input id="wpdocs-base-url-keep" type="url" name="' . esc_attr( $opt ) . '[base_url]" value="' . esc_attr( (string) ( $s['base_url'] ?? '' ) ) . '" />';
 				$tid_ctl_keep  = Settings::is_locked( 'token_id' )
 					? '<code>' . esc_html( (string) Settings::get( 'token_id' ) ) . '</code>'
-					: '<input id="wpdocs-token-id-keep" type="text" name="wpdocs[token_id]" value="' . esc_attr( (string) ( $s['token_id'] ?? '' ) ) . '" autocomplete="off" />';
-				if ( $token_locked ) {
+					: '<input id="wpdocs-token-id-keep" type="text" name="' . esc_attr( $opt ) . '[token_id]" value="' . esc_attr( (string) ( $s['token_id'] ?? '' ) ) . '" autocomplete="off" />';
+				if ( Settings::is_locked( 'token_secret' ) ) {
 					$secret_ctl_keep = '<code>' . esc_html__( '已由 wp-config.php 常量设置', 'wpdocs' ) . '</code>';
 				} else {
-					$ph_keep         = $token_saved ? esc_attr__( '留空表示不修改已保存的值', 'wpdocs' ) : '';
-					$secret_ctl_keep = '<input id="wpdocs-token-secret-keep" type="password" name="wpdocs[token_secret]" value="" autocomplete="new-password" placeholder="' . $ph_keep . '" />';
-					if ( $token_saved ) {
-						$secret_ctl_keep .= '<label class="chk" style="display:block;margin-top:8px"><input type="checkbox" name="wpdocs[token_secret_clear]" value="1" /> ' . esc_html__( '清除密钥', 'wpdocs' ) . '</label>';
+					$ph_keep         = ! empty( $s['token_secret'] ) ? esc_attr__( '留空表示不修改已保存的值', 'wpdocs' ) : '';
+					$secret_ctl_keep = '<input id="wpdocs-token-secret-keep" type="password" name="' . esc_attr( $opt ) . '[token_secret]" value="" autocomplete="new-password" placeholder="' . $ph_keep . '" />';
+					if ( ! empty( $s['token_secret'] ) ) {
+						$secret_ctl_keep .= '<label class="chk" style="display:block;margin-top:8px"><input type="checkbox" name="' . esc_attr( $opt ) . '[token_secret_clear]" value="1" /> ' . esc_html__( '清除密钥', 'wpdocs' ) . '</label>';
 					}
 				}
 				View::field(
@@ -281,11 +295,10 @@ echo Wenpai_Admin_UI::row_html( array( 'icon_html' => View::icon( 'info' ), 'tit
 					)
 				);
 				?>
-				<?php echo $group_div( 'connect', true ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 			<?php endif; ?>
 		</div>
 
-		<div class="wpdocs-when-content" data-wenpai-depends-on="wpdocs[content_mode]" data-wenpai-depends-value="cocobook" data-wenpai-depends-mode="disable"<?php echo Settings::CONTENT_COCOBOOK === $content_mode ? '' : ' hidden'; ?>>
+		<div class="wpdocs-when-content"<?php echo $dep_attr( 'cocobook' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php echo Settings::CONTENT_COCOBOOK === $content_mode ? '' : ' hidden'; ?>>
 			<?php if ( ! $adv ) : ?>
 				<?php
 				echo Wenpai_Admin_UI::row_html( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- kit-escaped.
@@ -303,47 +316,10 @@ echo Wenpai_Admin_UI::row_html( array( 'icon_html' => View::icon( 'info' ), 'tit
 				);
 				?>
 			<?php endif; ?>
-			<?php echo $group_div( 'connect' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-			<?php
-			View::field(
-				array(
-					'for'       => 'wpdocs-base-url',
-					'label'     => __( 'CocoBook 地址', 'wpdocs' ),
-					'help'      => __( 'CocoBook / BookStack 根地址。', 'wpdocs' ),
-					'advanced'  => true,
-					'control'   => $base_ctl,
-				)
-			);
-			View::field(
-				array(
-					'for'       => 'wpdocs-token-id',
-					'label'     => __( 'Token ID', 'wpdocs' ),
-					'advanced'  => true,
-					'control'   => $tid_ctl,
-				)
-			);
-			View::field(
-				array(
-					'for'       => 'wpdocs-token-secret',
-					'label'     => __( 'Token Secret', 'wpdocs' ),
-					'help'      => __( '留空表示不修改已保存的值。', 'wpdocs' ),
-					'advanced'  => true,
-					'control'   => $secret_ctl,
-				)
-			);
-			?>
-			<?php echo $group_div( 'connect', true ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+
 			<?php echo $group_div( 'scope' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+			<?php echo $field( 'site_tag' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 			<?php
-			View::field(
-				array(
-					'for'       => 'wpdocs-site-tag',
-					'label'     => __( '站点标签', 'wpdocs' ),
-					'help'      => __( '未勾选书目时，自动用带此标签的书。', 'wpdocs' ),
-					'advanced'  => true,
-					'control'   => '<input id="wpdocs-site-tag" type="text" name="wpdocs[site_tag]" value="' . esc_attr( (string) ( $s['site_tag'] ?? '' ) ) . '" />',
-				)
-			);
 			View::field(
 				array(
 					'label'     => __( '书目', 'wpdocs' ),
@@ -362,19 +338,20 @@ echo Wenpai_Admin_UI::row_html( array( 'icon_html' => View::icon( 'info' ), 'tit
 			);
 			?>
 			<div<?php echo Wenpai_Admin_UI::mode_attrs( 'advanced' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
-			<div class="field" data-wenpai-depends-on="wpdocs[mode]" data-wenpai-depends-value="pilot" data-wenpai-depends-mode="disable"<?php echo Settings::MODE_PILOT === $rollout ? '' : ' hidden'; ?>>
+			<div class="field" data-wenpai-depends-on="<?php echo esc_attr( $opt ); ?>[mode]" data-wenpai-depends-value="pilot" data-wenpai-depends-mode="disable"<?php echo Settings::MODE_PILOT === $rollout ? '' : ' hidden'; ?>>
 				<label class="field-label" for="wpdocs-pilot"><?php esc_html_e( '试点文章 ID', 'wpdocs' ); ?></label>
 				<div class="field-ctl">
-					<input id="wpdocs-pilot" type="text" name="wpdocs[pilot_post_ids]" value="<?php echo esc_attr( implode( ', ', Settings::pilot_post_ids() ) ); ?>" />
+					<input id="wpdocs-pilot" type="text" name="<?php echo esc_attr( $opt ); ?>[pilot_post_ids]" value="<?php echo esc_attr( implode( ', ', Settings::pilot_post_ids() ) ); ?>" />
 					<p class="hint"><?php esc_html_e( '逗号分隔。', 'wpdocs' ); ?></p>
 				</div>
 			</div>
 			</div>
 			<?php echo $group_div( 'scope', true ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+
 			<?php echo $group_div( 'comments' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 			<?php
 			ob_start();
-			echo View::toggle_input( 'wpdocs[comments]', $comments_on ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			echo View::toggle_input( $opt . '[comments]', $comments_on ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			$wpdocs_comments_ctl = (string) ob_get_clean();
 			echo Wenpai_Admin_UI::row_html(
 				array(
@@ -385,67 +362,32 @@ echo Wenpai_Admin_UI::row_html( array( 'icon_html' => View::icon( 'info' ), 'tit
 				)
 			);
 			?>
-			<div<?php echo Wenpai_Admin_UI::mode_attrs( 'advanced' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
-			<div class="field" data-wenpai-depends-on="wpdocs[comments]" data-wenpai-depends-value="1" data-wenpai-depends-mode="disable"<?php echo $comments_on ? '' : ' hidden'; ?>>
-				<label class="field-label" for="wpdocs-bff"><?php esc_html_e( '评论服务', 'wpdocs' ); ?></label>
-				<div class="field-ctl">
-					<input id="wpdocs-bff" type="url" name="wpdocs[bff_url]" value="<?php echo esc_attr( (string) ( $s['bff_url'] ?? '' ) ); ?>" />
-				</div>
-			</div>
-			</div>
+			<?php echo $field( 'bff_url' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 			<?php echo $group_div( 'comments', true ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+
 			<?php echo $group_div( 'misc' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 			<?php
-			View::field(
-				array(
-					'for'      => 'wpdocs-tree-url',
-					'label'    => __( '发布树地址', 'wpdocs' ),
-					'help'     => __( '留空用「CocoBook 根地址/books」。', 'wpdocs' ),
-					'advanced' => true,
-					'control'  => '<input id="wpdocs-tree-url" type="url" name="wpdocs[tree_url]" value="' . esc_attr( (string) ( $s['tree_url'] ?? '' ) ) . '" />',
-				)
-			);
+			echo $field( 'tree_url' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			echo $field( 'page_ttl' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			if ( Settings::is_locked( 'refresh_secret' ) ) {
+				$locked_field( 'misc', __( 'Webhook 密钥', 'wpdocs' ), __( '拼进工具 → 同步里的 Webhook URL。留空保存时自动生成；也可在 wp-config 用 WPDOCS_REFRESH_SECRET。', 'wpdocs' ), __( '已由 wp-config.php 常量设置', 'wpdocs' ) );
+			} else {
+				echo $field( 'refresh_secret' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			}
+			echo $field( 'comment_min_chars' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			View::field(
 				array(
 					'for'      => 'wpdocs-post-types',
 					'label'    => __( '文章类型', 'wpdocs' ),
 					'advanced' => true,
-					'control'  => '<input id="wpdocs-post-types" type="text" name="wpdocs[post_types]" value="' . esc_attr( implode( ',', (array) ( $s['post_types'] ?? array( 'post' ) ) ) ) . '" />',
-				)
-			);
-			View::field(
-				array(
-					'for'      => 'wpdocs-ttl',
-					'label'    => __( '缓存秒数', 'wpdocs' ),
-					'help'     => __( '页正文缓存；0 = 正文不过期。发布树索引仍最多约 5 分钟刷新。', 'wpdocs' ),
-					'advanced' => true,
-					'control'  => '<input id="wpdocs-ttl" type="number" min="0" name="wpdocs[page_ttl]" value="' . esc_attr( (string) ( $s['page_ttl'] ?? 0 ) ) . '" />',
-				)
-			);
-			View::field(
-				array(
-					'for'      => 'wpdocs-refresh-secret',
-					'label'    => __( 'Webhook 密钥', 'wpdocs' ),
-					'help'     => __( '拼进工具 → 同步里的 Webhook URL。留空保存时自动生成；也可在 wp-config 用 WPDOCS_REFRESH_SECRET。', 'wpdocs' ),
-					'advanced' => true,
-					'control'  => Settings::is_locked( 'refresh_secret' )
-						? '<code>' . esc_html__( '已由 wp-config.php 常量设置', 'wpdocs' ) . '</code>'
-						: '<input id="wpdocs-refresh-secret" type="text" name="wpdocs[refresh_secret]" value="' . esc_attr( (string) ( $s['refresh_secret'] ?? '' ) ) . '" autocomplete="off" />',
-				)
-			);
-			View::field(
-				array(
-					'for'      => 'wpdocs-minc',
-					'label'    => __( '旧评论迁移阈值', 'wpdocs' ),
-					'advanced' => true,
-					'control'  => '<input id="wpdocs-minc" type="number" min="1" max="1000" name="wpdocs[comment_min_chars]" value="' . esc_attr( (string) ( $s['comment_min_chars'] ?? 30 ) ) . '" />',
+					'control'  => '<input id="wpdocs-post-types" type="text" name="' . esc_attr( $opt ) . '[post_types]" value="' . esc_attr( implode( ',', (array) ( $s['post_types'] ?? array( 'post' ) ) ) ) . '" />',
 				)
 			);
 			?>
 			<?php echo $group_div( 'misc', true ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 		</div>
 
-		<div class="wpdocs-when-content" data-wenpai-depends-on="wpdocs[content_mode]" data-wenpai-depends-value="git" data-wenpai-depends-mode="disable"<?php echo Settings::CONTENT_GIT === $content_mode ? '' : ' hidden'; ?>>
+		<div class="wpdocs-when-content"<?php echo $dep_attr( 'git' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php echo Settings::CONTENT_GIT === $content_mode ? '' : ' hidden'; ?>>
 			<?php if ( $giw_standalone ) : ?>
 				<div class="notice warn"><span><?php esc_html_e( '已装独立 Git it Write。请停用后再用本页，或继续用那个插件。', 'wpdocs' ); ?></span></div>
 			<?php endif; ?>
@@ -470,30 +412,15 @@ echo Wenpai_Admin_UI::row_html( array( 'icon_html' => View::icon( 'info' ), 'tit
 			<?php endif; ?>
 			<?php echo $group_div( 'connect' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 			<?php
-			View::field(
-				array(
-					'for'       => 'wpdocs-git-url',
-					'label'     => __( 'Forgejo 地址', 'wpdocs' ),
-					'advanced'  => true,
-					'control'   => '<input id="wpdocs-git-url" type="url" name="wpdocs[git_forgejo_url]" value="' . esc_attr( (string) ( $s['git_forgejo_url'] ?? '' ) ) . '" placeholder="https://feicode.com" />',
-				)
-			);
-			View::field(
-				array(
-					'for'       => 'wpdocs-git-token',
-					'label'     => __( 'Token', 'wpdocs' ),
-					'help'      => __( '留空表示不修改已保存的值。', 'wpdocs' ),
-					'advanced'  => true,
-					'control'   => $git_token_ctl,
-				)
-			);
+			echo $field( 'git_forgejo_url' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			echo $field( 'git_forgejo_token' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			View::field(
 				array(
 					'for'       => 'wpdocs-git-slug',
 					'label'     => __( '仓库', 'wpdocs' ),
 					'help'      => __( '格式 owner/name。拉取在工具 → 同步。', 'wpdocs' ),
 					'advanced'  => true,
-					'control'   => '<input id="wpdocs-git-slug" type="text" name="wpdocs[git_repo_slug]" value="' . esc_attr( $git_slug ) . '" placeholder="WenPai-org/docs" />',
+					'control'   => '<input id="wpdocs-git-slug" type="text" name="' . esc_attr( $opt ) . '[git_repo_slug]" value="' . esc_attr( $git_slug ) . '" placeholder="WenPai-org/docs" />',
 				)
 			);
 			View::field(
@@ -501,7 +428,7 @@ echo Wenpai_Admin_UI::row_html( array( 'icon_html' => View::icon( 'info' ), 'tit
 					'for'       => 'wpdocs-git-folder',
 					'label'     => __( '子目录', 'wpdocs' ),
 					'advanced'  => true,
-					'control'   => '<input id="wpdocs-git-folder" type="text" name="wpdocs[git_repo_folder]" value="' . esc_attr( (string) ( $primary['folder'] ?? '' ) ) . '" placeholder="docs" />',
+					'control'   => '<input id="wpdocs-git-folder" type="text" name="' . esc_attr( $opt ) . '[git_repo_folder]" value="' . esc_attr( (string) ( $primary['folder'] ?? '' ) ) . '" placeholder="docs" />',
 				)
 			);
 			View::field(
@@ -509,49 +436,27 @@ echo Wenpai_Admin_UI::row_html( array( 'icon_html' => View::icon( 'info' ), 'tit
 					'for'       => 'wpdocs-git-branch',
 					'label'     => __( '分支', 'wpdocs' ),
 					'advanced'  => true,
-					'control'   => '<input id="wpdocs-git-branch" type="text" name="wpdocs[git_repo_branch]" value="' . esc_attr( (string) ( $primary['branch'] ?? 'main' ) ) . '" />',
+					'control'   => '<input id="wpdocs-git-branch" type="text" name="' . esc_attr( $opt ) . '[git_repo_branch]" value="' . esc_attr( (string) ( $primary['branch'] ?? 'main' ) ) . '" />',
 				)
 			);
 			?>
 			<?php echo $group_div( 'connect', true ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 			<?php echo $group_div( 'misc' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 			<?php
-			View::field(
-				array(
-					'for'      => 'wpdocs-git-webhook',
-					'label'    => __( 'Webhook Secret', 'wpdocs' ),
-					'advanced' => true,
-					'control'  => '<input id="wpdocs-git-webhook" type="text" name="wpdocs[git_webhook_secret]" value="' . esc_attr( (string) ( $s['git_webhook_secret'] ?? '' ) ) . '" autocomplete="off" />',
-				)
-			);
-			View::field(
-				array(
-					'for'      => 'wpdocs-git-base',
-					'label'    => __( '本地目录', 'wpdocs' ),
-					'help'     => __( '填了则走本地扫描，忽略上方远程仓库。', 'wpdocs' ),
-					'advanced' => true,
-					'control'  => '<input id="wpdocs-git-base" type="text" name="wpdocs[git_base_directory]" value="' . esc_attr( (string) ( $s['git_base_directory'] ?? '' ) ) . '" />',
-				)
-			);
-			View::field(
-				array(
-					'for'      => 'wpdocs-git-ptype',
-					'label'    => __( '文章类型', 'wpdocs' ),
-					'advanced' => true,
-					'control'  => '<input id="wpdocs-git-ptype" type="text" name="wpdocs[git_default_post_type]" value="' . esc_attr( (string) ( $s['git_default_post_type'] ?? 'post' ) ) . '" />',
-				)
-			);
+			echo $field( 'git_webhook_secret' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			echo $field( 'git_base_directory' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			echo $field( 'git_default_post_type' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			?>
 			<?php echo $group_div( 'misc', true ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-			<input type="hidden" name="wpdocs[git_repo_post_type]" value="<?php echo esc_attr( (string) ( $primary['post_type'] ?? 'post' ) ); ?>" />
-			<input type="hidden" name="wpdocs[git_repo_post_author]" value="<?php echo esc_attr( (string) (int) ( $primary['post_author'] ?? 1 ) ); ?>" />
-			<input type="hidden" name="wpdocs[git_repo_last_publish]" value="<?php echo esc_attr( (string) (int) ( $primary['last_publish'] ?? 0 ) ); ?>" />
+			<input type="hidden" name="<?php echo esc_attr( $opt ); ?>[git_repo_post_type]" value="<?php echo esc_attr( (string) ( $primary['post_type'] ?? 'post' ) ); ?>" />
+			<input type="hidden" name="<?php echo esc_attr( $opt ); ?>[git_repo_post_author]" value="<?php echo esc_attr( (string) (int) ( $primary['post_author'] ?? 1 ) ); ?>" />
+			<input type="hidden" name="<?php echo esc_attr( $opt ); ?>[git_repo_last_publish]" value="<?php echo esc_attr( (string) (int) ( $primary['last_publish'] ?? 0 ) ); ?>" />
 		</div>
 		</div>
 
 		<?php
 		ob_start();
-		echo View::toggle_input( 'wpdocs[redirects]', $redirects_on ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo View::toggle_input( $opt . '[redirects]', $redirects_on ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		$wpdocs_redirects_ctl = (string) ob_get_clean();
 		echo Wenpai_Admin_UI::row_html(
 			array(
