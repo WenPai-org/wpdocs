@@ -65,12 +65,39 @@ final class RemoteMeta {
 			$client = BookStackClient::from_config();
 		}
 
-		$out = array();
+		$out        = array();
+		$infra_fail = 0;
 		foreach ( $ids as $pid ) {
 			$stored_slug = (string) ( $slug_by_id[ $pid ] ?? '' );
-			$out[ $pid ] = self::for_page( $pid, $client, $stored_slug, $ttl );
+			// Circuit breaker: after repeated transport/auth failures the API is
+			// down or misconfigured — stop probing so admin renders stay fast.
+			if ( $infra_fail >= 3 ) {
+				$out[ $pid ] = self::circuit_open();
+				continue;
+			}
+			$meta = self::for_page( $pid, $client, $stored_slug, $ttl );
+			$out[ $pid ] = $meta;
+			$err         = (string) ( $meta['error'] ?? '' );
+			if ( in_array( $err, array( BookStackClient::ERR_HTTP, BookStackClient::ERR_CONFIG, BookStackClient::ERR_AUTH, BookStackClient::ERR_RATE ), true ) ) {
+				++$infra_fail;
+			} else {
+				$infra_fail = 0;
+			}
 		}
 		return $out;
+	}
+
+	/** Placeholder row when the circuit breaker skips remaining probes. */
+	private static function circuit_open(): array {
+		return array(
+			'state'       => self::STATE_UNKNOWN,
+			'title'       => '',
+			'slug'        => '',
+			'updated_at'  => '',
+			'error'       => 'circuit_open',
+			'slug_match'  => true,
+			'attachments' => 0,
+		);
 	}
 
 	/**

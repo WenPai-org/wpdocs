@@ -133,7 +133,7 @@
       setBusy(btn, true);
       clearPreview(out);
       showPreview(out, "反查中…", "");
-      var q = "post_id=" + encodeURIComponent(v);
+      var q = "id=" + encodeURIComponent(v);
       fetch(root + "/bindings/resolve?" + q, {
         credentials: "same-origin",
         headers: headers(),
@@ -148,7 +148,11 @@
             showPreview(out, "未找到绑定。", "bad");
             return;
           }
-          var d = res.data;
+          var d = res.data && res.data.row;
+          if (!d) {
+            showPreview(out, "未找到绑定。", "bad");
+            return;
+          }
           var line =
             "文章 #" +
             (d.wp_post_id || "?") +

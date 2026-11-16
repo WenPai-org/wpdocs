@@ -55,6 +55,7 @@ View::page_head(
 						array(
 							'title'     => __( '建绑定', 'wpdocs' ),
 							'body_html' => '<p>' . esc_html__( '在「工具 → 绑定」填写文章 ID 与文档书册/页面别名。简单模式够用；高级可补文档页 ID、外部 ID 与来源。', 'wpdocs' ) . '</p>'
+								. '<p>' . esc_html__( '「文档站读取」模式下，页面上的 wp-id / wp-path / wp-slug 标签优先；标签未命中时，active 绑定也会让文章读取该文档页正文并共用评论。', 'wpdocs' ) . '</p>'
 								. '<p><a href="' . esc_url( \Wpdocs\Admin\Menu::url( 'tools', 'bindings' ) ) . '">' . esc_html__( '打开绑定', 'wpdocs' ) . '</a></p>',
 						),
 						array(
@@ -120,7 +121,7 @@ View::page_head(
 						),
 						array(
 							'title'     => __( 'REST', 'wpdocs' ),
-							'body_html' => '<p>' . esc_html__( '命名空间 /wpdocs/v1，需 manage_options（Application Password）。status / bindings / redirects / search / suggest；refresh 用路径密钥不用 App Password。', 'wpdocs' ) . '</p><p><code>docs/ops/wpdocs-ops.md</code></p>',
+							'body_html' => '<p>' . esc_html__( '命名空间 /wpdocs/v1，需 manage_options（Application Password）。status / bindings / redirects / search / suggest；refresh 用路径密钥不用 App Password。', 'wpdocs' ) . '</p>',
 						),
 					),
 				),

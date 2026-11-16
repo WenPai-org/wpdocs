@@ -130,7 +130,7 @@ final class View {
 	 *
 	 * @param string               $name    Input name.
 	 * @param string               $current Current value.
-	 * @param array<string,array{label:string,desc?:string,icon?:string}> $choices Value => meta.
+	 * @param array<string,array{label:string,desc?:string,icon?:string,icon_html?:string}> $choices Value => meta.
 	 */
 	public static function choice_cards( string $name, string $current, array $choices ): string {
 		$cols = 2 === count( $choices ) ? ' cols-2' : '';
@@ -140,7 +140,9 @@ final class View {
 			$on   = (string) $k === (string) $current;
 			$cls  = 'choice' . ( $on ? ' is-on' : '' );
 			$icon = '';
-			if ( ! empty( $c['icon'] ) ) {
+			if ( ! empty( $c['icon_html'] ) ) {
+				$icon = '<span class="choice-ico" aria-hidden="true">' . $c['icon_html'] . '</span>';
+			} elseif ( ! empty( $c['icon'] ) ) {
 				$icon = '<span class="choice-ico" aria-hidden="true">' . self::icon( (string) $c['icon'] ) . '</span>';
 			}
 			$out .= '<label class="' . esc_attr( $cls ) . '">';

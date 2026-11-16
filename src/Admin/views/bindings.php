@@ -180,6 +180,9 @@ if ( ! $embed ) {
 <section class="card">
 	<h2 class="section-title"><?php esc_html_e( '已有绑定', 'wpdocs' ); ?></h2>
 	<p class="section-desc"><?php esc_html_e( '点「编辑」回填上方表单。删除前先勾确认门。', 'wpdocs' ); ?></p>
+	<?php if ( isset( $bind_total ) && $bind_total > count( $items ) ) : ?>
+		<p class="hint"><?php echo esc_html( sprintf( __( '共 %d 条绑定，表格显示最近 %d 条。', 'wpdocs' ), (int) $bind_total, count( $items ) ) ); ?></p>
+	<?php endif; ?>
 	<?php if ( array() === $items ) : ?>
 		<?php echo Wenpai_Admin_UI::empty_state_html( array( 'text' => __( '还没有文章绑定到文档页。保存上方表单后会出现在这里。', 'wpdocs' ) ) ); ?>
 	<?php else : ?>

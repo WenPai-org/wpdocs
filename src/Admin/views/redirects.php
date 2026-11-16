@@ -116,6 +116,9 @@ endif;
 		<div>
 			<h2 class="section-title"><?php esc_html_e( '已有映射', 'wpdocs' ); ?></h2>
 			<p class="section-desc"><?php esc_html_e( '点「编辑」回填上方表单。删除前先勾确认门。', 'wpdocs' ); ?></p>
+			<?php if ( isset( $redir_total ) && $redir_filtered > count( $items ) ) : ?>
+				<p class="hint"><?php echo esc_html( sprintf( __( '当前筛选共 %d 条，表格显示最近 %d 条。', 'wpdocs' ), (int) $redir_filtered, count( $items ) ) ); ?></p>
+			<?php endif; ?>
 		</div>
 		<?php
 		$redir_hidden = array(

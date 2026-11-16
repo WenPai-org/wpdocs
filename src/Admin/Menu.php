@@ -483,12 +483,15 @@ final class Menu {
 		$filter = '';
 		$remote = array();
 		if ( 'bindings' === $section ) {
-			$items  = BindRepo::list();
-			$remote = RemoteMeta::for_rows( is_array( $items ) ? $items : array() );
+			$items      = BindRepo::list();
+			$bind_total = BindRepo::count();
+			$remote     = RemoteMeta::for_rows( is_array( $items ) ? $items : array() );
 		} elseif ( 'redirects' === $section ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$filter = isset( $_GET['filter'] ) ? sanitize_key( (string) wp_unslash( $_GET['filter'] ) ) : '';
-			$items  = RedirectRepo::list( $filter );
+			$filter         = isset( $_GET['filter'] ) ? sanitize_key( (string) wp_unslash( $_GET['filter'] ) ) : '';
+			$items          = RedirectRepo::list( $filter );
+			$redir_total    = RedirectRepo::count();
+			$redir_filtered = RedirectRepo::count( $filter );
 		} elseif ( 'sync' === $section ) {
 			$s   = Settings::raw();
 			$cat = Settings::is_configured() ? Catalog::get() : null;
@@ -592,7 +595,14 @@ final class Menu {
 		if ( 'wpdocs_bind' !== $col ) {
 			return;
 		}
-		$row = BindRepo::find_by_post( $post_id );
+		static $map = null;
+		if ( null === $map ) {
+			$map = array();
+			foreach ( BindRepo::list( 500 ) as $r ) {
+				$map[ (int) $r->wp_post_id ] = $r;
+			}
+		}
+		$row = $map[ $post_id ] ?? null;
 		if ( ! $row ) {
 			echo '—';
 			return;

@@ -66,6 +66,9 @@ final class Frontend {
 			&& ( Settings::MODE_ALL === $mode || in_array( (int) $post->ID, Settings::pilot_post_ids(), true ) )
 		) {
 			$entry = Catalog::for_post( $post );
+			if ( null === $entry ) {
+				$entry = self::entry_from_binding( $post );
+			}
 		}
 		/**
 		 * Filter whether a post is rendered from CocoBook.
@@ -76,6 +79,37 @@ final class Frontend {
 		$entry                     = apply_filters( 'cocobook_docs_entry', $entry, $post );
 		self::$decided[ $post->ID ] = is_array( $entry ) ? $entry : false;
 		return is_array( $entry ) ? $entry : null;
+	}
+
+	/**
+	 * Fallback: an active Bind row maps this post to a CocoBook page when the
+	 * catalog tags do not. Catalog tags stay the preferred source.
+	 *
+	 * @param \WP_Post $post Post.
+	 * @return array<string,mixed>|null
+	 */
+	private static function entry_from_binding( \WP_Post $post ): ?array {
+		$row = Bind\Repository::find_by_post( (int) $post->ID );
+		if ( ! $row || 'active' !== (string) ( $row->status ?? '' ) ) {
+			return null;
+		}
+		$pid = (int) ( $row->docs_page_id ?? 0 );
+		if ( $pid < 1 ) {
+			return null;
+		}
+		return array(
+			'id'         => $pid,
+			'name'       => '',
+			'slug'       => (string) ( $row->docs_page_slug ?? '' ),
+			'book_id'    => 0,
+			'chapter_id' => 0,
+			'priority'   => 0,
+			'updated_at' => '',
+			'wp_id'      => (int) $post->ID,
+			'wp_path'    => '',
+			'wp_slug'    => (string) $post->post_name,
+			'source'     => 'binding',
+		);
 	}
 
 	/** Entry for the main queried post on singular views. */

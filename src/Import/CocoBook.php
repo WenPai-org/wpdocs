@@ -39,7 +39,15 @@ final class CocoBook {
 			return $stats;
 		}
 
-		$rows = BindRepo::list();
+		// BindRepo::list() caps at 100 per call; page through so large binding
+		// sets are not silently truncated.
+		$rows   = array();
+		$offset = 0;
+		do {
+			$batch   = BindRepo::list( 100, $offset );
+			$rows    = array_merge( $rows, $batch );
+			$offset += 100;
+		} while ( count( $batch ) === 100 );
 		foreach ( $rows as $row ) {
 			$post_id = (int) ( $row->wp_post_id ?? 0 );
 			$page_id = (int) ( $row->docs_page_id ?? 0 );

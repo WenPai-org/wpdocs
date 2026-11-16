@@ -257,9 +257,17 @@ final class Controller {
 	}
 
 	public static function resolve_binding( WP_REST_Request $req ): WP_REST_Response {
+		$id      = (int) $req->get_param( 'id' );
 		$post_id = (int) $req->get_param( 'wp_post_id' );
 		$page_id = (int) $req->get_param( 'docs_page_id' );
-		$row     = $post_id ? BindRepo::find_by_post( $post_id ) : ( $page_id ? BindRepo::find_by_docs_page( $page_id ) : null );
+		if ( $id > 0 ) {
+			$row = BindRepo::find_by_post( $id );
+			if ( ! $row ) {
+				$row = BindRepo::find_by_docs_page( $id );
+			}
+		} else {
+			$row = $post_id ? BindRepo::find_by_post( $post_id ) : ( $page_id ? BindRepo::find_by_docs_page( $page_id ) : null );
+		}
 		return new WP_REST_Response( array( 'row' => $row ) );
 	}
 
