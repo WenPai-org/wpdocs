@@ -101,8 +101,8 @@ View::page_head(
 							'body'  => __( '内容源切换、绑定、旧链跳转、CocoBook 只读探测，以及按源导入/拉取。', 'wpdocs' ),
 						),
 						array(
-							'title' => __( '本插件不做什么', 'wpdocs' ),
-							'body'  => __( '不改 CocoBook 主题壳；不在「保留正文 / Git 写入」提供统一评论；不把正文写入站点选项；不做站内第二套导出。', 'wpdocs' ),
+							'title' => __( '分工边界', 'wpdocs' ),
+							'body'  => __( '主题壳、正文存储和导出由 CocoBook 负责；正文保留在文档库，不写入站点选项；评论沿用各写入方式原有的评论区。', 'wpdocs' ),
 						),
 					),
 				),
@@ -112,7 +112,7 @@ View::page_head(
 					'steps'    => array(
 						array(
 							'title' => __( '导出', 'wpdocs' ),
-							'body'  => __( '整书/单页 ZIP、Markdown、PDF 在 CocoBook 后台导出。本插件不提供「再导出一份」。', 'wpdocs' ),
+							'body'  => __( '整书/单页 ZIP、Markdown、PDF 在 CocoBook 后台导出。', 'wpdocs' ),
 						),
 						array(
 							'title' => __( 'Webhook', 'wpdocs' ),
