@@ -51,6 +51,7 @@ final class Core {
 		Embed::register();
 		add_action( 'rest_api_init', array( self::class, 'routes' ) );
 		add_action( self::CHECK_HOOK, array( self::class, 'daily_check' ) );
+		add_action( Catalog::REBUILD_HOOK, array( Catalog::class, 'rebuild' ) );
 		add_action( 'init', array( self::class, 'ensure_schedule' ) );
 		if ( is_admin() ) {
 			add_action( 'admin_notices', array( self::class, 'health_notice' ) );
@@ -84,6 +85,7 @@ final class Core {
 	public static function unschedule(): void {
 		wp_clear_scheduled_hook( self::CHECK_HOOK );
 		wp_clear_scheduled_hook( self::LEGACY_HOOK );
+		wp_clear_scheduled_hook( Catalog::REBUILD_HOOK );
 	}
 
 	/**

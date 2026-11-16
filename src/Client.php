@@ -160,6 +160,16 @@ final class Client {
 	}
 
 	/**
+	 * Read a cache entry without fetching.
+	 *
+	 * @param string $key Key.
+	 * @return array{t:int,s:bool,d:array<string,mixed>}|null
+	 */
+	public static function peek( string $key ): ?array {
+		return self::cache_read( $key );
+	}
+
+	/**
 	 * Read cache entry.
 	 *
 	 * @param string $key Key.

@@ -32,6 +32,9 @@ final class Catalog {
 	 */
 	public const INDEX_TTL = 300;
 
+	/** Single-event hook for background index rebuilds. */
+	public const REBUILD_HOOK = 'wpdocs_catalog_rebuild';
+
 	/**
 	 * Memoized catalog for this request.
 	 *
@@ -63,6 +66,25 @@ final class Catalog {
 			return self::$memo;
 		}
 		$ttl = self::index_ttl( (int) Settings::get( 'page_ttl' ) );
+		$hit = Client::peek( self::KEY );
+		if ( $hit && ! $hit['s'] && ( time() - $hit['t'] ) < $ttl ) {
+			self::$memo = $hit['d'];
+			return self::$memo;
+		}
+		if ( $hit ) {
+			// WP-Cron fully disabled: keep the old synchronous rebuild.
+			if ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON ) {
+				$cat = Client::remember( self::KEY, $ttl, array( self::class, 'build' ) );
+				self::$memo = is_wp_error( $cat ) ? $hit['d'] : $cat;
+				return self::$memo;
+			}
+			// Expired or marked stale: serve the last good index and rebuild in
+			// the background so page views never block on a full catalog sweep.
+			self::schedule_rebuild();
+			self::$memo = $hit['d'];
+			return self::$memo;
+		}
+		// No cache at all (first run / cleared): one synchronous build.
 		$cat = Client::remember( self::KEY, $ttl, array( self::class, 'build' ) );
 		if ( ! is_wp_error( $cat ) ) {
 			self::$memo = $cat;
@@ -70,12 +92,31 @@ final class Catalog {
 		return $cat;
 	}
 
+	/**
+	 * Queue a single background rebuild (deduped by pending event + lock).
+	 */
+	public static function schedule_rebuild(): void {
+		if ( get_transient( 'wpdocs_cat_rebuild_lock' ) ) {
+			return;
+		}
+		// WP-Cron disabled: fall back handled by callers seeing stale data only
+		// until the next successful remember(); schedule anyway (harmless).
+		if ( ! wp_next_scheduled( self::REBUILD_HOOK ) ) {
+			wp_schedule_single_event( time() + 5, self::REBUILD_HOOK );
+		}
+		set_transient( 'wpdocs_cat_rebuild_lock', 1, MINUTE_IN_SECONDS );
+		if ( function_exists( 'spawn_cron' ) ) {
+			spawn_cron();
+		}
+	}
+
 	/** Force a rebuild now. Returns the catalog or error. */
 	public static function rebuild() {
 		self::$memo = null;
 		Client::mark_stale( self::KEY );
 		Client::$last_error = null;
-		$cat = self::get();
+		delete_transient( 'wpdocs_cat_rebuild_lock' );
+		$cat = Client::remember( self::KEY, 1, array( self::class, 'build' ) );
 		if ( ! is_wp_error( $cat ) && Client::$last_error ) {
 			$cat = Client::$last_error; // The old catalog stays in use; report the failure.
 		}

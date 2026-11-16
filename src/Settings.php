@@ -262,7 +262,8 @@ final class Settings {
 	 * @param array<int,array<string,mixed>> $repos Repos.
 	 */
 	public static function save_git_repositories( array $repos ): void {
-		$cur                   = self::raw();
+		$cur = Legacy::get_option( self::OPTION, array() );
+		$cur = is_array( $cur ) ? $cur : array();
 		$cur['git_repositories'] = $repos;
 		Legacy::update_option( self::OPTION, $cur );
 	}
@@ -274,8 +275,10 @@ final class Settings {
 	 * @return array<string,mixed> Saved settings.
 	 */
 	public static function save( array $input ): array {
-		$cur = self::raw();
-		$out = $cur;
+		$saved_raw = Legacy::get_option( self::OPTION, array() );
+		$saved_raw = is_array( $saved_raw ) ? $saved_raw : array();
+		$cur       = self::raw();
+		$out       = $cur;
 
 		if ( isset( $input['base_url'] ) && ! self::is_locked( 'base_url' ) ) {
 			$out['base_url'] = untrailingslashit( esc_url_raw( trim( (string) $input['base_url'] ) ) );
@@ -441,7 +444,24 @@ final class Settings {
 			}
 		}
 
-		Legacy::update_option( self::OPTION, $out );
+		// Persist only keys that were saved before, posted now, or generated
+		// secrets — never inject pure defaults into the option. Absent keys keep
+		// "unset" semantics downstream (e.g. tree_url → default /books probe).
+		$generated = array( 'refresh_secret', 'git_webhook_secret' );
+		$persist   = array();
+		foreach ( $out as $k => $v ) {
+			$posted_repo = 'git_repositories' === $k && array_key_exists( 'git_repo_slug', $input );
+			if ( array_key_exists( $k, $saved_raw ) || array_key_exists( $k, $input ) || $posted_repo || in_array( $k, $generated, true ) ) {
+				$persist[ $k ] = $v;
+			}
+		}
+		// tree_url UI contract: empty means "use default /books" → drop the key
+		// (also cleans up '' persisted by older saves).
+		if ( isset( $persist['tree_url'] ) && '' === trim( (string) $persist['tree_url'] ) ) {
+			unset( $persist['tree_url'] );
+		}
+
+		Legacy::update_option( self::OPTION, $persist );
 		return $out;
 	}
 

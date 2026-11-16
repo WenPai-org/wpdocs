@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased — 审计修复（绑定接管 + 反查 + UI 细节）
+
+- **绑定可驱动内容接管**：`Frontend::entry_for()` 在 catalog（BookStack `wp-id`/`wp-path`/`wp-slug` 标签）未命中时，回退查 `wpdocs_bindings` 的 active 绑定；绑定文章在「文档站读取」模式下渲染 CocoBook 正文并共用 `cocobook:page:{id}` 评论。标签仍是首选来源。
+- **修复绑定反查**：`assets/admin/admin.js` 原发送 `post_id=` 且按顶层字段读响应，与 REST `/bindings/resolve`（`wp_post_id`/`docs_page_id` 参数、`{row:…}` 包裹）不匹配，反查恒失败。现发送 `id=`（后端先按文章、再按文档页解析），JS 从 `data.row` 取值。
+- **设置页 choice 卡图标恢复**：`View::choice_cards()` 支持 `icon_html`（预渲染 SVG），此前传入的 `icon_html` 被静默忽略，五张卡片均无图标。
+- **帮助页**：移除不存在的 `docs/ops/wpdocs-ops.md` 引用；补充绑定接管优先级说明。
+- **readme.txt**：`Tested up to` 6.8 → 7.1（Studio wpdocs-dev 实测 WP 7.1.4）。
+- **CocoBook 导入不再截断**：`Import\CocoBook::run()` 原来只取 `BindRepo::list()` 前 100 条绑定；现在按 100/页翻页取完全部 active 绑定。
+- **文章列表列 N+1 → 1 次查询**：`post_column_content` 原每行查一次绑定表；现在每请求一次性载入绑定映射。
+- **RemoteMeta 熔断**：绑定页远端探测在连续 3 次传输/鉴权类失败后停止剩余探测（`circuit_open`），避免 BookStack 宕机时后台渲染串行等超时。
+- **新增 `uninstall.php`**：卸载时删除 `wpdocs_*` options/transients、`wpdocs_bindings`/`wpdocs_redirects` 表、`wpdocs_check`/`wpdocs_sync_legacy`/`wpdocs_catalog_rebuild` cron、`wp-content/cache/wpdocs/` 文件缓存。`cocobook_docs_*` 别名与 `giw_*` option 保留（旧插件回滚路径 / 独立 GIW 数据）。
+- **`Settings::save()` 持久化瘦身**：option 只写「曾保存过 / 本次提交过 / 生成的密钥」三类键，不再把全部 defaults 落库；`tree_url` 空值不再持久化（UI 语义本就是留空 = 默认 `/books`），旧保存遗留的 `tree_url=''` 会在下次保存时清掉。
+- **catalog 索引 stale-while-revalidate**：`Catalog::get()` 在索引过期/被标记 stale 时返回旧缓存并通过 `wpdocs_catalog_rebuild` 单次 cron 事件后台重建，前台不再同步等待全站扫描；无缓存首次仍同步构建一次；`DISABLE_WP_CRON` 时回退旧的同步行为。
+- **映射一致性抽检**：`DriftCheck::run()` 新增 `consistency` 段，比较 active 绑定与 catalog `wp-id` 标签——`both`/`binding_only`/`tag_only`/`conflict` 四类计数；概览页在 `conflict>0` 时给出 warn 提示（标签优先，提示去绑定页核对）。为「绑定表收敛为唯一权威」的迁移决策提供数据。
+- **列表截断透明化**：绑定/跳转表格超 100 条时显示「共 N 条，显示最近 M 条」提示（kit 无分页原语，先保证不误导）。
+- **清理 `.tmp-giw/`**：GIW 上游留存目录删除，对软链目录跑 Plugin Check 不再出现 compressed/hidden 文件误报。
+- 验证：`tests/run.sh` ALL PASS；lint findings=0；Studio 实测 `?id=` 正反查命中、绑定文章输出 `X-Wpdocs-Page: 5975` 与 `.wpdocs-body`；`save()` 后 option 中 `tree_url` 已移除、`/status` tree 探测恢复 `/books` 200；标记 catalog stale 后前台 0.14s 返回并自动完成后台重建；`DriftCheck::run()` consistency 段实测输出。
+
 ## Unreleased — Settings schema 迁移（kit 0.10.3）
 
 - vendor wenpai-admin-ui **0.10.2 → 0.10.3**。

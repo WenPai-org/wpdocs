@@ -152,6 +152,24 @@ if ( $drift_bad > 0 ) :
 	<?php
 endif;
 
+$consistency = isset( $drift['consistency'] ) && is_array( $drift['consistency'] ) ? $drift['consistency'] : array();
+$map_conflicts = (int) ( $consistency['conflict'] ?? 0 );
+if ( $map_conflicts > 0 ) :
+	?>
+	<div class="notice warn"><span><?php
+		echo esc_html(
+			sprintf(
+				/* translators: %d: conflicting mappings */
+				__( '映射不一致：%d 篇文章的绑定与文档站标签指向不同页面。文档站标签优先生效，请到工具 → 绑定核对。', 'wpdocs' ),
+				$map_conflicts
+			)
+		);
+	?></span>
+		<a href="<?php echo esc_url( \Wpdocs\Admin\Menu::url( 'tools', 'bindings' ) ); ?>"><?php esc_html_e( '打开绑定', 'wpdocs' ); ?></a>
+	</div>
+	<?php
+endif;
+
 $mx  = \Wpdocs\Metrics::snapshot( $st );
 $cov = isset( $mx['bindings'] ) && is_array( $mx['bindings'] ) ? $mx['bindings'] : array();
 $ratio = $cov['ratio'] ?? null;
