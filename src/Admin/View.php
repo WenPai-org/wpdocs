@@ -163,16 +163,19 @@ final class View {
 	 * @param string $label_on  on-state text.
 	 * @param string $label_off off-state text.
 	 */
-	public static function toggle_input( string $name, bool $on, string $label_on = '', string $label_off = '' ): string {
+	public static function toggle_input( string $name, bool $on, string $label_on = '', string $label_off = '', array $a11y = array() ): string {
 		$label_on  = '' !== $label_on ? $label_on : __( '已开启', 'wpdocs' );
 		$label_off = '' !== $label_off ? $label_off : __( '未开启', 'wpdocs' );
 		if ( class_exists( 'Wenpai_Admin_Settings', false ) ) {
 			return \Wenpai_Admin_Settings::switch_html(
-				array(
-					'name'    => $name,
-					'checked' => $on,
-					'on'      => $label_on,
-					'off'     => $label_off,
+				array_merge(
+					array(
+						'name'    => $name,
+						'checked' => $on,
+						'on'      => $label_on,
+						'off'     => $label_off,
+					),
+					$a11y
 				)
 			);
 		}

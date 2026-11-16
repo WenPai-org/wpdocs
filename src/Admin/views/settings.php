@@ -351,12 +351,13 @@ echo Wenpai_Admin_UI::row_html( array( 'icon_html' => View::icon( 'info' ), 'tit
 			<?php echo $group_div( 'comments' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 			<?php
 			ob_start();
-			echo View::toggle_input( $opt . '[comments]', $comments_on ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			echo View::toggle_input( $opt . '[comments]', $comments_on, '', '', array( 'id' => 'wpdocs-comments-sw', 'labelledby' => 'wpdocs-comments-t' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			$wpdocs_comments_ctl = (string) ob_get_clean();
 			echo Wenpai_Admin_UI::row_html(
 				array(
 					'icon_html'         => View::icon( 'feedback' ),
 					'title'        => __( '统一评论', 'wpdocs' ),
+					'title_id'     => 'wpdocs-comments-t',
 					'desc'         => __( '与 CocoBook 同一帖。仅此路径提供。', 'wpdocs' ),
 					'control_html' => $wpdocs_comments_ctl,
 				)
@@ -456,12 +457,13 @@ echo Wenpai_Admin_UI::row_html( array( 'icon_html' => View::icon( 'info' ), 'tit
 
 		<?php
 		ob_start();
-		echo View::toggle_input( $opt . '[redirects]', $redirects_on ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo View::toggle_input( $opt . '[redirects]', $redirects_on, '', '', array( 'id' => 'wpdocs-redirects-sw', 'labelledby' => 'wpdocs-redirects-t' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		$wpdocs_redirects_ctl = (string) ob_get_clean();
 		echo Wenpai_Admin_UI::row_html(
 			array(
 				'icon_html'         => View::icon( 'share' ),
 				'title'        => __( '旧链接跳转', 'wpdocs' ),
+				'title_id'     => 'wpdocs-redirects-t',
 				'desc_html'    => __( '旁路能力，与内容源无关。', 'wpdocs' ) . ' <a href="' . esc_url( \Wpdocs\Admin\Menu::url( 'tools', 'redirects' ) ) . '">' . esc_html__( '管理映射', 'wpdocs' ) . '</a>',
 				'control_html' => $wpdocs_redirects_ctl,
 			)
