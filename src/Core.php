@@ -49,6 +49,7 @@ final class Core {
 
 		Frontend::register();
 		Embed::register();
+		Integration\WPMind::register();
 		add_action( 'rest_api_init', array( self::class, 'routes' ) );
 		add_action( self::CHECK_HOOK, array( self::class, 'daily_check' ) );
 		add_action( Catalog::REBUILD_HOOK, array( Catalog::class, 'rebuild' ) );

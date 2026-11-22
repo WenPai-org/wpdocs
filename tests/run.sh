@@ -50,6 +50,9 @@ php tests/MetricsTest.php
 echo "== BookStack fixture (VCR) tests (no WP) =="
 php tests/BookStackFixturesTest.php
 
+echo "== WPMind integration unit tests (no WP) =="
+php tests/WPMindIntegrationTest.php
+
 echo "== dry-run must not persist =="
 # Listener::dry_run body (until the next method) must not call hit() or log_unmatched().
 dry_body="$(awk '
